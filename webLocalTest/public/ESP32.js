@@ -1,0 +1,97 @@
+export const msgTypeNames = [
+    'PING',
+    'CONTROLLER_INFO',
+    'TASK_INFO',
+    'CIRCUIT_INFO',
+    'FUNCTION_INFO',
+    'GET_MEM_DATA',
+    'SET_MEM_DATA',
+    'MONITORING_ENABLE',
+    'MONITORING_DISABLE',
+    'MONITORING_VALUES',
+];
+export const IO_FLAG_TYPE_MASK = (1 /* TYPE_B0 */ | 2 /* TYPE_B1 */ | 4 /* TYPE_B2 */);
+export const IO_FLAG_CONV_TYPE_MASK = (64 /* REF_CONV_TYPE_B0 */ | 128 /* REF_CONV_TYPE_B1 */);
+export const ioConvNames = {
+    [0 /* NONE */]: 'NONE',
+    [64 /* UNSIGNED */]: 'UNSIGNED',
+    [128 /* SIGNED */]: 'SIGNED',
+    [192 /* FLOAT */]: 'FLOAT',
+};
+export const IO_TYPE_MAP = [
+    5 /* uint32 */,
+    4 /* int32 */,
+    5 /* uint32 */,
+    6 /* float */,
+    5 /* uint32 */
+];
+export const ioTypeNames = [
+    'BOOL',
+    'INT',
+    'UINT',
+    'FLOAT',
+    'TIME',
+];
+export const MsgHeader_t = {
+    msgType: 5 /* uint32 */,
+    pointer: 5 /* uint32 */,
+};
+export const MsgControllerInfo_t = {
+    freeHeap: 5 /* uint32 */,
+    cpuFreq: 5 /* uint32 */,
+    aliveTime: 6 /* float */,
+    tickCount: 5 /* uint32 */,
+    taskCount: 5 /* uint32 */,
+    taskList: 5 /* uint32 */,
+};
+export const MsgTaskInfo_t = {
+    interval: 5 /* uint32 */,
+    offset: 5 /* uint32 */,
+    runCount: 5 /* uint32 */,
+    lastCPUTime: 5 /* uint32 */,
+    avgCPUTime: 6 /* float */,
+    lastActInterval: 5 /* uint32 */,
+    avgActInterval: 6 /* float */,
+    circuitCount: 5 /* uint32 */,
+    circuitList: 5 /* uint32 */,
+};
+export const MsgCircuitInfo_t = {
+    funcCount: 5 /* uint32 */,
+    funcList: 5 /* uint32 */,
+    outputRefList: 5 /* uint32 */,
+};
+export const MsgFunctionInfo_t = {
+    numInputs: 1 /* uint8 */,
+    numOutputs: 1 /* uint8 */,
+    opcode: 3 /* uint16 */,
+    flags: 5 /* uint32 */,
+    ioValueList: 5 /* uint32 */,
+    ioFlagList: 5 /* uint32 */,
+    nameLength: 5 /* uint32 */,
+    namePtr: 5 /* uint32 */,
+};
+// Address area Low is inclusive, High is exclusive
+const memoryAreas = [
+    { name: 'DROM', low: 0x3F400000, high: 0x3F800000 },
+    { name: 'EXTRAM_DATA', low: 0x3F800000, high: 0x3FC00000 },
+    { name: 'DRAM', low: 0x3FAE0000, high: 0x40000000 },
+    { name: 'IROM_MASK', low: 0x40000000, high: 0x40070000 },
+    { name: 'IROM', low: 0x400D0000, high: 0x40400000 },
+    { name: 'CACHE_PRO', low: 0x40070000, high: 0x40078000 },
+    { name: 'CACHE_APP', low: 0x40078000, high: 0x40080000 },
+    { name: 'IRAM', low: 0x40080000, high: 0x400A0000 },
+    { name: 'RTC_IRAM', low: 0x400C0000, high: 0x400C2000 },
+    { name: 'RTC_DRAM', low: 0x3FF80000, high: 0x3FF82000 },
+    { name: 'RTC_DATA', low: 0x50000000, high: 0x50002000 },
+];
+function findMemoryAreaForAddr(addr) {
+    const area = memoryAreas.find(area => addr >= area.low && addr < area.high);
+    return area;
+}
+function logMemoryInfo() {
+    memoryAreas.forEach(area => console.log((area.name + ':').padEnd(12) + (((area.high - area.low) / 1024) + ' kb').padStart(8)));
+}
+export const ESP32 = {
+    findMemoryAreaForAddr,
+    logMemoryInfo
+};

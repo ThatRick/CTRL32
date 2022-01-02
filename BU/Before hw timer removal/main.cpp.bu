@@ -1,0 +1,244 @@
+#include <Arduino.h>
+#include <U8g2lib.h>
+#include <WiFi.h>
+#include <SPIFFS.h>
+#include <ESPAsyncWebServer.h>
+
+#define SENSOR 34
+
+#define OLED_CLOCK  15
+#define OLED_DATA   4
+#define OLED_RESET  16
+
+#define DEBOUNCE_TIME_MS 0
+#define PULSE_ON_DELAY_MS 10
+
+#define PERIODIC_CYLCE_TIME_MS 10
+
+
+// ***********************************************
+//    Light sensor
+// ***********************************************
+
+hw_timer_t* debounceTimer = NULL;
+hw_timer_t* onDelayTimer = NULL;
+
+volatile bool ledState = false;
+volatile uint32_t risingEdgeCount = 0;
+volatile uint32_t fallingEdgeCount = 0;
+volatile uint32_t pulseCount = 0;
+
+volatile uint64_t prevEdgeTime = 0;
+volatile uint32_t accuHighTime = 0;
+volatile uint32_t accuLowTime = 0;
+
+float highRateFiltered = 0.0;
+uint64_t accuTotalTime = 0;
+
+void IRAM_ATTR onPulseTimer();
+void IRAM_ATTR onDebounceTimer();
+
+void IRAM_ATTR onLightSensorChange()
+{
+  uint64_t now = esp_timer_get_time();
+  uint64_t elapsed = now - prevEdgeTime;
+  prevEdgeTime = now;
+
+  bool sensorState = digitalRead(SENSOR);
+  // Sensor on
+  if (sensorState == LOW) {
+    risingEdgeCount++;
+    accuHighTime += elapsed;
+    if (PULSE_ON_DELAY_MS > 0) {
+      timerStop(debounceTimer);
+      timerRestart(onDelayTimer);
+    } else {
+      onPulseTimer();
+    }
+  }
+  // Sensor off
+  else {
+    fallingEdgeCount++;
+    accuLowTime += elapsed;
+    if (DEBOUNCE_TIME_MS > 0) {
+      timerRestart(debounceTimer);
+      timerStop(onDelayTimer);
+    } else {
+      onDebounceTimer();
+    }
+  }
+}
+
+void IRAM_ATTR onPulseTimer()
+{
+  // Serial.println("LED ON");
+  ledState = true;
+  pulseCount++;
+  digitalWrite(LED_BUILTIN, HIGH);
+  timerStop(onDelayTimer);
+}
+
+void IRAM_ATTR onDebounceTimer()
+{
+  // Serial.println("LED OFF");
+  ledState = false;
+  digitalWrite(LED_BUILTIN, LOW);
+  timerStop(debounceTimer);
+}
+
+
+// ***********************************************
+//    OLED Screen
+// ***********************************************
+
+U8G2_SSD1306_128X64_NONAME_F_SW_I2C g_OLED(U8G2_R2, OLED_CLOCK, OLED_DATA, OLED_RESET);
+
+int g_lineHeight = 0;
+
+void IRAM_ATTR updateDisplay()
+{
+  g_OLED.clearBuffer();
+  g_OLED.setCursor(0, g_lineHeight);
+  g_OLED.printf("R: %d", accuHighTime);
+  g_OLED.setCursor(0, g_lineHeight * 2);
+  g_OLED.printf("F: %d", accuLowTime);
+  g_OLED.setCursor(0, g_lineHeight * 3);
+  g_OLED.printf("P: %d", pulseCount);
+  g_OLED.setCursor(0, g_lineHeight * 4);
+  g_OLED.printf("R: %.1f / %lluus", highRateFiltered, accuTotalTime);
+  g_OLED.sendBuffer();
+}
+
+// ***********************************************
+//    Web server
+// ***********************************************
+
+const char *ssid = "Linksys";
+const char *pw = "langaton";
+
+AsyncWebServer webServer(80);
+
+void onIndexRequest(AsyncWebServerRequest *req)
+{
+  IPAddress remote_ip = req->client()->remoteIP();
+  Serial.println("[" + remote_ip.toString() + "] HTTP GET request of " + req->url());
+  req->send(SPIFFS, "/index.html", "text/html");
+}
+void onCSSRequest(AsyncWebServerRequest *req)
+{
+  IPAddress remote_ip = req->client()->remoteIP();
+  Serial.println("[" + remote_ip.toString() + "] HTTP GET request of " + req->url());
+  if (SPIFFS.exists("/style.css")) {
+    req->send(SPIFFS, "/style.css", "text/css");
+  }
+  else req->send(404, "text/plain", "CSS not available yet");
+}
+void onPageNotFound(AsyncWebServerRequest *req)
+{
+  IPAddress remote_ip = req->client()->remoteIP();
+  Serial.println("[" + remote_ip.toString() + "] HTTP GET request of " + req->url());
+  req->send(404, "text/plain", "Not found!");
+}
+
+// ***********************************************
+//    Periodic 100Hz
+// ***********************************************
+
+esp_timer_handle_t periodicTimer = NULL;
+float highRateFiltering = 0.0;
+
+void IRAM_ATTR onPeriodic(void* arg)
+{
+  uint64_t now = esp_timer_get_time();
+  uint64_t elapsed = now - prevEdgeTime;
+  prevEdgeTime = now;
+
+  bool sensorState = digitalRead(SENSOR);
+  if (sensorState == LOW) accuHighTime += elapsed;
+  if (sensorState == HIGH) accuLowTime += elapsed;
+
+  accuTotalTime = accuHighTime + accuLowTime;
+  float highRate;
+  if (accuLowTime == 0 && accuHighTime > 0) highRate = 100.0;
+  else if (accuLowTime == 0) highRate = 0.0;
+  else highRate = ((float)accuHighTime / (float)accuTotalTime) * 100.0;
+  
+  highRateFiltered = highRateFiltered * highRateFiltering + highRate * (1.0 - highRateFiltering);
+
+  accuHighTime = 0;
+  accuLowTime = 0;
+}
+
+// ***********************************************
+//    Setup
+// ***********************************************
+
+void setup()
+{
+  Serial.begin(115200);
+
+  g_OLED.begin();
+  g_OLED.setFont(u8g2_font_profont15_tf);
+  g_lineHeight = g_OLED.getFontAscent() - g_OLED.getFontDescent();
+  g_OLED.clearBuffer();
+  g_OLED.setCursor(0, g_lineHeight * 1);
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(SENSOR, INPUT);
+
+  attachInterrupt(SENSOR, onLightSensorChange, CHANGE);
+  prevEdgeTime = esp_timer_get_time();
+
+  debounceTimer = timerBegin(0, 80, true);
+  timerAttachInterrupt(debounceTimer, &onDebounceTimer, true);
+  timerAlarmWrite(debounceTimer, DEBOUNCE_TIME_MS * 1000, true);
+  timerAlarmEnable(debounceTimer);
+
+  onDelayTimer = timerBegin(1, 80, true);
+  timerAttachInterrupt(onDelayTimer, &onPulseTimer, true);
+  timerAlarmWrite(onDelayTimer, PULSE_ON_DELAY_MS * 1000, true);
+  timerAlarmEnable(onDelayTimer);
+
+  if ( !SPIFFS.begin() ) {
+    Serial.println("Error mounting SPIFFS");
+    g_OLED.printf("Error mounting SPIFFS");
+    g_OLED.sendBuffer();
+    delay(2000);
+    g_OLED.clearBuffer();
+  }
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pw);
+  Serial.print("Connecting to WiFi ..");
+
+  g_OLED.printf("Connecting to WiFi...");
+  g_OLED.sendBuffer();
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.print("Connected with IP ");
+  Serial.println(WiFi.localIP());
+  g_OLED.setCursor(0, g_lineHeight * 2);
+  g_OLED.printf("IP %s", WiFi.localIP().toString().c_str());
+  g_OLED.sendBuffer();
+  delay(2000);
+
+  webServer.on("/", HTTP_GET, onIndexRequest);
+  webServer.on("/style.css", HTTP_GET, onCSSRequest);
+  webServer.onNotFound(onPageNotFound);
+  webServer.begin();
+
+  // esp_timer
+  const esp_timer_create_args_t args {
+    .callback = onPeriodic
+  };
+  esp_timer_create(&args, &periodicTimer);
+  esp_timer_start_periodic(periodicTimer, PERIODIC_CYLCE_TIME_MS * 1000);
+}
+
+void loop()
+{
+  updateDisplay();
+  delay(100);
+}
