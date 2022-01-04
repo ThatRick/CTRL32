@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "ControllerTask.h"
 #include "Esp.h"
+#include "Wifi.h"
 
 Controller::Controller() {}
 
@@ -22,6 +23,9 @@ void Controller::connected() {
 void Controller::disconnected() {
 }
 
-int32_t Controller::freeHeap() { return ESP.getFreeHeap(); }
-int32_t Controller::cpuFreq() { return ESP.getCpuFreqMHz(); }
-Time Controller::getTime() { return esp_timer_get_time(); }
+uint32_t Controller::freeHeap() { return ESP.getFreeHeap(); }
+uint32_t Controller::cpuFreq()  { return ESP.getCpuFreqMHz(); }
+    Time Controller::getTime()  { return esp_timer_get_time(); }
+  int8_t Controller::getRSSI()  { return WiFi.RSSI(); }
+
+

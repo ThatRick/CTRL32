@@ -1,19 +1,7 @@
 export class WSConnection {
     constructor(hostIP) {
-        const hostAddr = 'ws://' + hostIP + '/ws';
-        const ws = new WebSocket(hostAddr);
-        ws.binaryType = 'arraybuffer';
-        this.setStatus("Connecting to " + hostAddr);
-        ws.onopen = () => this.setStatus("Connected to " + this.hostAddr);
-        ws.onerror = (ev) => {
-            const text = `Websocket error [${hostAddr}] `;
-            console.error(text, ev);
-            this.setStatus(text + ev.type);
-        };
-        ws.onclose = () => {
-            this.setStatus(`Disconnected from ${hostAddr}`);
-        };
-        ws.onmessage = (msg) => {
+        this.isConnected = false;
+        this.onmessage = (msg) => {
             if (typeof msg.data == 'string') {
                 this.consoleLine('text: ' + msg.data);
             }
@@ -27,13 +15,41 @@ export class WSConnection {
                 this.consoleLine(text);
             }
         };
+        this.onopen = () => {
+            this.isConnected = true;
+            this.setStatus(`Connected (${this.hostAddr})`);
+        };
+        this.onclose = () => {
+            this.isConnected = false;
+            this.setStatus(`Disconnected`);
+        };
+        this.onerror = (ev) => {
+            this.isConnected = (this.ws.readyState == WebSocket.OPEN);
+            const text = `Error (${this.hostAddr}) `;
+            console.error(text, ev);
+            this.setStatus(text + ev.type);
+        };
+        this.connect = () => {
+            this.setStatus("Connecting to " + this.hostAddr);
+            let ws = new WebSocket(this.hostAddr);
+            ws.binaryType = 'arraybuffer';
+            ws.onmessage = this.onmessage;
+            ws.onopen = this.onopen;
+            ws.onclose = this.onclose;
+            ws.onerror = this.onerror;
+            this.ws = ws;
+        };
+        this.disconnect = () => {
+            this.ws.close();
+        };
         this.hostIP = hostIP;
-        this.hostAddr = hostAddr;
-        this.ws = ws;
+        this.hostAddr = 'ws://' + hostIP + '/ws';
+        this.connect();
     }
     setStatus(text) { var _a; (_a = this.onSetStatus) === null || _a === void 0 ? void 0 : _a.call(this, text); }
     consoleLine(text) { var _a; (_a = this.onConsoleLine) === null || _a === void 0 ? void 0 : _a.call(this, text); }
     send(data) {
-        this.ws.send(data);
+        if (this.ws.readyState == WebSocket.OPEN)
+            this.ws.send(data);
     }
 }

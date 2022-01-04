@@ -21,7 +21,8 @@ public:
 
     void disconnected();
 
-    int32_t freeHeap();
-    int32_t cpuFreq();
+    uint32_t freeHeap();
+    uint32_t cpuFreq();
     Time getTime();
+    int8_t getRSSI();
 };

@@ -10,7 +10,8 @@ export const enum MSG_TYPE {
     SET_MEM_DATA,
     MONITORING_ENABLE,
     MONITORING_DISABLE,
-    MONITORING_VALUES
+    MONITORING_FUNC_VALUES,
+    MONITORING_COLLECTION,
 }
 
 export const msgTypeNames = [
@@ -23,8 +24,10 @@ export const msgTypeNames = [
     'SET_MEM_DATA',
     'MONITORING_ENABLE',
     'MONITORING_DISABLE',
-    'MONITORING_VALUES',
+    'MONITORING_FUNC_VALUES',
+    'MONITORING_COLLECTION',
 ]
+export const msgTypeNamesMaxLength = msgTypeNames.reduce((max, typeName) => Math.max(max, typeName.length), 0)
 
 export const enum REQUEST_RESULT {
     REQUEST_FAILED,
@@ -89,11 +92,13 @@ export const ioTypeNames =
 export const MsgHeader_t = {
     msgType:            DataType.uint32,
     pointer:            DataType.uint32,
+    timeStamp:          DataType.uint32
 }
 
 export const MsgControllerInfo_t = {
     freeHeap:           DataType.uint32,
     cpuFreq:            DataType.uint32,
+    RSSI:               DataType.int32,
     aliveTime:          DataType.float,
     tickCount:          DataType.uint32,
     taskCount:          DataType.uint32,
@@ -126,6 +131,15 @@ export const MsgFunctionInfo_t = {
     ioFlagList:         DataType.uint32,
     nameLength:         DataType.uint32,
     namePtr:            DataType.uint32,
+}
+
+export const MsgMonitoringCollection_t = {
+    itemCount:          DataType.uint32
+}
+export const MsgMonitoringCollectionItem_t = {
+    pointer:            DataType.uint32,
+    offset:             DataType.uint16,
+    size:               DataType.uint16,
 }
 
 

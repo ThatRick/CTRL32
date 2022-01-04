@@ -5,49 +5,65 @@ export class WSConnection {
     private ws: WebSocket
     private hostIP: string
     private hostAddr: string
+    private isConnected = false
+
+    private onmessage = (msg: MessageEvent) => {
+        if (typeof msg.data == 'string') {
+            this.consoleLine('text: ' + msg.data)
+        }
+        else if (typeof msg.data == 'object') {
+            const data = msg.data as ArrayBuffer
+            const text = 'Binary data (' + data.byteLength + ' bytes)'
+            this.handleMessageData(data)
+        }
+        else {
+            const text = 'Unknown message type: ' + typeof msg.data
+            this.consoleLine(text)
+        }
+    }
+
+    private onopen = () => {
+        this.isConnected = true
+        this.setStatus(`Connected (${this.hostAddr})`)
+    }
+
+    private onclose = () => {
+        this.isConnected = false
+        this.setStatus(`Disconnected`)
+    }
+
+    private onerror = (ev: Event) => {
+        this.isConnected = (this.ws.readyState == WebSocket.OPEN)
+        const text = `Error (${this.hostAddr}) `
+        console.error(text, ev)
+        this.setStatus(text + ev.type)
+    }
 
     constructor(hostIP: string) {
-        const hostAddr = 'ws://' + hostIP + '/ws'
-        const ws = new WebSocket(hostAddr)
+        this.hostIP = hostIP
+        this.hostAddr = 'ws://' + hostIP + '/ws'
+        this.connect()
+    }
 
+    connect = () => {
+        this.setStatus("Connecting to " + this.hostAddr)
+        let ws = new WebSocket(this.hostAddr)
         ws.binaryType = 'arraybuffer'
         
-        this.setStatus("Connecting to " + hostAddr)
-        
-        ws.onopen = () => this.setStatus("Connected to " + this.hostAddr)
-        
-        ws.onerror = (ev: Event) => {
-            const text = `Websocket error [${hostAddr}] `
-            console.error(text, ev)
-            this.setStatus(text + ev.type)
-        }
-        
-        ws.onclose = () => {
-            this.setStatus(`Disconnected from ${hostAddr}`)
-        }
+        ws.onmessage = this.onmessage
+        ws.onopen = this.onopen
+        ws.onclose = this.onclose
+        ws.onerror = this.onerror
 
-        ws.onmessage = (msg: MessageEvent) => {
-            if (typeof msg.data == 'string') {
-                this.consoleLine('text: ' + msg.data)
-            }
-            else if (typeof msg.data == 'object') {
-                const data = msg.data as ArrayBuffer
-                const text = 'Binary data (' + data.byteLength + ' bytes)'
-                this.handleMessageData(data)
-            }
-            else {
-                const text = 'Unknown message type: ' + typeof msg.data
-                this.consoleLine(text)
-            }
-        }
-
-        this.hostIP = hostIP
-        this.hostAddr = hostAddr
         this.ws = ws
     }
 
+    disconnect = () => {
+        this.ws.close()
+    }
+
     send(data: ArrayBuffer) {
-        this.ws.send(data)
+        if (this.ws.readyState == WebSocket.OPEN) this.ws.send(data)
     }
 
     onSetStatus: (text: string) => void

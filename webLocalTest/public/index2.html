@@ -6,15 +6,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
+        body {
+            background-color: dimgray;
+            color: azure;
+            height: 100vh;
+            margin: 0;
+        }
+        table, td {
+            table-layout: fixed;
+            font-family: monospace;
+            border-collapse: collapse;
+        }
         pre {
+            margin: 0;
+            margin-top: 0.5em;
+        }
+        tr {
+            height: 1em;
+        }
+        .container {
+            display: flex;
+            flex-flow: column;
+            height: 100%;
+        }
+        .toolbar {
+            display: flex;
+            align-items: center;
+
+            column-gap: 4px;
+            padding: 4px;
+        }
+        .split {
+            justify-content: space-between;
+            padding: 0;
+        }
+        .panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px;
+        }
+        .console {
+            background-color: darkslategray;
+            color: lemonchiffon;
+            flex-grow: 1;
             margin: 0px;
             margin-top: 0.5em;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        p {
+            margin: 0
         }
     </style>
 </head>
 <body>
-    <p id='status'>[STATUS]</p>
-    <div id='console'></div>
-    <script type='module' src='localControl.js'></script>
+    <div class='container'>
+        <div id='header' class='toolbar split'>
+            <div id='connectionControls' class='toolbar'>
+                <p id='connectionStatus'>[STATUS]</p>
+            </div>
+            <div id='consoleControls' class='toolbar'></div>
+        </div>
+        <div id='panel' class='panel'></div>
+        <div id='console' class='console'></div>
+        <script type='module' src='localControl.js'></script>
+    </div>
 </body>
 </html>

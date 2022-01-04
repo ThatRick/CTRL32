@@ -120,7 +120,7 @@ export function readArrayOfStructs(buffer, startByteOffset, struct, len) {
         len = maxLen;
     }
     if ((buffer.byteLength - startByteOffset) % structByteLength != 0)
-        console.error('Read Struct Array: Given buffer length is not a multiple of struct length');
+        console.warn('Read Struct Array: Given buffer length is not a multiple of struct length');
     const array = [];
     // console.log('Read Struct Array: len = %d / %d = %d\n', (buffer.byteLength - startByteOffset), sizeOfStruct(struct), len);
     // Iterate all array elements

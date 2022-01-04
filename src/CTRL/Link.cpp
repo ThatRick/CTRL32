@@ -8,6 +8,11 @@ Link::Link(Controller* controller, send_data_callback_t onSendData, send_text_ca
     sendData (onSendData), 
     sendText (onSendText) {
 }
+
+Link::~Link() {
+    free(monitoringCollection);
+}
+
 void Link::connected() {
     isConnected = true;
     sendResponse(MSG_TYPE_PING, this, NULL, 0);
@@ -42,58 +47,59 @@ void Link::receiveData(void* data, size_t len) {
     switch(header.msgType)
     {
         case MSG_TYPE_CONTROLLER_INFO: {
-            MsgControllerInfo_t info;
-            info.freeHeap        = ESP.getFreeHeap();
-            info.cpuFreq         = ESP.getCpuFreqMHz();
-            info.aliveTime       = (float)esp_timer_get_time() / 1000000;
-            info.tickCount       = controller->tickCount;
-            info.taskCount       = controller->tasks.size();
-            info.taskList        = (uint32_t)controller->tasks.data();
-
+            MsgControllerInfo_t info = {
+                .freeHeap        = ESP.getFreeHeap(),
+                .cpuFreq         = ESP.getCpuFreqMHz(),
+                .RSSI            = controller->getRSSI(),
+                .aliveTime       = (float)esp_timer_get_time() / 1000000,
+                .tickCount       = controller->tickCount,
+                .taskCount       = controller->tasks.size(),
+                .taskList        = (uint32_t)controller->tasks.data(),
+            };
             sendResponse(MSG_TYPE_CONTROLLER_INFO, controller, &info, sizeof(info));
             break;
         }
 
         case MSG_TYPE_TASK_INFO: {
             ControllerTask* task = (ControllerTask*)pointer;
-            MsgTaskInfo_t info;
-            info.interval        = task->interval_ms;
-            info.offset          = task->offset_ms;
-            info.runCount        = task->runCount;
-            info.lastCPUTime     = task->lastCPUTime;
-            info.avgCPUTime      = task->averageCPUTime();
-            info.lastActInterval = task->lastActualInterval_ms;
-            info.avgActInterval  = task->averageActualInterval_ms();
-            info.circuitCount    = task->circuits.size();
-            info.circuitList     = (uint32_t)task->circuits.data();
-
+            MsgTaskInfo_t info = {
+                .interval        = task->interval_ms,
+                .offset          = task->offset_ms,
+                .runCount        = task->runCount,
+                .lastCPUTime     = task->lastCPUTime,
+                .avgCPUTime      = task->averageCPUTime(),
+                .lastActInterval = task->lastActualInterval_ms,
+                .avgActInterval  = task->averageActualInterval_ms(),
+                .circuitCount    = task->circuits.size(),
+                .circuitList     = (uint32_t)task->circuits.data()
+            };
             sendResponse(MSG_TYPE_TASK_INFO, task, &info, sizeof(info));
             break;
         }
 
         case MSG_TYPE_CIRCUIT_INFO: {
             Circuit* circuit = (Circuit*)pointer;
-            MsgCircuitInfo_t info;
-            info.funcCount       = circuit->funcList.size();
-            info.funcList        = (uint32_t)circuit->funcList.data();
-            info.outputRefList   = (uint32_t)circuit->outputRefs;
-
+            MsgCircuitInfo_t info = {
+                .funcCount       = circuit->funcList.size(),
+                .funcList        = (uint32_t)circuit->funcList.data(),
+                .outputRefList   = (uint32_t)circuit->outputRefs,
+            };
             sendResponse(MSG_TYPE_CIRCUIT_INFO, circuit, &info, sizeof(info));
             break;
         }
 
         case MSG_TYPE_FUNCTION_INFO: {
             FunctionBlock* func = (FunctionBlock*)pointer;
-            MsgFunctionInfo_t info;
-            info.opcode          = func->opcode;
-            info.numInputs       = func->numInputs;
-            info.numOutputs      = func->numOutputs;
-            info.flags           = func->flags;
-            info.ioValuesPtr     = (uint32_t)func->ioValues;
-            info.ioFlagsPtr      = (uint32_t)func->ioFlags;
-            info.nameLength      = strlen(func->name());
-            info.namePtr         = (uint32_t)func->name();
-
+            MsgFunctionInfo_t info = {
+                .numInputs       = func->numInputs,
+                .numOutputs      = func->numOutputs,
+                .opcode          = func->opcode,
+                .flags           = func->flags,
+                .ioValuesPtr     = (uint32_t)func->ioValues,
+                .ioFlagsPtr      = (uint32_t)func->ioFlags,
+                .nameLength      = strlen(func->name()),
+                .namePtr         = (uint32_t)func->name(),
+            };
             sendResponse(MSG_TYPE_FUNCTION_INFO, func, &info, sizeof(info));
             break;
         }
@@ -129,10 +135,14 @@ void Link::receiveData(void* data, size_t len) {
 
 void Link::sendConfirmation(MESSAGE_TYPE msgType, void* pointer, REQUEST_RESULT result) {
     if (!isConnected) return;
-    MsgModifyResult_t response;
-    response.header.msgType = msgType;
-    response.header.pointer = (uint32_t)pointer;
-    response.result = result;
+    MsgModifyResult_t response {
+        .header = {
+            .msgType   = msgType,
+            .pointer   = (uint32_t)pointer,
+            .timeStamp = (uint32_t)(controller->getTime() / 1000ULL)
+        },
+        .result = result
+    };
     sendData(&response, sizeof(response));
     Serial.printf("   Sent ws response type: %u ptr: %p size: %u \n", msgType, pointer, sizeof(response));
 }
@@ -144,11 +154,85 @@ void Link::sendResponse(MESSAGE_TYPE msgType, void* pointer, void* payload, size
     MsgHeader_t* header = (MsgHeader_t*)data;
     header->msgType = msgType;
     header->pointer = (uint32_t)pointer;
+    header->timeStamp = (uint32_t)(controller->getTime() / 1000ULL);
     if (payload) memcpy(data + sizeof(MsgHeader_t), payload, payloadSize);
     sendData(data, size);
     Serial.printf("   Sent ws response type: %u ptr: %p size: %u \n", msgType, pointer, size);
 }
 
+void Link::monitoringCollectionStart(void* reportingTask, size_t maxItemCount) {
+    if (!isConnected) return;
+    monitoringCollectionTask = reportingTask;
+    if (monitoringCollection == nullptr || monitoringCollectionSize < maxItemCount) {
+        free(monitoringCollection);
+        monitoringCollection = (MonitoringCollectionItem_t*)calloc(sizeof(MonitoringCollectionItem_t), maxItemCount);
+        monitoringCollectionSize = maxItemCount;
+    }
+    monitoringCollectionCount = 0;
+}
+void Link::monitoringCollectionSend() {
+    if (!isConnected || monitoringCollection == nullptr) return;
+    size_t headSize = sizeof(MsgHeader_t)
+                    + sizeof(MsgMonitoringCollection_t)
+                    + sizeof(MsgMonitoringCollectionItem_t) * monitoringCollectionCount;
+    size_t bodySize = 0;
+    for (int i = 0; i < monitoringCollectionCount; i++) {
+        MonitoringCollectionItem_t item = monitoringCollection[i];
+        bodySize += item.size;
+    }
+    // Allocate memory for message from stack
+    // - Future improvement: allocate memory for message data with WebSocket library API to avoid unnecessary memory copying)
+    size_t dataSize = headSize + bodySize;
+    uint8_t data[dataSize];
+    
+    // Message header data
+    MsgHeader_t* header = (MsgHeader_t*)data;
+    header->msgType = MSG_TYPE_MONITORING_COLLECTION;
+    header->pointer = (uint32_t)monitoringCollectionTask;
+    header->timeStamp = (uint32_t)(controller->getTime() / 1000ULL);
+    
+    // Monitoring collection info
+    MsgMonitoringCollection_t* collectionInfo = (MsgMonitoringCollection_t*)(data + sizeof(MsgHeader_t));
+    collectionInfo->itemCount = monitoringCollectionCount;
+
+    // Monitoring collection item list
+    MsgMonitoringCollectionItem_t* itemList = (MsgMonitoringCollectionItem_t*)(data + sizeof(MsgHeader_t) + sizeof(MsgMonitoringCollection_t));
+    void* valuesData = itemList + monitoringCollectionCount;
+
+    // Build message data
+    uint16_t dataOffset = 0;
+    for (int i = 0; i < monitoringCollectionCount; i++) {
+        MonitoringCollectionItem_t item = monitoringCollection[i];
+        MsgMonitoringCollectionItem_t* msgItem = itemList + i;
+        msgItem->pointer = (uint32_t)item.func;
+        msgItem->size = item.size;
+        msgItem->offset = dataOffset;
+
+        void* dataDest = (uint8_t*)valuesData + dataOffset;
+        memcpy(dataDest, item.values, item.size);
+        dataOffset += item.size;
+    }
+
+    Serial.printf("   Sent ws response type: %u ptr: %p payload len: %u \n", header->msgType, (void*)header->pointer, dataSize - sizeof(MsgHeader_t));
+    sendData(data, dataSize);
+
+    monitoringCollectionCount = 0;
+}
+
+void Link::monitoringCollectionEnd() {
+    free(monitoringCollection);
+    monitoringCollectionCount = 0;
+}
+
 void Link::monitoringValueHandler(void* func, void* values, uint32_t byteSize) {
-    sendResponse(MSG_TYPE_MONITORING_VALUES, func, values, byteSize);
+    if (!isConnected) return;
+    if (monitoringCollection) {
+        monitoringCollection[monitoringCollectionCount++] = {
+            .func = func,
+            .values = values,
+            .size = byteSize
+        };
+        if (monitoringCollectionCount > monitoringCollectionSize) monitoringCollectionSend();
+    }
+    else sendResponse(MSG_TYPE_MONITORING_FUNC_VALUES, func, values, byteSize);
 }

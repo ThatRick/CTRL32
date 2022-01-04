@@ -1,4 +1,4 @@
-import { readStruct, DataType, sizeOfStruct, writeStruct, StructValues, sizeOfType, typedArray, readTypedValues, readStructElement, DataSize, StructDefinition } from './TypedStructs.js'
+import { readStruct, DataType, sizeOfStruct, writeStruct, StructValues, sizeOfType, typedArray, readTypedValues, readStructElement, DataSize, StructDefinition, readArrayOfStructs } from './TypedStructs.js'
 import {
     ESP32,
     MSG_TYPE,
@@ -16,10 +16,13 @@ import {
     IFunctionBlock,
     IO_FLAG_CONV_TYPE_MASK,
     ioConvNames,
+    msgTypeNamesMaxLength,
+    MsgMonitoringCollection_t,
+    MsgMonitoringCollectionItem_t,
 } from './ESP32.js'
 
 import { toHex } from './Util.js'
-import { CreateUI } from './UI.js'
+import { ActionButton, CreateUI, ObjectView } from './UI.js'
 import { WSConnection } from './WSConnection.js'
 
 interface MemDataRequest {
@@ -55,31 +58,33 @@ const monitoringValues: Map<number, number[]> = new Map()
 const UI = CreateUI()
 
 const ws = new WSConnection('192.168.0.241')
-ws.onConsoleLine = UI.consoleLine
+ws.onConsoleLine = UI.log.line
 ws.onSetStatus = UI.setStatus
 
+new ActionButton(UI.connectionControls, 'Connect', ws.connect)
+new ActionButton(UI.connectionControls, 'Disconnect', ws.disconnect)
+
+setInterval(() => requestInfo(MSG_TYPE.CONTROLLER_INFO, 0), 1000)
+
 ws.handleMessageData = (buffer: ArrayBuffer) => {
-    const { msgType, pointer } = readStruct(buffer, 0, MsgHeader_t)
+    const { msgType, pointer, timeStamp } = readStruct(buffer, 0, MsgHeader_t)
     const payload = buffer.slice(sizeOfStruct(MsgHeader_t))
     const memArea = ESP32.findMemoryAreaForAddr(pointer)
     let memAreaText = (memArea) ? memArea.name + ' + ' + (pointer - memArea.low).toString(16) : '???'
 
-    UI.consoleLine('')
-    UI.consoleLine(`[Received message type: [${msgType}] ${msgTypeNames[msgType]}  ptr: ${toHex(pointer)} (${memAreaText}) payload len: ${payload.byteLength}]`)
+    UI.log.line(`[Received type ${msgType.toString().padStart(2, '0')}: ${msgTypeNames[msgType].padEnd(msgTypeNamesMaxLength)}  time: ${timeStamp}  ptr: ${toHex(pointer)} (${memAreaText}) payload len: ${payload.byteLength}]`)
 
     switch (msgType)
     {
         case MSG_TYPE.PING:
         {
-            UI.consoleLine('PING')
             requestInfo(MSG_TYPE.CONTROLLER_INFO, 0);
             break
         }
         case MSG_TYPE.CONTROLLER_INFO:
         {
-            UI.consoleLine('CONTROLLER INFO:')
             const data = readStruct(payload, 0, MsgControllerInfo_t)
-            UI.consoleData(data)
+
             handleControllerData(pointer, data)
             if (infoRequests.has(0)) {
                 infoRequests.get(0).callbackFn(data)
@@ -89,9 +94,9 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
         }
         case MSG_TYPE.TASK_INFO:
         {
-            UI.consoleLine('TASK INFO:')
+            UI.log.line('TASK INFO:')
             const data = readStruct(payload, 0, MsgTaskInfo_t)
-            UI.consoleData(data)
+            UI.log.record(data)
             handleTaskData(pointer, data)
             if (infoRequests.has(pointer)) {
                 infoRequests.get(pointer).callbackFn(data)
@@ -101,9 +106,9 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
         }
         case MSG_TYPE.CIRCUIT_INFO:
         {
-            UI.consoleLine('CIRCUIT INFO:')
+            UI.log.line('CIRCUIT INFO:')
             const data = readStruct(payload, 0, MsgCircuitInfo_t)
-            UI.consoleData(data)
+            UI.log.record(data)
             handleCircuitData(pointer, data)
             if (infoRequests.has(pointer)) {
                 infoRequests.get(pointer).callbackFn(data)
@@ -113,9 +118,9 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
         }
         case MSG_TYPE.FUNCTION_INFO:
         {
-            UI.consoleLine('FUNCTION INFO:')
+            UI.log.line('FUNCTION INFO:')
             const data = readStruct(payload, 0, MsgFunctionInfo_t)
-            UI.consoleData(data)
+            UI.log.record(data)
             handleFunctionData(pointer, data)
             if (infoRequests.has(pointer)) {
                 infoRequests.get(pointer).callbackFn(data)
@@ -125,16 +130,16 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
         }
         case MSG_TYPE.GET_MEM_DATA:
         {
-            UI.consoleLine('MEMORY DATA:')
+            UI.log.line('MEMORY DATA:')
             const req = memDataRequests.get(pointer)
             if (req) {
                 const array = typedArray(payload, req.elemType)
                 const values = [...array]
-                UI.consoleList(values)
+                UI.log.list(values)
                 req.callbackFn(values, payload)
                 memDataRequests.delete(pointer)
             }
-            else UI.consoleLine('Unrequested memory data received')
+            else UI.log.line('Unrequested memory data received')
             break
         }
         case MSG_TYPE.SET_MEM_DATA:
@@ -142,7 +147,7 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
         case MSG_TYPE.MONITORING_DISABLE:
         {
             const [result] = readTypedValues(payload, [DataType.uint32])
-            UI.consoleLine(`RESPONSE TO ${msgTypeNames[msgType]}: ${result ? 'SUCCESSFUL' : 'FAILED'}`)
+            UI.log.line(`RESPONSE TO ${msgTypeNames[msgType]}: ${result ? 'SUCCESSFUL' : 'FAILED'}`)
             const req = modifyRequests.get(pointer)
             if (req) {
                 req.callbackFn(result)
@@ -150,25 +155,58 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
             }
             break
         }
-        case MSG_TYPE.MONITORING_VALUES:
+        case MSG_TYPE.MONITORING_FUNC_VALUES:
         {
             if (functionBlocks.has(pointer)) {
-                const func = functionBlocks.get(pointer)
-                const dataTypes = func.ioFlags.map(ioFlag => IO_TYPE_MAP[ ioFlag & IO_FLAG_TYPE_MASK ])
-                const values = readTypedValues(payload, dataTypes)
-                monitoringValues.set(pointer, values)
-
-                printFunctionBlock(func, false)
+                handleMonitoringValues(pointer, payload)
             } 
-            else UI.consoleLine('Undefined function block target for monitoring values')
+            else UI.log.line('Undefined function block target for monitoring values')
+            break
+        }
+        case MSG_TYPE.MONITORING_COLLECTION:
+        {
+            let offset = 0
+            const { itemCount } = readStruct(payload, offset, MsgMonitoringCollection_t )
+            offset += sizeOfStruct(MsgMonitoringCollection_t)
+            const collectionItems = readArrayOfStructs(payload, offset, MsgMonitoringCollectionItem_t, itemCount)
+            const valueDataStart = offset + sizeOfStruct(MsgMonitoringCollectionItem_t) * itemCount
+
+            collectionItems.forEach(item => {
+                item => UI.log.record(item)
+                const valueDataOffset = valueDataStart + item.offset
+                handleMonitoringValues(item.pointer, payload, valueDataOffset)
+            })
             break
         }
         default:
         {
-            UI.consoleLine('UNKNOWN MESSAGE TYPE')
+            UI.log.line('UNKNOWN MESSAGE TYPE')
         }
     }
 }
+
+//  ------------------------------------------
+//          Create monitoring view
+//  ------------------------------------------
+
+let controllerInfoView: ObjectView
+
+const monitoringViews: Map<number, ObjectView> = new Map()
+
+function showMonitoringValues(pointer: number) {
+    const values = monitoringValues.get(pointer)
+    const obj = {}
+    values.forEach((value, i) => obj[i+':'] = value)
+
+    let view = monitoringViews.get(pointer)
+    if (!view) {
+        const func = functionBlocks.get(pointer)
+        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`)
+        monitoringViews.set(pointer, view)
+    }
+    else view.updateValues(obj)
+}
+
 
 //  ------------------------------------------
 //      Send a info request to controller
@@ -201,9 +239,9 @@ function modifyMemData(pointer: number, dataSource: ArrayBuffer, callbackFn?: (r
     ws.send(buffer)
 }
 
-//  -----------------------------------------------------------
-//      Enable / Disable function block IO-value monitoring
-//  -----------------------------------------------------------
+//  --------------------------------------------------------------
+//      Enable / Disable IO-value monitoring on function block
+//  --------------------------------------------------------------
 
 function monitoringEnable(pointer: number, once = false, callbackFn?: (result: REQUEST_RESULT) => void) {
     const buffer = createMessageWithStruct(MSG_TYPE.MONITORING_ENABLE, pointer, { once: DataType.uint32 }, { once: +once })
@@ -222,15 +260,27 @@ function monitoringDisable(pointer: number, callbackFn?: (result: REQUEST_RESULT
 //      Handle info data received from controller
 //  --------------------------------------------------
 
+function handleMonitoringValues(pointer: number, data: ArrayBuffer, offset=0) {
+    const func = functionBlocks.get(pointer)
+    const dataTypes = func.ioFlags.map(ioFlag => IO_TYPE_MAP[ ioFlag & IO_FLAG_TYPE_MASK ])
+    const values = readTypedValues(data, dataTypes, offset)
+    monitoringValues.set(pointer, values)
+
+    showMonitoringValues(pointer)
+}
+
 function handleControllerData(pointer: number, data: StructValues<typeof MsgControllerInfo_t>) {
     controller ??= { pointer, data, tasks: undefined, complete: false }
     controller.data = data
     // Get task list
-    requestMemData(controller.data.taskList, controller.data.taskCount, DataType.uint32, taskList => {
+    if (!controller.tasks) requestMemData(controller.data.taskList, controller.data.taskCount, DataType.uint32, taskList => {
         controller.tasks = taskList
         controller.complete = true
         taskList.forEach(pointer => requestInfo(MSG_TYPE.TASK_INFO, pointer))
     })
+
+    if (!controllerInfoView) controllerInfoView = new ObjectView(data, 'Controller info')
+    else controllerInfoView.updateValues(data)
 }
 
 function handleTaskData(pointer: number, data: StructValues<typeof MsgTaskInfo_t>) {
@@ -242,7 +292,7 @@ function handleTaskData(pointer: number, data: StructValues<typeof MsgTaskInfo_t
         task = { pointer, data, circuits: undefined, complete: false }
         tasks.set(pointer, task)
     }
-    requestMemData(task.data.circuitList, task.data.circuitCount, DataType.uint32, circuitList => {
+    if (!task.circuits) requestMemData(task.data.circuitList, task.data.circuitCount, DataType.uint32, circuitList => {
         task.circuits = circuitList
         task.complete = true
         circuitList.forEach(pointer => requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer))
@@ -258,7 +308,7 @@ function handleCircuitData(pointer: number, data: StructValues<typeof MsgCircuit
         circuit = { pointer, data, funcCalls: undefined, outputRefs: undefined, complete: false }
         circuits.set(pointer, circuit)
     }
-    requestInfo(MSG_TYPE.FUNCTION_INFO, circuit.pointer, () => {
+    if (!functionBlocks.has(pointer)) requestInfo(MSG_TYPE.FUNCTION_INFO, circuit.pointer, () => {
         const funcData = functionBlocks.get(pointer)?.data
         if (funcData) {
             requestMemData(circuit.data.outputRefList, funcData.numOutputs, DataType.uint32, outputRefs => {
@@ -267,7 +317,7 @@ function handleCircuitData(pointer: number, data: StructValues<typeof MsgCircuit
             })
         }
     })
-    requestMemData(circuit.data.funcList, circuit.data.funcCount, DataType.uint32, funcList => {
+    if (!circuit.funcCalls) requestMemData(circuit.data.funcList, circuit.data.funcCount, DataType.uint32, funcList => {
         circuit.funcCalls = funcList
         if (circuit.outputRefs) circuit.complete = true
         funcList.forEach(pointer => requestInfo(MSG_TYPE.FUNCTION_INFO, pointer))
@@ -284,7 +334,7 @@ function handleFunctionData(pointer: number, data: StructValues<typeof MsgFuncti
         functionBlocks.set(pointer, func)
     }
     const ioCount = func.data.numInputs + func.data.numOutputs
-    requestMemData(func.data.ioFlagList, ioCount, DataType.uint8, ioFlags => {
+    if (!func.ioFlags) requestMemData(func.data.ioFlagList, ioCount, DataType.uint8, ioFlags => {
         func.ioFlags = ioFlags
         requestMemData(func.data.ioValueList, ioCount, DataType.uint32, (_, data) => {
             const dataTypes = ioFlags.map(ioFlag => (ioFlag & IO_FLAG.REF) ? DataType.uint32 : IO_TYPE_MAP[ ioFlag & IO_FLAG_TYPE_MASK ])
@@ -292,7 +342,7 @@ function handleFunctionData(pointer: number, data: StructValues<typeof MsgFuncti
             checkIfComplete()
         })
     })
-    requestMemData(func.data.namePtr, func.data.nameLength, DataType.uint8, (_, data) => {
+    if (!func.name) requestMemData(func.data.namePtr, func.data.nameLength, DataType.uint8, (_, data) => {
         func.name = new TextDecoder().decode(data)
         checkIfComplete()
     })
@@ -407,5 +457,5 @@ function printFunctionBlock(func: IFunctionBlock, withFlags = true) {
         })
     }
 
-    UI.consoleBlock(lines)
+    UI.log.entry(lines)
 }

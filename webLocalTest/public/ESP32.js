@@ -8,8 +8,10 @@ export const msgTypeNames = [
     'SET_MEM_DATA',
     'MONITORING_ENABLE',
     'MONITORING_DISABLE',
-    'MONITORING_VALUES',
+    'MONITORING_FUNC_VALUES',
+    'MONITORING_COLLECTION',
 ];
+export const msgTypeNamesMaxLength = msgTypeNames.reduce((max, typeName) => Math.max(max, typeName.length), 0);
 export const IO_FLAG_TYPE_MASK = (1 /* TYPE_B0 */ | 2 /* TYPE_B1 */ | 4 /* TYPE_B2 */);
 export const IO_FLAG_CONV_TYPE_MASK = (64 /* REF_CONV_TYPE_B0 */ | 128 /* REF_CONV_TYPE_B1 */);
 export const ioConvNames = {
@@ -35,10 +37,12 @@ export const ioTypeNames = [
 export const MsgHeader_t = {
     msgType: 5 /* uint32 */,
     pointer: 5 /* uint32 */,
+    timeStamp: 5 /* uint32 */
 };
 export const MsgControllerInfo_t = {
     freeHeap: 5 /* uint32 */,
     cpuFreq: 5 /* uint32 */,
+    RSSI: 4 /* int32 */,
     aliveTime: 6 /* float */,
     tickCount: 5 /* uint32 */,
     taskCount: 5 /* uint32 */,
@@ -69,6 +73,14 @@ export const MsgFunctionInfo_t = {
     ioFlagList: 5 /* uint32 */,
     nameLength: 5 /* uint32 */,
     namePtr: 5 /* uint32 */,
+};
+export const MsgMonitoringCollection_t = {
+    itemCount: 5 /* uint32 */
+};
+export const MsgMonitoringCollectionItem_t = {
+    pointer: 5 /* uint32 */,
+    offset: 3 /* uint16 */,
+    size: 3 /* uint16 */,
 };
 // Address area Low is inclusive, High is exclusive
 const memoryAreas = [

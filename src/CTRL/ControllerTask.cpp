@@ -70,7 +70,15 @@ bool ControllerTask::isRunning() {
 }
 
 void ControllerTask::collectMonitoringValues() {
+    size_t itemCount = 0;
+    for (Circuit* circuit : circuits) {
+        for (FunctionBlock* func : circuit->funcList) {
+            if (func->flags & FUNC_FLAG_MONITORING) itemCount++;
+        }
+    }
+    link->monitoringCollectionStart(this, itemCount);
     for (Circuit* circuit : circuits) {
         circuit->collectMonitoringValues(link);
     }
+    link->monitoringCollectionSend();
 }

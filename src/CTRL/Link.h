@@ -21,7 +21,8 @@ enum MESSAGE_TYPE {
     MSG_TYPE_SET_MEM_DATA,
     MSG_TYPE_MONITORING_ENABLE,
     MSG_TYPE_MONITORING_DISABLE,
-    MSG_TYPE_MONITORING_VALUES
+    MSG_TYPE_MONITORING_FUNC_VALUES,
+    MSG_TYPE_MONITORING_COLLECTION
 };
 
 typedef uint32_t ptr32_t;
@@ -32,6 +33,7 @@ typedef uint32_t ptr32_t;
 struct MsgHeader_t {
     uint32_t    msgType;
     uint32_t    pointer;
+    uint32_t    timeStamp;
 };
 //
 //  Common message structure to get header and start point to payload
@@ -51,6 +53,7 @@ struct MsgModifyResult_t {
 struct MsgControllerInfo_t {
     uint32_t    freeHeap;
     uint32_t    cpuFreq;
+    int32_t     RSSI;
     float       aliveTime;
     uint32_t    tickCount;
     uint32_t    taskCount;
@@ -87,6 +90,21 @@ struct MsgFunctionInfo_t {
     ptr32_t     namePtr;
 };
 
+struct MsgMonitoringCollection_t {
+    uint32_t    itemCount;
+};
+struct MsgMonitoringCollectionItem_t {
+    uint32_t    pointer;
+    uint16_t    offset;
+    uint16_t    size;
+};
+
+struct MonitoringCollectionItem_t {
+    void*       func;
+    void*       values;
+    size_t      size;
+};
+
 typedef void (*send_data_callback_t)(const void* data, size_t len);
 typedef void (*send_text_callback_t)(const char* text);
 
@@ -98,9 +116,15 @@ class Link
     send_text_callback_t sendText;
     bool isConnected = false;
 
+    MonitoringCollectionItem_t* monitoringCollection = nullptr;
+    size_t monitoringCollectionCount = 0;
+    size_t monitoringCollectionSize = 0;
+    void* monitoringCollectionTask = nullptr;
+
 public:
 
     Link(Controller* controller, send_data_callback_t onSendData, send_text_callback_t onSendText);
+    ~Link();
 
     void connected();
     void disconnected();
@@ -111,5 +135,8 @@ public:
 
     void sendResponse(MESSAGE_TYPE msgType, void* pointer, void* payload = nullptr, size_t payloadSize = 0);
 
+    void monitoringCollectionStart(void* reportingTask, size_t funcCount);
+    void monitoringCollectionSend();
+    void monitoringCollectionEnd();
     void monitoringValueHandler(void* func, void* values, uint32_t byteSize);
 };
