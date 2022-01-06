@@ -7,8 +7,8 @@
 #define ADDRESS_MAX 0x50002000
 
 enum REQUEST_RESULT {
-    REQUEST_FAILED,
-    REQUEST_SUCCESSFUL
+    REQUEST_FAILED,     // = 0
+    REQUEST_SUCCESSFUL //  > 0
 };
 
 enum MESSAGE_TYPE {
@@ -17,12 +17,42 @@ enum MESSAGE_TYPE {
     MSG_TYPE_TASK_INFO,
     MSG_TYPE_CIRCUIT_INFO,
     MSG_TYPE_FUNCTION_INFO,
+
     MSG_TYPE_GET_MEM_DATA,
     MSG_TYPE_SET_MEM_DATA,
+
     MSG_TYPE_MONITORING_ENABLE,
     MSG_TYPE_MONITORING_DISABLE,
     MSG_TYPE_MONITORING_FUNC_VALUES,
-    MSG_TYPE_MONITORING_COLLECTION
+    MSG_TYPE_MONITORING_COLLECTION,
+
+    MSG_TYPE_CREATE_TASK,
+    MSG_TYPE_CREATE_CIRCUIT,
+    MSG_TYPE_CREATE_FUNCTION,
+
+    MSG_TYPE_DELETE_TASK,
+    MSG_TYPE_DELETE_CIRCUIT,
+    MSG_TYPE_DELETE_FUNCTION,
+
+    MSG_TYPE_TASK_START,
+    MSG_TYPE_TASK_STOP,
+    MSG_TYPE_TASK_SET_INTERVAL,
+    MSG_TYPE_TASK_SET_OFFSET,
+    MSG_TYPE_TASK_ADD_CIRCUIT,
+    MSG_TYPE_TASK_REMOVE_CIRCUIT,
+
+    MSG_TYPE_CIRCUIT_ADD_FUNCTION,
+    MSG_TYPE_CIRCUIT_REMOVE_FUNCTION,
+    MSG_TYPE_CIRCUIT_REORDER_FUNCTION,
+    MSG_TYPE_CIRCUIT_CONNECT_OUTPUT,
+
+    MSG_TYPE_FUNCTION_SET_IO_VALUE,
+    MSG_TYPE_FUNCTION_SET_IO_FLAG,
+    MSG_TYPE_FUNCTION_CONNECT_INPUT,
+    MSG_TYPE_FUNCTION_DISCONNECT_INPUT,
+    MSG_TYPE_FUNCTION_SET_FLAGS,
+    MSG_TYPE_FUNCTION_SET_FLAG,
+    MSG_TYPE_FUNCTION_CLEAR_FLAG,
 };
 
 typedef uint32_t ptr32_t;
@@ -93,16 +123,28 @@ struct MsgFunctionInfo_t {
 struct MsgMonitoringCollection_t {
     uint32_t    itemCount;
 };
+
 struct MsgMonitoringCollectionItem_t {
     uint32_t    pointer;
     uint16_t    offset;
     uint16_t    size;
 };
 
-struct MonitoringCollectionItem_t {
-    void*       func;
-    void*       values;
-    size_t      size;
+struct MsgCreateTask_t {
+    uint32_t    interval;
+    uint32_t    offset;
+};
+
+struct MsgCreateFunction_t {
+    uint16_t    opcode;
+    uint8_t     numInputs;
+    uint8_t     numOutputs;
+    uint32_t    flags;
+};
+
+struct MsgAddItem_t {
+    uint32_t    pointer;
+    int32_t     index;
 };
 
 typedef void (*send_data_callback_t)(const void* data, size_t len);
@@ -111,6 +153,12 @@ typedef void (*send_text_callback_t)(const char* text);
 
 class Link
 {
+    struct MonitoringCollectionItem_t {
+        void*       func;
+        void*       values;
+        size_t      size;
+    };
+
     Controller* controller;
     send_data_callback_t sendData;
     send_text_callback_t sendText;

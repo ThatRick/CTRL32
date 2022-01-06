@@ -18,7 +18,6 @@ public:
     uint32_t tick();
 
     void connected();
-
     void disconnected();
 
     uint32_t freeHeap();

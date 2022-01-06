@@ -7,7 +7,7 @@
     <title>Document</title>
     <style>
         body {
-            background-color: dimgray;
+            background-color: gray;
             color: azure;
             height: 100vh;
             margin: 0;
@@ -46,6 +46,12 @@
             align-items: flex-start;
             gap: 8px;
             padding: 8px;
+            background-color: dimgrey;
+        }
+        .panel > div {
+            border-radius: 4px;
+            background-color: grey;
+            border-color: silver;
         }
         .console {
             background-color: darkslategray;
@@ -56,6 +62,11 @@
             overflow-x: hidden;
             overflow-y: auto;
         }
+        .horizontalBar
+        {
+            border-top: 1px solid lightgray;
+            border-bottom: 1px solid dimgrey;
+        }
         p {
             margin: 0
         }
@@ -63,13 +74,13 @@
 </head>
 <body>
     <div class='container'>
-        <div id='header' class='toolbar split'>
+        <div id='header' class='toolbar split horizontalBar'>
             <div id='connectionControls' class='toolbar'>
                 <p id='connectionStatus'>[STATUS]</p>
             </div>
             <div id='consoleControls' class='toolbar'></div>
         </div>
-        <div id='panel' class='panel'></div>
+        <div id='panel' class='panel horizontalBar'></div>
         <div id='console' class='console'></div>
         <script type='module' src='localControl.js'></script>
     </div>

@@ -47,7 +47,7 @@ void IRAM_ATTR FunctionBlock::update(uint32_t dt)
 
 // Return an input value. Dereferece if needed
 IOValue IRAM_ATTR FunctionBlock::inputValue(uint8_t index) {
-    const uint8_t flags = inputFlags()[index];
+    const uint8_t flags = inputFlag(index);
     IOValue value = inputs()[index];
     // Check if input is a reference
     if (flags & IO_FLAG_REF) {
@@ -85,7 +85,7 @@ IOValue IRAM_ATTR FunctionBlock::inputValue(uint8_t index) {
 // Read all input values to given array. Dereference values if needed
 void IRAM_ATTR FunctionBlock::readInputValues(IOValue* values) {
     for (size_t index = 0; index < numInputs; index++) {
-        const uint8_t flags = inputFlags()[index];
+        const uint8_t flags = inputFlag(index);
         IOValue value = inputs()[index];
         // Check if input is a reference
         if (flags & IO_FLAG_REF) {
@@ -152,6 +152,12 @@ void FunctionBlock::connectInput(uint8_t inputNum, FunctionBlock* sourceFunc, ui
         setInputFlag(inputNum, IO_FLAG_REF_INVERT);
     else
         clearInputFlag(inputNum, IO_FLAG_REF_INVERT);
+}
+
+void FunctionBlock::disconnectInput(uint8_t inputNum) {
+    IOValue value = inputValue(inputNum);
+    clearInputFlag(inputNum, IO_FLAG_REF | IO_FLAG_REF_INVERT | IO_FLAG_CONV_TYPE_MASK);
+    setInput(inputNum, value);
 }
 
 const char* FunctionBlock::getIOTypeString(IO_TYPE ioType)

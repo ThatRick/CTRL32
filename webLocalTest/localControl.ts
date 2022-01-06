@@ -55,6 +55,8 @@ const modifyRequests:   Map<number, ModifyRequest> = new Map()
 
 const monitoringValues: Map<number, number[]> = new Map()
 
+// Setup UI and Websocket
+
 const UI = CreateUI()
 
 const ws = new WSConnection('192.168.0.241')
@@ -64,8 +66,89 @@ ws.onSetStatus = UI.setStatus
 new ActionButton(UI.connectionControls, 'Connect', ws.connect)
 new ActionButton(UI.connectionControls, 'Disconnect', ws.disconnect)
 
-setInterval(() => requestInfo(MSG_TYPE.CONTROLLER_INFO, 0), 1000)
 
+///////////////////////////////////////////////////////////////////////////
+//                    Send Commands to Controller
+///////////////////////////////////////////////////////////////////////////
+
+//  ------------------------------------------
+//      Send a info request to controlle
+
+function requestInfo(msgType: MSG_TYPE, pointer: number, callbackFn?: (data: Object) => void) {
+    const msg = createMessageWithSize(msgType, pointer)
+    if (callbackFn) infoRequests.set(pointer, { pointer, msgType, callbackFn })
+    ws.send(msg.buffer)
+}
+
+//  -------------------------------------------------
+//      Send a memory data request to controller
+
+function requestMemData(pointer: number, length: number, elemType: DataType, callbackFn: (list: number[], data: ArrayBuffer) => void) {
+    const size = length * sizeOfType(elemType)
+    const buffer = createMessageWithStruct(MSG_TYPE.GET_MEM_DATA, pointer, { size: DataType.uint32 }, { size })
+    memDataRequests.set(pointer, { pointer, elemType, callbackFn })
+    ws.send(buffer)
+}
+
+//  ----------------------------------------------------------
+//      Send a request to modify memory data on controller
+
+function modifyMemData(pointer: number, dataSource: ArrayBuffer, callbackFn?: (result: REQUEST_RESULT) => void) {
+    const buffer = createMessageWithData(MSG_TYPE.SET_MEM_DATA, pointer, dataSource)
+    if (callbackFn) modifyRequests.set(pointer, { pointer, msgType: MSG_TYPE.SET_MEM_DATA, callbackFn })
+    ws.send(buffer)
+}
+
+//  --------------------------------------------------------------
+//      Enable / Disable IO-value monitoring on function block
+
+function monitoringEnable(pointer: number, once = false, callbackFn?: (result: REQUEST_RESULT) => void) {
+    const buffer = createMessageWithStruct(MSG_TYPE.MONITORING_ENABLE, pointer, { once: DataType.uint32 }, { once: +once })
+    if (callbackFn) modifyRequests.set(pointer, { pointer, msgType: MSG_TYPE.SET_MEM_DATA, callbackFn })
+    ws.send(buffer)
+}
+function monitoringDisable(pointer: number, callbackFn?: (result: REQUEST_RESULT) => void) {
+    const msg = createMessageWithSize(MSG_TYPE.MONITORING_ENABLE, pointer)
+    if (callbackFn) modifyRequests.set(pointer, { pointer, msgType: MSG_TYPE.SET_MEM_DATA, callbackFn })
+    ws.send(msg.buffer)
+}
+
+//  ----------------------------------------------------------------------
+//      Create a message buffer with empty payload data of given size
+
+function createMessageWithSize(msgType: MSG_TYPE, pointer: number, payloadSize = 0) {
+    const headerSize = sizeOfStruct(MsgHeader_t)
+    const buffer = new ArrayBuffer(headerSize + payloadSize)
+    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer })
+    return { buffer, payloadStart: headerSize }
+}
+//  ----------------------------------------------------------------------
+//      Create a message buffer with given struct data
+
+function createMessageWithStruct<T extends StructDefinition>(msgType: MSG_TYPE, pointer: number, struct: T, values: Partial<StructValues<T>>) {
+    const headerSize = sizeOfStruct(MsgHeader_t)
+    const buffer = new ArrayBuffer(headerSize + sizeOfStruct(struct))
+    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer })
+    writeStruct(buffer, headerSize, struct, values)
+    return buffer
+}
+//  ----------------------------------------------------------------------
+//      Create a message buffer with given ArrayBuffer as payload
+
+function createMessageWithData(msgType: MSG_TYPE, pointer: number, data: ArrayBuffer) {
+    const headerSize = sizeOfStruct(MsgHeader_t)
+    const buffer = new ArrayBuffer(headerSize + data.byteLength)
+    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer })
+    const msgBytes = new Uint8Array(buffer)
+    const sourceBytes = new Uint8Array(data)
+    msgBytes.set(sourceBytes, headerSize)
+    return buffer
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+//                  Handle Messages from Controller
+///////////////////////////////////////////////////////////////////////////
 ws.handleMessageData = (buffer: ArrayBuffer) => {
     const { msgType, pointer, timeStamp } = readStruct(buffer, 0, MsgHeader_t)
     const payload = buffer.slice(sizeOfStruct(MsgHeader_t))
@@ -94,9 +177,7 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
         }
         case MSG_TYPE.TASK_INFO:
         {
-            UI.log.line('TASK INFO:')
             const data = readStruct(payload, 0, MsgTaskInfo_t)
-            UI.log.record(data)
             handleTaskData(pointer, data)
             if (infoRequests.has(pointer)) {
                 infoRequests.get(pointer).callbackFn(data)
@@ -185,80 +266,12 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
     }
 }
 
-//  ------------------------------------------
-//          Create monitoring view
-//  ------------------------------------------
+///////////////////////////////////////////////////////////////////////////
+//                      Message data handlers
+///////////////////////////////////////////////////////////////////////////
 
-let controllerInfoView: ObjectView
-
-const monitoringViews: Map<number, ObjectView> = new Map()
-
-function showMonitoringValues(pointer: number) {
-    const values = monitoringValues.get(pointer)
-    const obj = {}
-    values.forEach((value, i) => obj[i+':'] = value)
-
-    let view = monitoringViews.get(pointer)
-    if (!view) {
-        const func = functionBlocks.get(pointer)
-        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`)
-        monitoringViews.set(pointer, view)
-    }
-    else view.updateValues(obj)
-}
-
-
-//  ------------------------------------------
-//      Send a info request to controller
-//  ------------------------------------------
-
-function requestInfo(msgType: MSG_TYPE, pointer: number, callbackFn?: (data: Object) => void) {
-    const msg = createMessageWithSize(msgType, pointer)
-    if (callbackFn) infoRequests.set(pointer, { pointer, msgType, callbackFn })
-    ws.send(msg.buffer)
-}
-
-//  -------------------------------------------------
-//      Send a memory data request to controller
-//  -------------------------------------------------
-
-function requestMemData(pointer: number, length: number, elemType: DataType, callbackFn: (list: number[], data: ArrayBuffer) => void) {
-    const size = length * sizeOfType(elemType)
-    const buffer = createMessageWithStruct(MSG_TYPE.GET_MEM_DATA, pointer, { size: DataType.uint32 }, { size })
-    memDataRequests.set(pointer, { pointer, elemType, callbackFn })
-    ws.send(buffer)
-}
-
-//  ----------------------------------------------------------
-//      Send a request to modify memory data on controller
-//  ----------------------------------------------------------
-
-function modifyMemData(pointer: number, dataSource: ArrayBuffer, callbackFn?: (result: REQUEST_RESULT) => void) {
-    const buffer = createMessageWithData(MSG_TYPE.SET_MEM_DATA, pointer, dataSource)
-    if (callbackFn) modifyRequests.set(pointer, { pointer, msgType: MSG_TYPE.SET_MEM_DATA, callbackFn })
-    ws.send(buffer)
-}
-
-//  --------------------------------------------------------------
-//      Enable / Disable IO-value monitoring on function block
-//  --------------------------------------------------------------
-
-function monitoringEnable(pointer: number, once = false, callbackFn?: (result: REQUEST_RESULT) => void) {
-    const buffer = createMessageWithStruct(MSG_TYPE.MONITORING_ENABLE, pointer, { once: DataType.uint32 }, { once: +once })
-    if (callbackFn) modifyRequests.set(pointer, { pointer, msgType: MSG_TYPE.SET_MEM_DATA, callbackFn })
-    ws.send(buffer)
-}
-
-function monitoringDisable(pointer: number, callbackFn?: (result: REQUEST_RESULT) => void) {
-    const msg = createMessageWithSize(MSG_TYPE.MONITORING_ENABLE, pointer)
-    if (callbackFn) modifyRequests.set(pointer, { pointer, msgType: MSG_TYPE.SET_MEM_DATA, callbackFn })
-    ws.send(msg.buffer)
-}
-
-
-//  --------------------------------------------------
-//      Handle info data received from controller
-//  --------------------------------------------------
+// ------------------------------------------------------------------------
+//      Monitoring values
 
 function handleMonitoringValues(pointer: number, data: ArrayBuffer, offset=0) {
     const func = functionBlocks.get(pointer)
@@ -268,6 +281,8 @@ function handleMonitoringValues(pointer: number, data: ArrayBuffer, offset=0) {
 
     showMonitoringValues(pointer)
 }
+// ------------------------------------------------------------------------
+//      Controller info
 
 function handleControllerData(pointer: number, data: StructValues<typeof MsgControllerInfo_t>) {
     controller ??= { pointer, data, tasks: undefined, complete: false }
@@ -279,9 +294,13 @@ function handleControllerData(pointer: number, data: StructValues<typeof MsgCont
         taskList.forEach(pointer => requestInfo(MSG_TYPE.TASK_INFO, pointer))
     })
 
-    if (!controllerInfoView) controllerInfoView = new ObjectView(data, 'Controller info')
-    else controllerInfoView.updateValues(data)
+    if (!monitoringViews.has(pointer)) monitoringViews.set(pointer, new ObjectView(data, `Controller [${toHex(pointer)}]`))
+    else monitoringViews.get(pointer).updateValues(data)
+
+    setTimeout(() => requestInfo(MSG_TYPE.CONTROLLER_INFO, 0), 1000)
 }
+// ------------------------------------------------------------------------
+//      Task info
 
 function handleTaskData(pointer: number, data: StructValues<typeof MsgTaskInfo_t>) {
     let task: ITask
@@ -297,7 +316,14 @@ function handleTaskData(pointer: number, data: StructValues<typeof MsgTaskInfo_t
         task.complete = true
         circuitList.forEach(pointer => requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer))
     })
+
+    if (!monitoringViews.has(pointer)) monitoringViews.set(pointer, new ObjectView(data, `TASK [${toHex(pointer)}]`))
+    else monitoringViews.get(pointer).updateValues(data)
+
+    setTimeout(() => requestInfo(MSG_TYPE.TASK_INFO, pointer), 1000)
 }
+// ------------------------------------------------------------------------
+//      Circuit info
 
 function handleCircuitData(pointer: number, data: StructValues<typeof MsgCircuitInfo_t>) {
     let circuit: ICircuit
@@ -323,6 +349,8 @@ function handleCircuitData(pointer: number, data: StructValues<typeof MsgCircuit
         funcList.forEach(pointer => requestInfo(MSG_TYPE.FUNCTION_INFO, pointer))
     })
 }
+// ------------------------------------------------------------------------
+//      Function Block info
 
 function handleFunctionData(pointer: number, data: StructValues<typeof MsgFunctionInfo_t>) {
     let func: IFunctionBlock
@@ -355,34 +383,28 @@ function handleFunctionData(pointer: number, data: StructValues<typeof MsgFuncti
     }
 }
 
-//  -----------------------------------------------
-//      Create Message buffer helper functions
-//  -----------------------------------------------
+//  ------------------------------------------
+//          Create monitoring view
+//  ------------------------------------------
 
-function createMessageWithSize(msgType: MSG_TYPE, pointer: number, payloadSize = 0) {
-    const headerSize = sizeOfStruct(MsgHeader_t)
-    const buffer = new ArrayBuffer(headerSize + payloadSize)
-    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer })
-    return { buffer, payloadStart: headerSize }
+const monitoringViews: Map<number, ObjectView> = new Map()
+
+function showMonitoringValues(pointer: number) {
+    const values = monitoringValues.get(pointer)
+    const obj = {}
+    values.forEach((value, i) => obj[i+':'] = value)
+
+    let view = monitoringViews.get(pointer)
+    if (!view) {
+        const func = functionBlocks.get(pointer)
+        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`)
+        monitoringViews.set(pointer, view)
+    }
+    else view.updateValues(obj)
 }
 
-function createMessageWithStruct<T extends StructDefinition>(msgType: MSG_TYPE, pointer: number, struct: T, values: Partial<StructValues<T>>) {
-    const headerSize = sizeOfStruct(MsgHeader_t)
-    const buffer = new ArrayBuffer(headerSize + sizeOfStruct(struct))
-    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer })
-    writeStruct(buffer, headerSize, struct, values)
-    return buffer
-}
-
-function createMessageWithData(msgType: MSG_TYPE, pointer: number, data: ArrayBuffer) {
-    const headerSize = sizeOfStruct(MsgHeader_t)
-    const buffer = new ArrayBuffer(headerSize + data.byteLength)
-    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer })
-    const msgBytes = new Uint8Array(buffer)
-    const sourceBytes = new Uint8Array(data)
-    msgBytes.set(sourceBytes, headerSize)
-    return buffer
-}
+// ------------------------------------------------------------------------
+//      Parse opcode to library id and function id
 
 function parseOpcode(opcode: number) {
     const lib_id = (opcode & 0xFF00) >>> 8;

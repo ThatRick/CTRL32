@@ -86,6 +86,7 @@ public:
     void readInputValues(IOValue* values);
 
     void connectInput(uint8_t inputNum, FunctionBlock* sourceFunc, uint8_t outputNum, bool inverted = false);
+    void disconnectInput(uint8_t inputNum);
 
     inline size_t ioCount() { return numInputs + numOutputs; }
 
@@ -114,6 +115,11 @@ public:
     inline void setInput(uint8_t inputNum, float value) {
         inputs()[inputNum].f = value;
     }
+    inline void setInput(uint8_t inputNum, IOValue value) {
+        inputs()[inputNum] = value;
+    }
+
+    inline uint8_t inputFlag(uint8_t inputNum) { return inputFlags()[inputNum]; }
 
     inline void setInputFlag(uint8_t inputNum, uint8_t ioFlag) {
         inputFlags()[inputNum] |= ioFlag;

@@ -16,7 +16,8 @@ public:
 
     const char* name();
 
-    bool addFunction(FunctionBlock* func);
+    void addFunction(FunctionBlock* func, int32_t index = -1);
+    void removeFunction(FunctionBlock* func);
 
     void collectMonitoringValues(Link* link);
 

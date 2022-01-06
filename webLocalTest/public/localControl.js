@@ -17,7 +17,6 @@ ws.onConsoleLine = UI.log.line;
 ws.onSetStatus = UI.setStatus;
 new ActionButton(UI.connectionControls, 'Connect', ws.connect);
 new ActionButton(UI.connectionControls, 'Disconnect', ws.disconnect);
-setInterval(() => requestInfo(1 /* CONTROLLER_INFO */, 0), 1000);
 ws.handleMessageData = (buffer) => {
     const { msgType, pointer, timeStamp } = readStruct(buffer, 0, MsgHeader_t);
     const payload = buffer.slice(sizeOfStruct(MsgHeader_t));
@@ -27,7 +26,6 @@ ws.handleMessageData = (buffer) => {
     switch (msgType) {
         case 0 /* PING */:
             {
-                UI.log.line('PING');
                 requestInfo(1 /* CONTROLLER_INFO */, 0);
                 break;
             }
@@ -43,9 +41,7 @@ ws.handleMessageData = (buffer) => {
             }
         case 2 /* TASK_INFO */:
             {
-                UI.log.line('TASK INFO:');
                 const data = readStruct(payload, 0, MsgTaskInfo_t);
-                UI.log.record(data);
                 handleTaskData(pointer, data);
                 if (infoRequests.has(pointer)) {
                     infoRequests.get(pointer).callbackFn(data);
@@ -137,7 +133,6 @@ ws.handleMessageData = (buffer) => {
 //  ------------------------------------------
 //          Create monitoring view
 //  ------------------------------------------
-let controllerInfoView;
 const monitoringViews = new Map();
 function showMonitoringValues(pointer) {
     const values = monitoringValues.get(pointer);
@@ -214,10 +209,11 @@ function handleControllerData(pointer, data) {
             controller.complete = true;
             taskList.forEach(pointer => requestInfo(2 /* TASK_INFO */, pointer));
         });
-    if (!controllerInfoView)
-        controllerInfoView = new ObjectView(data, 'Controller info');
+    if (!monitoringViews.has(pointer))
+        monitoringViews.set(pointer, new ObjectView(data, `Controller [${toHex(pointer)}]`));
     else
-        controllerInfoView.updateValues(data);
+        monitoringViews.get(pointer).updateValues(data);
+    setTimeout(() => requestInfo(1 /* CONTROLLER_INFO */, 0), 1000);
 }
 function handleTaskData(pointer, data) {
     let task;
@@ -235,6 +231,11 @@ function handleTaskData(pointer, data) {
             task.complete = true;
             circuitList.forEach(pointer => requestInfo(3 /* CIRCUIT_INFO */, pointer));
         });
+    if (!monitoringViews.has(pointer))
+        monitoringViews.set(pointer, new ObjectView(data, `TASK [${toHex(pointer)}]`));
+    else
+        monitoringViews.get(pointer).updateValues(data);
+    setTimeout(() => requestInfo(2 /* TASK_INFO */, pointer), 1000);
 }
 function handleCircuitData(pointer, data) {
     let circuit;

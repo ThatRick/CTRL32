@@ -10,7 +10,7 @@ Link::Link(Controller* controller, send_data_callback_t onSendData, send_text_ca
 }
 
 Link::~Link() {
-    free(monitoringCollection);
+    delete[] monitoringCollection;
 }
 
 void Link::connected() {
@@ -36,6 +36,7 @@ void Link::receiveData(void* data, size_t len) {
     void* pointer = (void*)header.pointer;
     void* payload = &msg->payload;
     size_t payloadSize = len - sizeof(header);
+    MESSAGE_TYPE msgType = (MESSAGE_TYPE)header.msgType;
 
     Serial.printf("Received ws request type: %d ptr: %p size: %d \n", header.msgType, pointer, len);
 
@@ -44,7 +45,7 @@ void Link::receiveData(void* data, size_t len) {
         return;
     }
 
-    switch(header.msgType)
+    switch(msgType)
     {
         case MSG_TYPE_CONTROLLER_INFO: {
             MsgControllerInfo_t info = {
@@ -56,7 +57,7 @@ void Link::receiveData(void* data, size_t len) {
                 .taskCount       = controller->tasks.size(),
                 .taskList        = (uint32_t)controller->tasks.data(),
             };
-            sendResponse(MSG_TYPE_CONTROLLER_INFO, controller, &info, sizeof(info));
+            sendResponse(msgType, controller, &info, sizeof(info));
             break;
         }
 
@@ -73,7 +74,7 @@ void Link::receiveData(void* data, size_t len) {
                 .circuitCount    = task->circuits.size(),
                 .circuitList     = (uint32_t)task->circuits.data()
             };
-            sendResponse(MSG_TYPE_TASK_INFO, task, &info, sizeof(info));
+            sendResponse(msgType, task, &info, sizeof(info));
             break;
         }
 
@@ -84,7 +85,7 @@ void Link::receiveData(void* data, size_t len) {
                 .funcList        = (uint32_t)circuit->funcList.data(),
                 .outputRefList   = (uint32_t)circuit->outputRefs,
             };
-            sendResponse(MSG_TYPE_CIRCUIT_INFO, circuit, &info, sizeof(info));
+            sendResponse(msgType, circuit, &info, sizeof(info));
             break;
         }
 
@@ -100,19 +101,19 @@ void Link::receiveData(void* data, size_t len) {
                 .nameLength      = strlen(func->name()),
                 .namePtr         = (uint32_t)func->name(),
             };
-            sendResponse(MSG_TYPE_FUNCTION_INFO, func, &info, sizeof(info));
+            sendResponse(msgType, func, &info, sizeof(info));
             break;
         }
 
         case MSG_TYPE_GET_MEM_DATA: {
             uint32_t size = *(uint32_t*)payload;
-            sendResponse(MSG_TYPE_GET_MEM_DATA, pointer, pointer, size);
+            sendResponse(msgType, pointer, pointer, size);
             break;
         }
 
         case MSG_TYPE_SET_MEM_DATA: {
             memcpy(pointer, payload, payloadSize);
-            sendConfirmation(MSG_TYPE_SET_MEM_DATA, pointer, REQUEST_SUCCESSFUL);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
             break;
         }
 
@@ -120,17 +121,78 @@ void Link::receiveData(void* data, size_t len) {
             FunctionBlock* func = (FunctionBlock*)pointer;
             boolean once = *(uint32_t*)payload;
             func->enableMonitoring(once);
-            sendConfirmation(MSG_TYPE_MONITORING_ENABLE, pointer, REQUEST_SUCCESSFUL);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
             break;
         }
 
         case MSG_TYPE_MONITORING_DISABLE: {
             FunctionBlock* func = (FunctionBlock*)pointer;
             func->disableMonitoring();
-            sendConfirmation(MSG_TYPE_MONITORING_DISABLE, pointer, REQUEST_SUCCESSFUL);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
             break;
         }
+
+        // ========================================================================
+        //      CREATE
+
+        // ========================================================================
+        //      REMOVE
+
+        // ========================================================================
+        //      MODIFY TASK
+        
+        case MSG_TYPE_TASK_START: {
+            ((ControllerTask*)pointer)->start();
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
         }
+        case MSG_TYPE_TASK_STOP: {
+            ((ControllerTask*)pointer)->stop();
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+        case MSG_TYPE_TASK_SET_INTERVAL: {
+            uint32_t time = msg->payload;
+            ((ControllerTask*)pointer)->setInterval(time);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+        case MSG_TYPE_TASK_SET_OFFSET: {
+            uint32_t time = msg->payload;
+            ((ControllerTask*)pointer)->setOffset(time);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+        case MSG_TYPE_TASK_ADD_CIRCUIT: {
+            MsgAddItem_t* params = (MsgAddItem_t*)payload;
+            ((ControllerTask*)pointer)->addCircuit((Circuit*)params->pointer, params->index);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+        case MSG_TYPE_TASK_REMOVE_CIRCUIT: {
+            Circuit* circuit = (Circuit*)msg->payload;
+            ((ControllerTask*)pointer)->removeCircuit(circuit);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+
+        // ========================================================================
+        //      MODIFY CIRCUIT
+
+        case MSG_TYPE_CIRCUIT_ADD_FUNCTION: {
+            MsgAddItem_t* params = (MsgAddItem_t*)payload;
+            ((Circuit*)pointer)->addFunction((FunctionBlock*)params->pointer, params->index);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+        case MSG_TYPE_CIRCUIT_REMOVE_FUNCTION: {
+            FunctionBlock* function = (FunctionBlock*)msg->payload;
+            ((Circuit*)pointer)->removeFunction(function);
+            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            break;
+        }
+
+    }
 }
 
 void Link::sendConfirmation(MESSAGE_TYPE msgType, void* pointer, REQUEST_RESULT result) {
@@ -165,7 +227,8 @@ void Link::monitoringCollectionStart(void* reportingTask, size_t maxItemCount) {
     monitoringCollectionTask = reportingTask;
     if (monitoringCollection == nullptr || monitoringCollectionSize < maxItemCount) {
         free(monitoringCollection);
-        monitoringCollection = (MonitoringCollectionItem_t*)calloc(sizeof(MonitoringCollectionItem_t), maxItemCount);
+        // monitoringCollection = (MonitoringCollectionItem_t*)calloc(sizeof(MonitoringCollectionItem_t), maxItemCount);
+        monitoringCollection = new MonitoringCollectionItem_t[maxItemCount];
         monitoringCollectionSize = maxItemCount;
     }
     monitoringCollectionCount = 0;
@@ -220,7 +283,7 @@ void Link::monitoringCollectionSend() {
 }
 
 void Link::monitoringCollectionEnd() {
-    free(monitoringCollection);
+    delete[] monitoringCollection;
     monitoringCollectionCount = 0;
 }
 
