@@ -158,6 +158,8 @@ public:
 
     void reportMonitoringValues(Link* link);
 
+    void executeQueuedCommands(Link* link);
+
     void initInput(uint8_t index, bool value);
     void initInput(uint8_t index, uint32_t value);
     void initInput(uint8_t index, int32_t value);

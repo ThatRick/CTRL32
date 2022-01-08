@@ -32,16 +32,15 @@ class ControllerTask
 
     std::vector<Command_t> commandQueue;
 
-    bool        commandQueueLocked = false;
-
     bool        running = false;
     Time        baseTimer = 0;
     Time        prevRunTime = 0;
     Controller* controller;
 
-    void queueCommand(CommandType type, uint32_t time = 0);
-    void queueCommand(CommandType type, Circuit* circuit, int32_t index = -1);
-    void executeCommands();
+    uint32_t queueCommand(CommandType type, uint32_t time = 0);
+    uint32_t queueCommand(CommandType type, Circuit* circuit, int32_t index = -1);
+    
+    void executeQueuedCommands();
     void collectMonitoringValues();
 
     void _start();
@@ -76,14 +75,10 @@ public:
     float averageCPUTime();
     float averageActualInterval_ms();
 
-    // Commands to be queued for execution on next tick()
-    bool readyForCommand();
-
-    void start();
-    void stop();
-    void setInterval(uint32_t time);
-    void setOffset(uint32_t time);
-    void addCircuit(Circuit* circuit, int32_t index = -1);
-    void removeCircuit(Circuit* circuit);
-
+    uint32_t start();
+    uint32_t stop();
+    uint32_t setInterval(uint32_t time);
+    uint32_t setOffset(uint32_t time);
+    uint32_t addCircuit(Circuit* circuit, int32_t index = -1);
+    uint32_t removeCircuit(Circuit* circuit);
 };

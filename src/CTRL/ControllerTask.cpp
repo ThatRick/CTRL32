@@ -25,7 +25,7 @@ void ControllerTask::_stop() {
 
 // Returns next pending update time
 Time ControllerTask::tick() {
-    executeCommands();
+    executeQueuedCommands();
     if (!running) return UINT64_MAX;
     Time now = controller->getTime();
     if (now >= nextUpdateTime()) {
@@ -85,33 +85,34 @@ void ControllerTask::collectMonitoringValues() {
     link->monitoringCollectionSend();
 }
 
-void ControllerTask::queueCommand(CommandType type, uint32_t time ) {
+uint32_t ControllerTask::queueCommand(CommandType type, uint32_t time ) {
     Command_t command;
     command.type = type;
     command.time_ms = time;
-    while (commandQueueLocked) sleep(1);
     commandQueue.push_back(command);
+    return (uint32_t)&commandQueue + commandQueue.size()-1;
 }
-void ControllerTask::queueCommand(CommandType type, Circuit* circuit, int32_t index ) {
+uint32_t ControllerTask::queueCommand(CommandType type, Circuit* circuit, int32_t index ) {
     Command_t command;
     command.type = type;
     command.circuit = circuit;
-    while (commandQueueLocked) sleep(1);
     commandQueue.push_back(command);
+    return (uint32_t)&commandQueue + commandQueue.size()-1;
 }
 
-void ControllerTask::start()                            { queueCommand(START); }
-void ControllerTask::stop()                             { queueCommand(STOP); }
+uint32_t ControllerTask::start()                            { return queueCommand(START); }
+uint32_t ControllerTask::stop()                             { return queueCommand(STOP); }
 
-void ControllerTask::setInterval(uint32_t time)         { queueCommand(SET_INTERVAL, time); }
-void ControllerTask::setOffset(uint32_t time)           { queueCommand(SET_OFFSET, time); }
+uint32_t ControllerTask::setInterval(uint32_t time)         { return queueCommand(SET_INTERVAL, time); }
+uint32_t ControllerTask::setOffset(uint32_t time)           { return queueCommand(SET_OFFSET, time); }
 
-void ControllerTask::addCircuit(Circuit* circuit, int32_t index)    { queueCommand(ADD_CIRCUIT, circuit, index); }
-void ControllerTask::removeCircuit(Circuit* circuit)    { queueCommand(REMOVE_CIRCUIT, circuit); }
+uint32_t ControllerTask::addCircuit(Circuit* circuit, int32_t index)    { return queueCommand(ADD_CIRCUIT, circuit, index); }
+uint32_t ControllerTask::removeCircuit(Circuit* circuit)    { return queueCommand(REMOVE_CIRCUIT, circuit); }
 
-void ControllerTask::executeCommands() {
-    commandQueueLocked = true;
-    for (Command_t command : commandQueue) {
+void ControllerTask::executeQueuedCommands() {
+    for (size_t i = 0; i < commandQueue.size(); i++) {
+        Command_t command = commandQueue[i];
+        uint32_t ref = (uint32_t)&commandQueue + i;
         switch (command.type) {
             case START:
                 _start();
@@ -141,11 +142,11 @@ void ControllerTask::executeCommands() {
                 }
                 break;
         }
+        link->aknowledgeCommand(ref);
     }
     commandQueue.clear();
-    commandQueueLocked = false;
-}
 
-bool ControllerTask::readyForCommand() {
-    return (!commandQueueLocked);
+    for (Circuit* circuit : circuits) {
+        circuit->executeQueuedCommands(link);
+    }
 }

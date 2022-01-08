@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include "Controller.h"
+#include <map>
 
 #define ADDRESS_MIN 0x3F400000
 #define ADDRESS_MAX 0x50002000
@@ -64,6 +65,11 @@ struct MsgHeader_t {
     uint32_t    msgType;
     uint32_t    pointer;
     uint32_t    timeStamp;
+};
+
+struct MsgID_t {
+    uint32_t    msgType;
+    uint32_t    pointer;
 };
 //
 //  Common message structure to get header and start point to payload
@@ -169,6 +175,8 @@ class Link
     size_t monitoringCollectionSize = 0;
     void* monitoringCollectionTask = nullptr;
 
+    std::map<uint32_t, MsgID_t> queuedCommands;
+
 public:
 
     Link(Controller* controller, send_data_callback_t onSendData, send_text_callback_t onSendText);
@@ -187,4 +195,6 @@ public:
     void monitoringCollectionSend();
     void monitoringCollectionEnd();
     void monitoringValueHandler(void* func, void* values, uint32_t byteSize);
+
+    void aknowledgeCommand(uint32_t commandRef, uint32_t result = REQUEST_SUCCESSFUL);
 };

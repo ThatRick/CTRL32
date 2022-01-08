@@ -57,6 +57,13 @@ void Circuit::collectMonitoringValues(Link* link) {
     }
 }
 
+void Circuit::executeQueuedCommands(Link* link) {
+
+    for (FunctionBlock* func : funcList) {
+        func->executeQueuedCommands(link);
+    }
+}
+
 void Circuit::run(IOValue* inputValues, IOValue* outputValues, uint32_t dt)
 {
     // Update functions

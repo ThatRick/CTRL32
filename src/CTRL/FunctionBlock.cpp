@@ -191,6 +191,10 @@ void IRAM_ATTR FunctionBlock::reportMonitoringValues(Link* link) {
     if (monitorOnce) disableMonitoring();
 }
 
+void FunctionBlock::executeQueuedCommands(Link* link) {
+
+}
+
 void FunctionBlock::initInput(uint8_t index, bool value) {
     inputs()[index].u = value;
     inputFlags()[index] = IO_TYPE_BOOL;

@@ -21,5 +21,7 @@ public:
 
     void collectMonitoringValues(Link* link);
 
+    void executeQueuedCommands(Link* link);
+
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt);
 };

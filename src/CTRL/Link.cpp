@@ -37,6 +37,7 @@ void Link::receiveData(void* data, size_t len) {
     void* payload = &msg->payload;
     size_t payloadSize = len - sizeof(header);
     MESSAGE_TYPE msgType = (MESSAGE_TYPE)header.msgType;
+    MsgID_t msgID = { header.msgType, header.pointer };
 
     Serial.printf("Received ws request type: %d ptr: %p size: %d \n", header.msgType, pointer, len);
 
@@ -139,40 +140,40 @@ void Link::receiveData(void* data, size_t len) {
         //      REMOVE
 
         // ========================================================================
-        //      MODIFY TASK
+        //      MODIFY CONTROLLER TASK
         
         case MSG_TYPE_TASK_START: {
-            ((ControllerTask*)pointer)->start();
-            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            uint32_t commandRef = ((ControllerTask*)pointer)->start();
+            queuedCommands.emplace(commandRef, msgID);
             break;
         }
         case MSG_TYPE_TASK_STOP: {
-            ((ControllerTask*)pointer)->stop();
-            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            uint32_t commandRef = ((ControllerTask*)pointer)->stop();
+            queuedCommands.emplace(commandRef, msgID);
             break;
         }
         case MSG_TYPE_TASK_SET_INTERVAL: {
             uint32_t time = msg->payload;
-            ((ControllerTask*)pointer)->setInterval(time);
-            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            uint32_t commandRef = ((ControllerTask*)pointer)->setInterval(time);
+            queuedCommands.emplace(commandRef, msgID);
             break;
         }
         case MSG_TYPE_TASK_SET_OFFSET: {
             uint32_t time = msg->payload;
-            ((ControllerTask*)pointer)->setOffset(time);
-            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            uint32_t commandRef = ((ControllerTask*)pointer)->setOffset(time);
+            queuedCommands.emplace(commandRef, msgID);
             break;
         }
         case MSG_TYPE_TASK_ADD_CIRCUIT: {
             MsgAddItem_t* params = (MsgAddItem_t*)payload;
-            ((ControllerTask*)pointer)->addCircuit((Circuit*)params->pointer, params->index);
-            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            uint32_t commandRef = ((ControllerTask*)pointer)->addCircuit((Circuit*)params->pointer, params->index);
+            queuedCommands.emplace(commandRef, msgID);
             break;
         }
         case MSG_TYPE_TASK_REMOVE_CIRCUIT: {
             Circuit* circuit = (Circuit*)msg->payload;
-            ((ControllerTask*)pointer)->removeCircuit(circuit);
-            sendConfirmation(msgType, pointer, REQUEST_SUCCESSFUL);
+            uint32_t commandRef = ((ControllerTask*)pointer)->removeCircuit(circuit);
+            queuedCommands.emplace(commandRef, msgID);
             break;
         }
 
@@ -193,6 +194,12 @@ void Link::receiveData(void* data, size_t len) {
         }
 
     }
+}
+
+void Link::aknowledgeCommand(uint32_t commandRef, uint32_t result) {
+    MsgID_t msgID = queuedCommands.at(commandRef);
+    sendConfirmation((MESSAGE_TYPE)msgID.msgType, (void*)msgID.pointer, (REQUEST_RESULT)result);
+    queuedCommands.erase(commandRef);
 }
 
 void Link::sendConfirmation(MESSAGE_TYPE msgType, void* pointer, REQUEST_RESULT result) {
