@@ -32,7 +32,7 @@ enum wsMessageType
 #define MAX_CONTROLLER_INTERVAL 100U
 
 Controller* controller;
-Link* comm;
+Link* commLink;
 FunctionFactory* funcFactory;
 
 TaskHandle_t taskController = NULL;
@@ -119,13 +119,13 @@ void IRAM_ATTR onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, A
     {
         // client connected
         Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
-        comm->connected();
+        commLink->connected();
     }
     else if (type == WS_EVT_DISCONNECT)
     {
         // client disconnected
         Serial.printf("ws[%s][%u] disconnected\n", server->url(), client->id());
-        comm->disconnected();
+        commLink->disconnected();
     }
     else if (type == WS_EVT_ERROR)
     {
@@ -150,7 +150,7 @@ void IRAM_ATTR onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, A
             // }
             // Serial.printf("\n");
 
-            comm->receiveData(data, len);
+            commLink->receiveData(data, len);
         }
     }
 }
@@ -162,6 +162,7 @@ void IRAM_ATTR onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, A
 
 void IRAM_ATTR ControllerLoop(void *) {
     for (;;) {
+        commLink->processData();
         uint32_t remainingToNextUpdate = controller->tick();
         uint32_t delayTime = max(1U, min(remainingToNextUpdate, MAX_CONTROLLER_INTERVAL));
         delay(delayTime);
@@ -171,7 +172,7 @@ void IRAM_ATTR ControllerLoop(void *) {
 void ControllerSetup()
 {
     controller = new Controller();
-    comm = new Link(controller, &onWSSendData, &onWSSendText);
+    commLink = new Link(controller, &onWSSendData, &onWSSendText);
     funcFactory = new FunctionFactory();
 
     Circuit *loop = new Circuit(4, 2);

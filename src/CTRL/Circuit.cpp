@@ -51,16 +51,19 @@ void Circuit::removeFunction(FunctionBlock* partingFunc) {
     }
 }
 
-void Circuit::collectMonitoringValues(Link* link) {
-    for (FunctionBlock* func : funcList) {
-        func->reportMonitoringValues(link);
+void Circuit::reorderFunction(FunctionBlock* func, uint32_t newIndex) {
+    if (newIndex < 0 || newIndex >= funcList.size()) return;
+    for (size_t current = 0; current < funcList.size(); current++) {
+        if (funcList.at(current) == func) {
+            std::swap(funcList[current], funcList[newIndex]);
+            return;
+        }
     }
 }
 
-void Circuit::executeQueuedCommands(Link* link) {
-
+void Circuit::collectMonitoringValues(Link* link) {
     for (FunctionBlock* func : funcList) {
-        func->executeQueuedCommands(link);
+        func->reportMonitoringValues(link);
     }
 }
 

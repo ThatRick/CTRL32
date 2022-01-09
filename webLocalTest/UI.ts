@@ -135,7 +135,7 @@ export class ObjectView
         if (!valueCell) return
         const currentValue = this.valueMap.get(key)
         if (currentValue != value) {
-            valueCell.textContent = (key.endsWith('List') || key.endsWith('Ptr')) ? toHex(value)
+            valueCell.textContent = (key.endsWith('List') || key.endsWith('Ptr') || key == 'pointer') ? toHex(value)
                                   : (value % 1) ? value.toPrecision(7) : value.toString()
             this.valueMap.set(key, value)
         }

@@ -1,5 +1,5 @@
 import { readStruct, sizeOfStruct, writeStruct, sizeOfType, typedArray, readTypedValues, readArrayOfStructs } from './TypedStructs.js';
-import { ESP32, msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, ioTypeNames, MsgHeader_t, MsgControllerInfo_t, MsgTaskInfo_t, MsgCircuitInfo_t, MsgFunctionInfo_t, IO_FLAG_CONV_TYPE_MASK, ioConvNames, msgTypeNamesMaxLength, MsgMonitoringCollection_t, MsgMonitoringCollectionItem_t, } from './ESP32.js';
+import { msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, ioTypeNames, MsgRequestHeader_t, MsgControllerInfo_t, MsgTaskInfo_t, MsgCircuitInfo_t, MsgFunctionInfo_t, IO_FLAG_CONV_TYPE_MASK, ioConvNames, msgTypeNamesMaxLength, MsgMonitoringCollection_t, MsgMonitoringCollectionItem_t, MsgResponseHeader_t, } from './ESP32.js';
 import { toHex } from './Util.js';
 import { ActionButton, CreateUI, ObjectView } from './UI.js';
 import { WSConnection } from './WSConnection.js';
@@ -8,81 +8,126 @@ const tasks = new Map();
 const circuits = new Map();
 const functionBlocks = new Map();
 const memDataRequests = new Map();
-const infoRequests = new Map();
-const modifyRequests = new Map();
+const requestCallbacks = new Map();
 const monitoringValues = new Map();
+// Setup UI and Websocket
 const UI = CreateUI();
 const ws = new WSConnection('192.168.0.241');
 ws.onConsoleLine = UI.log.line;
 ws.onSetStatus = UI.setStatus;
 new ActionButton(UI.connectionControls, 'Connect', ws.connect);
 new ActionButton(UI.connectionControls, 'Disconnect', ws.disconnect);
+let msgID = 1;
+///////////////////////////////////////////////////////////////////////////
+//                    Send Commands to Controller
+///////////////////////////////////////////////////////////////////////////
+//  ------------------------------------------
+//      Send a info request to controlle
+function requestInfo(msgType, pointer, callback) {
+    sendMessage(msgType, pointer, callback);
+}
+//  -------------------------------------------------
+//      Send a memory data request to controller
+function requestMemData(pointer, length, elemType, callback) {
+    const size = length * sizeOfType(elemType);
+    memDataRequests.set(msgID, { pointer, elemType, callback });
+    sendMessageWithStruct(5 /* GET_MEM_DATA */, pointer, { size: 5 /* uint32 */ }, { size });
+}
+//  ----------------------------------------------------------
+//      Send a request to modify memory data on controller
+function modifyMemData(pointer, dataSource, callback) {
+    sendMessageWithData(6 /* SET_MEM_DATA */, pointer, dataSource, callback);
+}
+//  --------------------------------------------------------------
+//      Enable / Disable IO-value monitoring on function block
+function monitoringEnable(pointer, once = false, callback) {
+    sendMessageWithStruct(7 /* MONITORING_ENABLE */, pointer, { once: 5 /* uint32 */ }, { once: +once }, callback);
+}
+function monitoringDisable(pointer, callback) {
+    sendMessage(8 /* MONITORING_DISABLE */, pointer, callback);
+}
+//  --------------------------------------------------------------
+//      Modify task on controller
+function taskStart(pointer, callback) {
+    sendMessage(16 /* TASK_START */, pointer, callback);
+}
+function taskStop(pointer, callback) {
+    sendMessage(17 /* TASK_STOP */, pointer, callback);
+}
+///////////////////////////////////////////////////////////////////////////
+//                  Create and send message data
+///////////////////////////////////////////////////////////////////////////
+//  ----------------------------------------------------------------------
+//      Create a message buffer with given payload size
+function createMessageBuffer(msgType, pointer, payloadSize, callback) {
+    const headerSize = sizeOfStruct(MsgRequestHeader_t);
+    const buffer = new ArrayBuffer(headerSize + payloadSize);
+    writeStruct(buffer, 0, MsgRequestHeader_t, { msgType, msgID, pointer });
+    if (callback)
+        requestCallbacks.set(msgID, { pointer, msgType, callback });
+    return { buffer, payloadStart: headerSize };
+}
+//  ----------------------------------------------------------------------
+//      Send a message with no payload
+function sendMessage(msgType, pointer, callback) {
+    const { buffer } = createMessageBuffer(msgType, pointer, 0, callback);
+    sendBuffer(buffer);
+}
+//  ----------------------------------------------------------------------
+//      Send a message with Typed Struct payload
+function sendMessageWithStruct(msgType, pointer, struct, values, callback) {
+    const { buffer, payloadStart } = createMessageBuffer(msgType, pointer, sizeOfStruct(struct), callback);
+    writeStruct(buffer, payloadStart, struct, values);
+    sendBuffer(buffer);
+}
+//  ----------------------------------------------------------------------
+//      Send a message with ArrayBuffer payload
+function sendMessageWithData(msgType, pointer, data, callback) {
+    const { buffer, payloadStart } = createMessageBuffer(msgType, pointer, data.byteLength, callback);
+    const msgBytes = new Uint8Array(buffer);
+    const sourceBytes = new Uint8Array(data);
+    msgBytes.set(sourceBytes, payloadStart);
+    sendBuffer(buffer);
+}
+//  ----------------------------------------------------------------------
+//      Send a message buffer
+function sendBuffer(buffer) {
+    ws.send(buffer);
+    msgID++;
+}
+///////////////////////////////////////////////////////////////////////////
+//                  Handle Messages from Controller
+///////////////////////////////////////////////////////////////////////////
 ws.handleMessageData = (buffer) => {
-    const { msgType, pointer, timeStamp } = readStruct(buffer, 0, MsgHeader_t);
-    const payload = buffer.slice(sizeOfStruct(MsgHeader_t));
-    const memArea = ESP32.findMemoryAreaForAddr(pointer);
-    let memAreaText = (memArea) ? memArea.name + ' + ' + (pointer - memArea.low).toString(16) : '???';
-    UI.log.line(`[Received type ${msgType.toString().padStart(2, '0')}: ${msgTypeNames[msgType].padEnd(msgTypeNamesMaxLength)}  time: ${timeStamp}  ptr: ${toHex(pointer)} (${memAreaText}) payload len: ${payload.byteLength}]`);
+    const { msgType, msgID, result, timeStamp } = readStruct(buffer, 0, MsgResponseHeader_t);
+    const payload = buffer.slice(sizeOfStruct(MsgResponseHeader_t));
+    UI.log.line(`[Response #${(msgID + '  ' + msgTypeNames[msgType]).padEnd(msgTypeNamesMaxLength)}  result: ${result}  time: ${timeStamp}  payload len: ${payload.byteLength}]`);
     switch (msgType) {
         case 0 /* PING */:
-            {
-                requestInfo(1 /* CONTROLLER_INFO */, 0);
-                break;
-            }
+            requestInfo(1 /* CONTROLLER_INFO */, 0);
+            break;
         case 1 /* CONTROLLER_INFO */:
-            {
-                const data = readStruct(payload, 0, MsgControllerInfo_t);
-                handleControllerData(pointer, data);
-                if (infoRequests.has(0)) {
-                    infoRequests.get(0).callbackFn(data);
-                    infoRequests.delete(0);
-                }
-                break;
-            }
+            handleControllerData(payload);
+            break;
         case 2 /* TASK_INFO */:
-            {
-                const data = readStruct(payload, 0, MsgTaskInfo_t);
-                handleTaskData(pointer, data);
-                if (infoRequests.has(pointer)) {
-                    infoRequests.get(pointer).callbackFn(data);
-                    infoRequests.delete(pointer);
-                }
-                break;
-            }
+            handleTaskData(payload);
+            break;
         case 3 /* CIRCUIT_INFO */:
-            {
-                UI.log.line('CIRCUIT INFO:');
-                const data = readStruct(payload, 0, MsgCircuitInfo_t);
-                UI.log.record(data);
-                handleCircuitData(pointer, data);
-                if (infoRequests.has(pointer)) {
-                    infoRequests.get(pointer).callbackFn(data);
-                    infoRequests.delete(pointer);
-                }
-                break;
-            }
+            handleCircuitData(payload);
+            break;
         case 4 /* FUNCTION_INFO */:
-            {
-                UI.log.line('FUNCTION INFO:');
-                const data = readStruct(payload, 0, MsgFunctionInfo_t);
-                UI.log.record(data);
-                handleFunctionData(pointer, data);
-                if (infoRequests.has(pointer)) {
-                    infoRequests.get(pointer).callbackFn(data);
-                    infoRequests.delete(pointer);
-                }
-                break;
-            }
+            handleFunctionData(payload);
+            break;
         case 5 /* GET_MEM_DATA */:
             {
                 UI.log.line('MEMORY DATA:');
-                const req = memDataRequests.get(pointer);
+                const req = memDataRequests.get(msgID);
                 if (req) {
                     const array = typedArray(payload, req.elemType);
                     const values = [...array];
                     UI.log.list(values);
-                    req.callbackFn(values, payload);
-                    memDataRequests.delete(pointer);
+                    req.callback(values, payload);
+                    memDataRequests.delete(msgID);
                 }
                 else
                     UI.log.line('Unrequested memory data received');
@@ -92,25 +137,9 @@ ws.handleMessageData = (buffer) => {
         case 7 /* MONITORING_ENABLE */:
         case 8 /* MONITORING_DISABLE */:
             {
-                const [result] = readTypedValues(payload, [5 /* uint32 */]);
-                UI.log.line(`RESPONSE TO ${msgTypeNames[msgType]}: ${result ? 'SUCCESSFUL' : 'FAILED'}`);
-                const req = modifyRequests.get(pointer);
-                if (req) {
-                    req.callbackFn(result);
-                    modifyRequests.delete(pointer);
-                }
                 break;
             }
-        case 9 /* MONITORING_FUNC_VALUES */:
-            {
-                if (functionBlocks.has(pointer)) {
-                    handleMonitoringValues(pointer, payload);
-                }
-                else
-                    UI.log.line('Undefined function block target for monitoring values');
-                break;
-            }
-        case 10 /* MONITORING_COLLECTION */:
+        case 9 /* MONITORING_REPORT */:
             {
                 let offset = 0;
                 const { itemCount } = readStruct(payload, offset, MsgMonitoringCollection_t);
@@ -128,79 +157,21 @@ ws.handleMessageData = (buffer) => {
             {
                 UI.log.line('UNKNOWN MESSAGE TYPE');
             }
+            const pendingRequest = requestCallbacks.get(msgID);
+            if (pendingRequest) {
+                pendingRequest.callback(result);
+                requestCallbacks.delete(msgID);
+            }
     }
 };
-//  ------------------------------------------
-//          Create monitoring view
-//  ------------------------------------------
-const monitoringViews = new Map();
-function showMonitoringValues(pointer) {
-    const values = monitoringValues.get(pointer);
-    const obj = {};
-    values.forEach((value, i) => obj[i + ':'] = value);
-    let view = monitoringViews.get(pointer);
-    if (!view) {
-        const func = functionBlocks.get(pointer);
-        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`);
-        monitoringViews.set(pointer, view);
-    }
-    else
-        view.updateValues(obj);
-}
-//  ------------------------------------------
-//      Send a info request to controller
-//  ------------------------------------------
-function requestInfo(msgType, pointer, callbackFn) {
-    const msg = createMessageWithSize(msgType, pointer);
-    if (callbackFn)
-        infoRequests.set(pointer, { pointer, msgType, callbackFn });
-    ws.send(msg.buffer);
-}
-//  -------------------------------------------------
-//      Send a memory data request to controller
-//  -------------------------------------------------
-function requestMemData(pointer, length, elemType, callbackFn) {
-    const size = length * sizeOfType(elemType);
-    const buffer = createMessageWithStruct(5 /* GET_MEM_DATA */, pointer, { size: 5 /* uint32 */ }, { size });
-    memDataRequests.set(pointer, { pointer, elemType, callbackFn });
-    ws.send(buffer);
-}
-//  ----------------------------------------------------------
-//      Send a request to modify memory data on controller
-//  ----------------------------------------------------------
-function modifyMemData(pointer, dataSource, callbackFn) {
-    const buffer = createMessageWithData(6 /* SET_MEM_DATA */, pointer, dataSource);
-    if (callbackFn)
-        modifyRequests.set(pointer, { pointer, msgType: 6 /* SET_MEM_DATA */, callbackFn });
-    ws.send(buffer);
-}
-//  --------------------------------------------------------------
-//      Enable / Disable IO-value monitoring on function block
-//  --------------------------------------------------------------
-function monitoringEnable(pointer, once = false, callbackFn) {
-    const buffer = createMessageWithStruct(7 /* MONITORING_ENABLE */, pointer, { once: 5 /* uint32 */ }, { once: +once });
-    if (callbackFn)
-        modifyRequests.set(pointer, { pointer, msgType: 6 /* SET_MEM_DATA */, callbackFn });
-    ws.send(buffer);
-}
-function monitoringDisable(pointer, callbackFn) {
-    const msg = createMessageWithSize(7 /* MONITORING_ENABLE */, pointer);
-    if (callbackFn)
-        modifyRequests.set(pointer, { pointer, msgType: 6 /* SET_MEM_DATA */, callbackFn });
-    ws.send(msg.buffer);
-}
-//  --------------------------------------------------
-//      Handle info data received from controller
-//  --------------------------------------------------
-function handleMonitoringValues(pointer, data, offset = 0) {
-    const func = functionBlocks.get(pointer);
-    const dataTypes = func.ioFlags.map(ioFlag => IO_TYPE_MAP[ioFlag & IO_FLAG_TYPE_MASK]);
-    const values = readTypedValues(data, dataTypes, offset);
-    monitoringValues.set(pointer, values);
-    showMonitoringValues(pointer);
-}
-function handleControllerData(pointer, data) {
-    controller !== null && controller !== void 0 ? controller : (controller = { pointer, data, tasks: undefined, complete: false });
+///////////////////////////////////////////////////////////////////////////
+//                      Message data handlers
+///////////////////////////////////////////////////////////////////////////
+// ------------------------------------------------------------------------
+//      Controller info
+function handleControllerData(payload) {
+    const data = readStruct(payload, 0, MsgControllerInfo_t);
+    controller !== null && controller !== void 0 ? controller : (controller = { data, tasks: undefined, complete: false });
     controller.data = data;
     // Get task list
     if (!controller.tasks)
@@ -209,21 +180,24 @@ function handleControllerData(pointer, data) {
             controller.complete = true;
             taskList.forEach(pointer => requestInfo(2 /* TASK_INFO */, pointer));
         });
-    if (!monitoringViews.has(pointer))
-        monitoringViews.set(pointer, new ObjectView(data, `Controller [${toHex(pointer)}]`));
+    if (!monitoringViews.has(data.pointer))
+        monitoringViews.set(data.pointer, new ObjectView(data, 'Controller'));
     else
-        monitoringViews.get(pointer).updateValues(data);
-    setTimeout(() => requestInfo(1 /* CONTROLLER_INFO */, 0), 1000);
+        monitoringViews.get(data.pointer).updateValues(data);
+    setTimeout(() => requestInfo(1 /* CONTROLLER_INFO */, 0), 5000);
 }
-function handleTaskData(pointer, data) {
+// ------------------------------------------------------------------------
+//      Task info
+function handleTaskData(payload) {
+    const data = readStruct(payload, 0, MsgTaskInfo_t);
     let task;
-    if (tasks.has(pointer)) {
-        task = tasks.get(pointer);
+    if (tasks.has(data.pointer)) {
+        task = tasks.get(data.pointer);
         task.data = data;
     }
     else {
-        task = { pointer, data, circuits: undefined, complete: false };
-        tasks.set(pointer, task);
+        task = { data, circuits: undefined, complete: false };
+        tasks.set(data.pointer, task);
     }
     if (!task.circuits)
         requestMemData(task.data.circuitList, task.data.circuitCount, 5 /* uint32 */, circuitList => {
@@ -231,26 +205,29 @@ function handleTaskData(pointer, data) {
             task.complete = true;
             circuitList.forEach(pointer => requestInfo(3 /* CIRCUIT_INFO */, pointer));
         });
-    if (!monitoringViews.has(pointer))
-        monitoringViews.set(pointer, new ObjectView(data, `TASK [${toHex(pointer)}]`));
+    if (!monitoringViews.has(data.pointer))
+        monitoringViews.set(data.pointer, new ObjectView(data, 'Task'));
     else
-        monitoringViews.get(pointer).updateValues(data);
-    setTimeout(() => requestInfo(2 /* TASK_INFO */, pointer), 1000);
+        monitoringViews.get(data.pointer).updateValues(data);
+    setTimeout(() => requestInfo(2 /* TASK_INFO */, data.pointer), 5000);
 }
-function handleCircuitData(pointer, data) {
+// ------------------------------------------------------------------------
+//      Circuit info
+function handleCircuitData(payload) {
+    const data = readStruct(payload, 0, MsgCircuitInfo_t);
     let circuit;
-    if (circuits.has(pointer)) {
-        circuit = circuits.get(pointer);
+    if (circuits.has(data.pointer)) {
+        circuit = circuits.get(data.pointer);
         circuit.data = data;
     }
     else {
-        circuit = { pointer, data, funcCalls: undefined, outputRefs: undefined, complete: false };
-        circuits.set(pointer, circuit);
+        circuit = { data, funcCalls: undefined, outputRefs: undefined, complete: false };
+        circuits.set(data.pointer, circuit);
     }
-    if (!functionBlocks.has(pointer))
-        requestInfo(4 /* FUNCTION_INFO */, circuit.pointer, () => {
+    if (!functionBlocks.has(data.pointer))
+        requestInfo(4 /* FUNCTION_INFO */, circuit.data.pointer, () => {
             var _a;
-            const funcData = (_a = functionBlocks.get(pointer)) === null || _a === void 0 ? void 0 : _a.data;
+            const funcData = (_a = functionBlocks.get(data.pointer)) === null || _a === void 0 ? void 0 : _a.data;
             if (funcData) {
                 requestMemData(circuit.data.outputRefList, funcData.numOutputs, 5 /* uint32 */, outputRefs => {
                     circuit.outputRefs = outputRefs;
@@ -267,15 +244,18 @@ function handleCircuitData(pointer, data) {
             funcList.forEach(pointer => requestInfo(4 /* FUNCTION_INFO */, pointer));
         });
 }
-function handleFunctionData(pointer, data) {
+// ------------------------------------------------------------------------
+//      Function Block info
+function handleFunctionData(payload) {
+    const data = readStruct(payload, 0, MsgFunctionInfo_t);
     let func;
-    if (functionBlocks.has(pointer)) {
-        func = functionBlocks.get(pointer);
+    if (functionBlocks.has(data.pointer)) {
+        func = functionBlocks.get(data.pointer);
         func.data = data;
     }
     else {
-        func = { pointer, data, ioValues: undefined, ioFlags: undefined, name: undefined, complete: false };
-        functionBlocks.set(pointer, func);
+        func = { data, ioValues: undefined, ioFlags: undefined, name: undefined, complete: false };
+        functionBlocks.set(data.pointer, func);
     }
     const ioCount = func.data.numInputs + func.data.numOutputs;
     if (!func.ioFlags)
@@ -296,40 +276,45 @@ function handleFunctionData(pointer, data) {
         if (func.ioValues && func.name) {
             func.complete = true;
             printFunctionBlock(func);
-            monitoringEnable(func.pointer);
+            monitoringEnable(func.data.pointer);
         }
     }
 }
-//  -----------------------------------------------
-//      Create Message buffer helper functions
-//  -----------------------------------------------
-function createMessageWithSize(msgType, pointer, payloadSize = 0) {
-    const headerSize = sizeOfStruct(MsgHeader_t);
-    const buffer = new ArrayBuffer(headerSize + payloadSize);
-    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer });
-    return { buffer, payloadStart: headerSize };
+// ------------------------------------------------------------------------
+//      Monitoring values
+function handleMonitoringValues(pointer, data, offset = 0) {
+    const func = functionBlocks.get(pointer);
+    const dataTypes = func.ioFlags.map(ioFlag => IO_TYPE_MAP[ioFlag & IO_FLAG_TYPE_MASK]);
+    const values = readTypedValues(data, dataTypes, offset);
+    monitoringValues.set(pointer, values);
+    showMonitoringValues(pointer);
 }
-function createMessageWithStruct(msgType, pointer, struct, values) {
-    const headerSize = sizeOfStruct(MsgHeader_t);
-    const buffer = new ArrayBuffer(headerSize + sizeOfStruct(struct));
-    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer });
-    writeStruct(buffer, headerSize, struct, values);
-    return buffer;
+//  ------------------------------------------
+//          Create monitoring view
+//  ------------------------------------------
+const monitoringViews = new Map();
+function showMonitoringValues(pointer) {
+    const values = monitoringValues.get(pointer);
+    const obj = {};
+    values.forEach((value, i) => obj[i + ':'] = value);
+    let view = monitoringViews.get(pointer);
+    if (!view) {
+        const func = functionBlocks.get(pointer);
+        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`);
+        monitoringViews.set(pointer, view);
+    }
+    else
+        view.updateValues(obj);
 }
-function createMessageWithData(msgType, pointer, data) {
-    const headerSize = sizeOfStruct(MsgHeader_t);
-    const buffer = new ArrayBuffer(headerSize + data.byteLength);
-    writeStruct(buffer, 0, MsgHeader_t, { msgType, pointer });
-    const msgBytes = new Uint8Array(buffer);
-    const sourceBytes = new Uint8Array(data);
-    msgBytes.set(sourceBytes, headerSize);
-    return buffer;
-}
+// ------------------------------------------------------------------------
+//      Parse opcode to library id and function id
 function parseOpcode(opcode) {
     const lib_id = (opcode & 0xFF00) >>> 8;
     const func_id = opcode & 0x00FF;
     return { lib_id, func_id };
 }
+// ------------------------------------------------------------------------
+//      Print Function Block data to log
 function printFunctionBlock(func, withFlags = true) {
     if (!func.complete) {
         console.error('printFunctionBlock: FunctionBlock data is not complete');
@@ -340,11 +325,11 @@ function printFunctionBlock(func, withFlags = true) {
     const lines = [];
     lines.push('');
     const { lib_id, func_id } = parseOpcode(func.data.opcode);
-    lines.push(`Function Block ${func.name}:  id: ${lib_id}/${func_id}  ptr: ${toHex(func.pointer)}  flags: ${'b' + func.data.flags.toString(2).padStart(8, '0')}`);
+    lines.push(`Function Block ${func.name}:  id: ${lib_id}/${func_id}  ptr: ${toHex(func.data.pointer)}  flags: ${'b' + func.data.flags.toString(2).padStart(8, '0')}`);
     lines.push('');
     const topLine = ''.padStart(valuePad) + ' ┌─' + ''.padEnd(2 * typePad, '─') + '─┐  ' + ''.padEnd(valuePad);
     lines.push(topLine);
-    const monValues = monitoringValues.get(func.pointer);
+    const monValues = monitoringValues.get(func.data.pointer);
     for (let i = 0; i < Math.max(func.data.numInputs, func.data.numOutputs); i++) {
         let text;
         // Input value

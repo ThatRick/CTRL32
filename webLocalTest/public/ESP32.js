@@ -8,8 +8,30 @@ export const msgTypeNames = [
     'SET_MEM_DATA',
     'MONITORING_ENABLE',
     'MONITORING_DISABLE',
-    'MONITORING_FUNC_VALUES',
-    'MONITORING_COLLECTION',
+    'MONITORING_REPORT',
+    'CREATE_TASK',
+    'CREATE_CIRCUIT',
+    'CREATE_FUNCTION',
+    'DELETE_TASK',
+    'DELETE_CIRCUIT',
+    'DELETE_FUNCTION',
+    'TASK_START',
+    'TASK_STOP',
+    'TASK_SET_INTERVAL',
+    'TASK_SET_OFFSET',
+    'TASK_ADD_CIRCUIT',
+    'TASK_REMOVE_CIRCUIT',
+    'CIRCUIT_ADD_FUNCTION',
+    'CIRCUIT_REMOVE_FUNCTION',
+    'CIRCUIT_REORDER_FUNCTION',
+    'CIRCUIT_CONNECT_OUTPUT',
+    'FUNCTION_SET_IO_VALUE',
+    'FUNCTION_SET_IO_FLAG',
+    'FUNCTION_CONNECT_INPUT',
+    'FUNCTION_DISCONNECT_INPUT',
+    'FUNCTION_SET_FLAGS',
+    'FUNCTION_SET_FLAG',
+    'FUNCTION_CLEAR_FLAG',
 ];
 export const msgTypeNamesMaxLength = msgTypeNames.reduce((max, typeName) => Math.max(max, typeName.length), 0);
 export const IO_FLAG_TYPE_MASK = (1 /* TYPE_B0 */ | 2 /* TYPE_B1 */ | 4 /* TYPE_B2 */);
@@ -34,12 +56,19 @@ export const ioTypeNames = [
     'FLOAT',
     'TIME',
 ];
-export const MsgHeader_t = {
+export const MsgRequestHeader_t = {
     msgType: 5 /* uint32 */,
+    msgID: 5 /* uint32 */,
     pointer: 5 /* uint32 */,
-    timeStamp: 5 /* uint32 */
+};
+export const MsgResponseHeader_t = {
+    msgType: 5 /* uint32 */,
+    msgID: 5 /* uint32 */,
+    result: 5 /* uint32 */,
+    timeStamp: 5 /* uint32 */,
 };
 export const MsgControllerInfo_t = {
+    pointer: 5 /* uint32 */,
     freeHeap: 5 /* uint32 */,
     cpuFreq: 5 /* uint32 */,
     RSSI: 4 /* int32 */,
@@ -49,6 +78,7 @@ export const MsgControllerInfo_t = {
     taskList: 5 /* uint32 */,
 };
 export const MsgTaskInfo_t = {
+    pointer: 5 /* uint32 */,
     interval: 5 /* uint32 */,
     offset: 5 /* uint32 */,
     runCount: 5 /* uint32 */,
@@ -60,11 +90,13 @@ export const MsgTaskInfo_t = {
     circuitList: 5 /* uint32 */,
 };
 export const MsgCircuitInfo_t = {
+    pointer: 5 /* uint32 */,
     funcCount: 5 /* uint32 */,
     funcList: 5 /* uint32 */,
     outputRefList: 5 /* uint32 */,
 };
 export const MsgFunctionInfo_t = {
+    pointer: 5 /* uint32 */,
     numInputs: 1 /* uint8 */,
     numOutputs: 1 /* uint8 */,
     opcode: 3 /* uint16 */,

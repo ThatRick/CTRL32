@@ -2,31 +2,92 @@ import { DataType, StructValues } from './TypedStructs.js'
 
 export const enum MSG_TYPE {
     PING,
+
     CONTROLLER_INFO,
     TASK_INFO,
     CIRCUIT_INFO,
     FUNCTION_INFO,
+
     GET_MEM_DATA,
     SET_MEM_DATA,
+
     MONITORING_ENABLE,
     MONITORING_DISABLE,
-    MONITORING_FUNC_VALUES,
-    MONITORING_COLLECTION,
+    MONITORING_REPORT,
+
+    CREATE_TASK,
+    CREATE_CIRCUIT,
+    CREATE_FUNCTION,
+
+    DELETE_TASK,
+    DELETE_CIRCUIT,
+    DELETE_FUNCTION,
+
+    TASK_START,
+    TASK_STOP,
+    TASK_SET_INTERVAL,
+    TASK_SET_OFFSET,
+    TASK_ADD_CIRCUIT,
+    TASK_REMOVE_CIRCUIT,
+
+    CIRCUIT_ADD_FUNCTION,
+    CIRCUIT_REMOVE_FUNCTION,
+    CIRCUIT_REORDER_FUNCTION,
+    CIRCUIT_CONNECT_OUTPUT,
+
+    FUNCTION_SET_IO_VALUE,
+    FUNCTION_SET_IO_FLAG,
+    FUNCTION_CONNECT_INPUT,
+    FUNCTION_DISCONNECT_INPUT,
+    FUNCTION_SET_FLAGS,
+    FUNCTION_SET_FLAG,
+    FUNCTION_CLEAR_FLAG,
 }
 
 export const msgTypeNames = [
     'PING',
+
     'CONTROLLER_INFO',
     'TASK_INFO',
     'CIRCUIT_INFO',
     'FUNCTION_INFO',
+
     'GET_MEM_DATA',
     'SET_MEM_DATA',
+
     'MONITORING_ENABLE',
     'MONITORING_DISABLE',
-    'MONITORING_FUNC_VALUES',
-    'MONITORING_COLLECTION',
+    'MONITORING_REPORT',
+
+    'CREATE_TASK',
+    'CREATE_CIRCUIT',
+    'CREATE_FUNCTION',
+
+    'DELETE_TASK',
+    'DELETE_CIRCUIT',
+    'DELETE_FUNCTION',
+
+    'TASK_START',
+    'TASK_STOP',
+    'TASK_SET_INTERVAL',
+    'TASK_SET_OFFSET',
+    'TASK_ADD_CIRCUIT',
+    'TASK_REMOVE_CIRCUIT',
+
+    'CIRCUIT_ADD_FUNCTION',
+    'CIRCUIT_REMOVE_FUNCTION',
+    'CIRCUIT_REORDER_FUNCTION',
+    'CIRCUIT_CONNECT_OUTPUT',
+
+    'FUNCTION_SET_IO_VALUE',
+    'FUNCTION_SET_IO_FLAG',
+    'FUNCTION_CONNECT_INPUT',
+    'FUNCTION_DISCONNECT_INPUT',
+    'FUNCTION_SET_FLAGS',
+    'FUNCTION_SET_FLAG',
+    'FUNCTION_CLEAR_FLAG',
 ]
+
 export const msgTypeNamesMaxLength = msgTypeNames.reduce((max, typeName) => Math.max(max, typeName.length), 0)
 
 export const enum REQUEST_RESULT {
@@ -89,13 +150,21 @@ export const ioTypeNames =
     'TIME',
 ]
 
-export const MsgHeader_t = {
+export const MsgRequestHeader_t = {
     msgType:            DataType.uint32,
+    msgID:              DataType.uint32,
     pointer:            DataType.uint32,
-    timeStamp:          DataType.uint32
+}
+
+export const MsgResponseHeader_t = {
+    msgType:            DataType.uint32,
+    msgID:              DataType.uint32,
+    result:             DataType.uint32,
+    timeStamp:          DataType.uint32,
 }
 
 export const MsgControllerInfo_t = {
+    pointer:            DataType.uint32,
     freeHeap:           DataType.uint32,
     cpuFreq:            DataType.uint32,
     RSSI:               DataType.int32,
@@ -106,6 +175,7 @@ export const MsgControllerInfo_t = {
 }
 
 export const MsgTaskInfo_t = {
+    pointer:            DataType.uint32,
     interval:           DataType.uint32,
     offset:             DataType.uint32,
     runCount:           DataType.uint32,
@@ -117,12 +187,14 @@ export const MsgTaskInfo_t = {
     circuitList:        DataType.uint32,
 }
 export const MsgCircuitInfo_t = {
+    pointer:            DataType.uint32,
     funcCount:          DataType.uint32,
     funcList:           DataType.uint32,
     outputRefList:      DataType.uint32,
 }
 
 export const MsgFunctionInfo_t = {
+    pointer:            DataType.uint32,
     numInputs:          DataType.uint8,
     numOutputs:         DataType.uint8,
     opcode:             DataType.uint16,
@@ -136,6 +208,7 @@ export const MsgFunctionInfo_t = {
 export const MsgMonitoringCollection_t = {
     itemCount:          DataType.uint32
 }
+
 export const MsgMonitoringCollectionItem_t = {
     pointer:            DataType.uint32,
     offset:             DataType.uint16,
@@ -176,7 +249,6 @@ export const ESP32 =
 
 export interface IFunctionBlock
 {
-    pointer:    number
     data:       StructValues<typeof MsgFunctionInfo_t>
     ioValues:   number[]
     ioFlags:    number[]
@@ -186,7 +258,6 @@ export interface IFunctionBlock
 
 export interface ICircuit
 {
-    pointer:    number
     data:       StructValues<typeof MsgCircuitInfo_t>
     funcCalls:  number[]
     outputRefs: number[]
@@ -195,7 +266,6 @@ export interface ICircuit
 
 export interface ITask
 {
-    pointer:    number
     data:       StructValues<typeof MsgTaskInfo_t>
     circuits:   number[]
     complete:   boolean
@@ -203,7 +273,6 @@ export interface ITask
 
 export interface IController
 {
-    pointer:    number
     data:       StructValues<typeof MsgControllerInfo_t>
     tasks:      number[]
     complete:   boolean

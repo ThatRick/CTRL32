@@ -18,10 +18,10 @@ public:
 
     void addFunction(FunctionBlock* func, int32_t index = -1);
     void removeFunction(FunctionBlock* func);
+    
+    void reorderFunction(FunctionBlock* func, uint32_t index);
 
     void collectMonitoringValues(Link* link);
-
-    void executeQueuedCommands(Link* link);
 
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt);
 };

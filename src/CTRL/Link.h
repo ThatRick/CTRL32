@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include "Controller.h"
+#include "FIFO.h"
 #include <map>
 
 #define ADDRESS_MIN 0x3F400000
@@ -24,8 +25,7 @@ enum MESSAGE_TYPE {
 
     MSG_TYPE_MONITORING_ENABLE,
     MSG_TYPE_MONITORING_DISABLE,
-    MSG_TYPE_MONITORING_FUNC_VALUES,
-    MSG_TYPE_MONITORING_COLLECTION,
+    MSG_TYPE_MONITORING_REPORT,
 
     MSG_TYPE_CREATE_TASK,
     MSG_TYPE_CREATE_CIRCUIT,
@@ -58,35 +58,40 @@ enum MESSAGE_TYPE {
 
 typedef uint32_t ptr32_t;
 
-//
-//  Common header for all messages
-//
-struct MsgHeader_t {
+
+//  Request header
+
+struct MsgRequestHeader_t {
     uint32_t    msgType;
+    uint32_t    msgID;
     uint32_t    pointer;
+};
+
+// Response header
+
+struct MsgResponseHeader_t {
+    uint32_t    msgType;
+    uint32_t    msgID;
+    uint32_t    result;
     uint32_t    timeStamp;
 };
 
-struct MsgID_t {
-    uint32_t    msgType;
-    uint32_t    pointer;
-};
-//
-//  Common message structure to get header and start point to payload
-//
-struct MsgStruct_t {
-    MsgHeader_t header;
-    uint32_t    payload;
-};
-//
-//  Response to modify request with result SUCCESSFUL or FAILED
-//
-struct MsgModifyResult_t {
-    MsgHeader_t header;
-    uint32_t    result;
+// Message structure
+
+struct MsgResponse_t {
+    MsgResponseHeader_t header;
+    uint32_t            payload;
 };
 
+struct MsgRequest_t {
+    MsgRequestHeader_t  header;
+    uint32_t            payload;
+};
+
+// Info response structs
+
 struct MsgControllerInfo_t {
+    uint32_t    pointer;
     uint32_t    freeHeap;
     uint32_t    cpuFreq;
     int32_t     RSSI;
@@ -97,6 +102,7 @@ struct MsgControllerInfo_t {
 };
 
 struct MsgTaskInfo_t {
+    uint32_t    pointer;
     uint32_t    interval;
     uint32_t    offset;
     uint32_t    runCount;
@@ -109,22 +115,25 @@ struct MsgTaskInfo_t {
 };
 
 struct MsgCircuitInfo_t {
+    uint32_t    pointer;
     uint32_t    funcCount;
     ptr32_t     funcList;
     ptr32_t     outputRefList;
 };
 
 struct MsgFunctionInfo_t {
+    uint32_t    pointer;
     uint8_t     numInputs;
     uint8_t     numOutputs;
     uint16_t    opcode;
     uint32_t    flags;
-
     ptr32_t     ioValuesPtr;
     ptr32_t     ioFlagsPtr;
     uint32_t    nameLength;
     ptr32_t     namePtr;
 };
+
+// Monitoring response structure
 
 struct MsgMonitoringCollection_t {
     uint32_t    itemCount;
@@ -135,6 +144,8 @@ struct MsgMonitoringCollectionItem_t {
     uint16_t    offset;
     uint16_t    size;
 };
+
+// Create request parameters
 
 struct MsgCreateTask_t {
     uint32_t    interval;
@@ -153,6 +164,7 @@ struct MsgAddItem_t {
     int32_t     index;
 };
 
+
 typedef void (*send_data_callback_t)(const void* data, size_t len);
 typedef void (*send_text_callback_t)(const char* text);
 
@@ -165,6 +177,11 @@ class Link
         size_t      size;
     };
 
+    struct RequestData_t {
+        void*   data;
+        size_t  size;
+    };
+
     Controller* controller;
     send_data_callback_t sendData;
     send_text_callback_t sendText;
@@ -175,7 +192,9 @@ class Link
     size_t monitoringCollectionSize = 0;
     void* monitoringCollectionTask = nullptr;
 
-    std::map<uint32_t, MsgID_t> queuedCommands;
+    FIFOBuffer<RequestData_t, 16> dataQueue;
+
+    void handleRequest(void* data, size_t len);
 
 public:
 
@@ -187,14 +206,14 @@ public:
 
     void receiveData(void* data, size_t len);
 
-    void sendConfirmation(MESSAGE_TYPE msgType, void* pointer, REQUEST_RESULT result);
+    void sendConfirmation(MsgRequestHeader_t request, REQUEST_RESULT result);
 
-    void sendResponse(MESSAGE_TYPE msgType, void* pointer, void* payload = nullptr, size_t payloadSize = 0);
+    void sendResponse(MsgRequestHeader_t request, void* payload = nullptr, size_t payloadSize = 0);
 
     void monitoringCollectionStart(void* reportingTask, size_t funcCount);
     void monitoringCollectionSend();
     void monitoringCollectionEnd();
     void monitoringValueHandler(void* func, void* values, uint32_t byteSize);
-
-    void aknowledgeCommand(uint32_t commandRef, uint32_t result = REQUEST_SUCCESSFUL);
+    
+    void processData();
 };
