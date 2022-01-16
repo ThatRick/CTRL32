@@ -23,6 +23,7 @@ import {
 import { toHex } from './Util.js'
 import { ActionButton, CreateUI, ObjectView } from './UI.js'
 import { WSConnection } from './WSConnection.js'
+import { GUI } from './GUI.js'
 
 interface MemDataRequest {
     pointer:    number
@@ -50,6 +51,9 @@ const monitoringValues: Map<number, number[]> = new Map()
 // Setup UI and Websocket
 
 const UI = CreateUI()
+
+console.log('Running globol')
+const gui = new GUI()
 
 const ws = new WSConnection('192.168.0.241')
 ws.onConsoleLine = UI.log.line
