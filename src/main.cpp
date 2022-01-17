@@ -1,3 +1,7 @@
+
+#define CONFIG_ASYNC_TCP_RUNNING_CORE   0
+#define CONTROLLER_RUNNING_CORE         1
+
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <WiFi.h>
@@ -14,21 +18,13 @@
 #include "CTRL/FunctionLib.h"
 #include "CTRL/FunctionFactory.h"
 
-#define OLED_CLOCK 15
-#define OLED_DATA 4
-#define OLED_RESET 16
+#define OLED_CLOCK  15
+#define OLED_DATA    4
+#define OLED_RESET  16
 
-enum wsMessageType
-{
-    WS_MSG_TYPE_NULL,
-    WS_MSG_TYPE_MEAS,
-    WS_MSG_TYPE_INTENSITY_GRAPH,
-    WS_MSG_TYPE_CONFIG,
-    WS_MSG_TYPE_SET_CONFIG
-};
-
-#define CONTROLLER_CORE 1
 #define CONTROLLER_PRIORITY 2
+
+#define MIN_CONTROLLER_INTERVAL 1U
 #define MAX_CONTROLLER_INTERVAL 100U
 
 Controller* controller;
@@ -136,7 +132,6 @@ void IRAM_ATTR onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, A
     {
         // data packet
         AwsFrameInfo *info = (AwsFrameInfo *)arg;
-        // Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT) ? "text" : "binary", info->len);
         if (info->opcode == WS_TEXT)
         {
             data[len] = 0;
@@ -144,12 +139,6 @@ void IRAM_ATTR onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, A
         }
         else
         {
-            // for (size_t i = 0; i < info->len; i++)
-            // {
-            //     Serial.printf("%02x ", data[i]);
-            // }
-            // Serial.printf("\n");
-
             commLink->receiveData(data, len);
         }
     }
@@ -164,7 +153,7 @@ void IRAM_ATTR ControllerLoop(void *) {
     for (;;) {
         commLink->processData();
         uint32_t remainingToNextUpdate = controller->tick();
-        uint32_t delayTime = max(1U, min(remainingToNextUpdate, MAX_CONTROLLER_INTERVAL));
+        uint32_t delayTime = min(max(remainingToNextUpdate, MIN_CONTROLLER_INTERVAL), MAX_CONTROLLER_INTERVAL);
         delay(delayTime);
     }
 }
@@ -206,7 +195,7 @@ void ControllerSetup()
     task1->start();
 
     Serial.println("Creating a FreeRTOS task");
-    xTaskCreatePinnedToCore(ControllerLoop, "CTRL32", 4*1024, NULL, CONTROLLER_PRIORITY, &taskController, CONTROLLER_CORE);
+    xTaskCreatePinnedToCore(ControllerLoop, "CTRL32", 4*1024, NULL, CONTROLLER_PRIORITY, &taskController, CONTROLLER_RUNNING_CORE);
 
     Serial.println("Controller tasks running.");
 }
@@ -272,5 +261,6 @@ void setup()
 
 void loop()
 {
-    delay(10);
+    delay(100);
+    ws.cleanupClients();
 }
