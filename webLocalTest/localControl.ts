@@ -23,7 +23,10 @@ import {
 import { toHex } from './Util.js'
 import { ActionButton, CreateUI, ObjectView } from './UI.js'
 import { WSConnection } from './WSConnection.js'
-import { GUI } from './GUI.js'
+import { GUIManager } from './GUI/GUI.js'
+
+import { createTestSet } from "./guiTest.js"
+
 
 interface MemDataRequest {
     pointer:    number
@@ -52,8 +55,9 @@ const monitoringValues: Map<number, number[]> = new Map()
 
 const UI = CreateUI()
 
-console.log('Running globol')
-const gui = new GUI()
+// Test GUI windows
+const gui = new GUIManager()
+createTestSet(gui)
 
 const ws = new WSConnection('192.168.0.241')
 ws.onConsoleLine = UI.log.line
