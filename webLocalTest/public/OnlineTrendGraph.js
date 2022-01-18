@@ -1,4 +1,4 @@
-export default class OnlineTrendGraph {
+export class OnlineTrendGraph {
     constructor(width, height) {
         this.lineColor = '#44D';
         this.bgColor = '#EEE';
@@ -21,8 +21,7 @@ export default class OnlineTrendGraph {
         // off-screen canvas is drawn horizontally so canvas drawing is rotated 90 degrees
         this.screenCtx.rotate(-90 * Math.PI / 180);
         this.screenCanvas.style.overflow = 'hidden';
-        this.bufferCtx.fillStyle = this.bgColor;
-        this.bufferCtx.fillRect(0, 0, height, width);
+        this.clear();
         // Blit buffer to screen with 90deg rotated
         this.blit();
     }
@@ -38,6 +37,22 @@ export default class OnlineTrendGraph {
         this.offset += 1;
         if (this.offset >= this.width)
             this.offset = 0;
+    }
+    addValues(values) {
+        const w = this.offScreenCanvas.width;
+        values.forEach(value => {
+            const length = Math.round(value * w);
+            this.drawBufferLine(this.offset, length);
+            this.offset += 1;
+            if (this.offset >= this.width)
+                this.offset = 0;
+        });
+        this.blit();
+    }
+    clear() {
+        this.bufferCtx.fillStyle = this.bgColor;
+        this.bufferCtx.fillRect(0, 0, this.height, this.width);
+        this.offset = 0;
     }
     drawBufferLine(pos, length) {
         const w = this.offScreenCanvas.width;

@@ -1,10 +1,8 @@
 import { readStruct, sizeOfStruct, writeStruct, sizeOfType, typedArray, readTypedValues, readArrayOfStructs } from './TypedStructs.js';
 import { msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, ioTypeNames, MsgRequestHeader_t, MsgControllerInfo_t, MsgTaskInfo_t, MsgCircuitInfo_t, MsgFunctionInfo_t, IO_FLAG_CONV_TYPE_MASK, ioConvNames, msgTypeNamesMaxLength, MsgMonitoringCollection_t, MsgMonitoringCollectionItem_t, MsgResponseHeader_t, } from './ESP32.js';
 import { toHex } from './Util.js';
-import { ActionButton, CreateUI, ObjectView } from './UI.js';
+import { ActionButton, CreateUI } from './UI.js';
 import { WSConnection } from './WSConnection.js';
-import { GUIManager } from './GUI/GUI.js';
-import { createTestSet } from "./guiTest.js";
 let controller;
 const tasks = new Map();
 const circuits = new Map();
@@ -14,9 +12,6 @@ const requestCallbacks = new Map();
 const monitoringValues = new Map();
 // Setup UI and Websocket
 const UI = CreateUI();
-// Test GUI windows
-const gui = new GUIManager();
-createTestSet(gui);
 const ws = new WSConnection('192.168.0.241');
 ws.onConsoleLine = UI.log.line;
 ws.onSetStatus = UI.setStatus;
@@ -176,7 +171,7 @@ ws.handleMessageData = (buffer) => {
 //      Controller info
 function handleControllerData(payload) {
     const data = readStruct(payload, 0, MsgControllerInfo_t);
-    controller !== null && controller !== void 0 ? controller : (controller = { data, tasks: undefined, complete: false });
+    controller ??= { data, tasks: undefined, complete: false };
     controller.data = data;
     // Get task list
     if (!controller.tasks)
@@ -186,7 +181,7 @@ function handleControllerData(payload) {
             taskList.forEach(pointer => requestInfo(2 /* TASK_INFO */, pointer));
         });
     if (!monitoringViews.has(data.pointer))
-        monitoringViews.set(data.pointer, new ObjectView(data, 'Controller'));
+        monitoringViews.set(data.pointer, UI.createObjectView(data, 'Controller'));
     else
         monitoringViews.get(data.pointer).updateValues(data);
     setTimeout(() => requestInfo(1 /* CONTROLLER_INFO */, 0), 5000);
@@ -211,7 +206,7 @@ function handleTaskData(payload) {
             circuitList.forEach(pointer => requestInfo(3 /* CIRCUIT_INFO */, pointer));
         });
     if (!monitoringViews.has(data.pointer))
-        monitoringViews.set(data.pointer, new ObjectView(data, 'Task'));
+        monitoringViews.set(data.pointer, UI.createObjectView(data, 'Task'));
     else
         monitoringViews.get(data.pointer).updateValues(data);
     setTimeout(() => requestInfo(2 /* TASK_INFO */, data.pointer), 5000);
@@ -231,8 +226,7 @@ function handleCircuitData(payload) {
     }
     if (!functionBlocks.has(data.pointer))
         requestInfo(4 /* FUNCTION_INFO */, circuit.data.pointer, () => {
-            var _a;
-            const funcData = (_a = functionBlocks.get(data.pointer)) === null || _a === void 0 ? void 0 : _a.data;
+            const funcData = functionBlocks.get(data.pointer)?.data;
             if (funcData) {
                 requestMemData(circuit.data.outputRefList, funcData.numOutputs, 5 /* uint32 */, outputRefs => {
                     circuit.outputRefs = outputRefs;
@@ -305,7 +299,7 @@ function showMonitoringValues(pointer) {
     let view = monitoringViews.get(pointer);
     if (!view) {
         const func = functionBlocks.get(pointer);
-        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`);
+        view = UI.createObjectView(obj, `${func.name} [${toHex(pointer)}]`);
         monitoringViews.set(pointer, view);
     }
     else

@@ -4,12 +4,16 @@ export class GUIElement {
     constructor(pos, size, style) {
         this.currentPos = vec2(0, 0);
         this.currentSize = vec2(0, 0);
+        this.onMouseDown = (ev) => {
+            this.gui?.selectElement(this);
+        };
         this.node = document.createElement('div');
         style && Object.assign(this.node.style, style);
         this.setPos(pos);
         this.setSize(size);
         this.node.style.zIndex = '2';
-        this.node.onpointerdown = ev => { var _a; (_a = this.gui) === null || _a === void 0 ? void 0 : _a.selectElement(this); };
+        //this.node.addEventListener('pointerdown', () => this.onMouseDown )
+        this.node.onpointerdown = this.onMouseDown;
     }
     highlight(enabled) {
         this.node.style.borderColor = enabled ? 'silver' : 'grey';
@@ -33,16 +37,19 @@ export class GUIElement {
             this.node.style.top = this.newPos.y + 'px';
             this.currentPos.set(this.newPos);
             this.newPos = null;
+            this.didMove && setTimeout(this.didMove);
         }
         if (this.newSize) {
             this.node.style.width = this.newSize.x + 'px';
             this.node.style.height = this.newSize.y + 'px';
             this.currentSize.set(this.newSize);
             this.newSize = null;
+            this.didResize && setTimeout(this.didResize);
         }
     }
     setGUI(gui) { this.gui = gui; }
     remove() {
+        this.gui?.removeElement(this);
         this.node.remove();
     }
 }
@@ -53,10 +60,11 @@ export class Movable extends GUIPointerHandler {
         this.userOnDown = () => {
             this.initPos.set(this.moveTarget.currentPos);
             this.node.style.cursor = 'grabbing';
+            const parent = this.moveTarget.node.parentElement;
+            this.maxPos = vec2(parent.clientWidth - this.moveTarget.currentSize.x, parent.clientHeight - this.moveTarget.currentSize.y);
         };
         this.userOnDrag = (offset) => {
-            const maxPos = vec2(document.body.clientWidth - this.moveTarget.currentSize.x, document.body.clientHeight - this.moveTarget.currentSize.y);
-            const draggedPos = Vec2.add(this.initPos, offset).limit(vec2(0, 0), maxPos);
+            const draggedPos = Vec2.add(this.initPos, offset).limit(vec2(0, 0), this.maxPos);
             this.moveTarget.setPos(draggedPos);
         };
         this.userOnUp = () => {
@@ -73,9 +81,11 @@ export class Resizable extends GUIPointerHandler {
         this.resizeTarget = resizeTarget;
         this.userOnDown = () => {
             this.initSize.set(this.resizeTarget.currentSize);
+            const parent = this.resizeTarget.node.parentElement;
+            this.maxSize = vec2(parent.clientWidth - this.resizeTarget.currentPos.x, parent.clientHeight - this.resizeTarget.currentPos.y);
         };
         this.userOnDrag = (offset) => {
-            const draggedSize = Vec2.add(this.initSize, offset).limit(vec2(50, 50), vec2(400, 400));
+            const draggedSize = Vec2.add(this.initSize, offset).limit(vec2(120, 60), this.maxSize);
             this.resizeTarget.setSize(draggedSize);
         };
         this.initSize = vec2(resizeTarget.currentSize);
@@ -86,7 +96,6 @@ export class Clickable extends GUIPointerHandler {
     constructor(eventTarget, action) {
         super(eventTarget);
         this.action = action;
-        this.userOnUp = this.action;
-        eventTarget.style.cursor = '';
+        this.userOnClick = this.action;
     }
 }

@@ -4,7 +4,7 @@ export function vec2(xv, y) {
         return new Vec2(xv.x, xv.y);
     }
     else if (typeof xv == 'number') {
-        return new Vec2(xv, y !== null && y !== void 0 ? y : xv);
+        return new Vec2(xv, y ?? xv);
     }
 }
 export default class Vec2 {
@@ -19,7 +19,7 @@ export default class Vec2 {
         }
         else {
             this.x = vx;
-            this.y = y !== null && y !== void 0 ? y : vx;
+            this.y = y ?? vx;
         }
         return this;
     }
@@ -66,10 +66,14 @@ export default class Vec2 {
         return this;
     }
     limit(min, max) {
-        this.x = Math.max(this.x, min.x);
-        this.x = Math.min(this.x, max.x);
-        this.y = Math.max(this.y, min.y);
-        this.y = Math.min(this.y, max.y);
+        if (min) {
+            this.x = Math.max(this.x, min.x);
+            this.y = Math.max(this.y, min.y);
+        }
+        if (max) {
+            this.x = Math.min(this.x, max.x);
+            this.y = Math.min(this.y, max.y);
+        }
         return this;
     }
     len() {
@@ -117,11 +121,16 @@ export default class Vec2 {
         return Math.sqrt(a.x * a.x + a.y * a.y);
     }
     static limit(v, min, max) {
-        v.x = Math.max(v.x, min.x);
-        v.x = Math.min(v.x, max.x);
-        v.y = Math.max(v.y, min.y);
-        v.y = Math.min(v.y, max.y);
-        return v;
+        const n = vec2(v);
+        if (min) {
+            n.x = Math.max(v.x, min.x);
+            n.y = Math.max(v.y, min.y);
+        }
+        if (max) {
+            n.x = Math.min(v.x, max.x);
+            n.y = Math.min(v.y, max.y);
+        }
+        return n;
     }
     static normalize(a) {
         const l = Vec2.len(a);

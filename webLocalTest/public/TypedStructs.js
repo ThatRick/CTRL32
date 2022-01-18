@@ -114,12 +114,12 @@ export function readArrayOfStructs(buffer, startByteOffset, struct, len) {
     let offset = startByteOffset;
     const structByteLength = sizeOfStruct(struct);
     const maxLen = Math.floor((buffer.byteLength - startByteOffset) / structByteLength);
-    len || (len = maxLen);
+    len ||= maxLen;
     if (len > maxLen) {
         console.error('Read Struct Array: Buffer overflow. Given struct array length too big', len);
         len = maxLen;
     }
-    if ((buffer.byteLength - startByteOffset) % structByteLength != 0)
+    if ((buffer.byteLength - startByteOffset) % structByteLength != 0 && len == maxLen)
         console.warn('Read Struct Array: Given buffer length is not a multiple of struct length');
     const array = [];
     // console.log('Read Struct Array: len = %d / %d = %d\n', (buffer.byteLength - startByteOffset), sizeOfStruct(struct), len);

@@ -23,9 +23,7 @@ import {
 import { toHex } from './Util.js'
 import { ActionButton, CreateUI, ObjectView } from './UI.js'
 import { WSConnection } from './WSConnection.js'
-import { GUIManager } from './GUI/GUI.js'
 
-import { createTestSet } from "./guiTest.js"
 
 
 interface MemDataRequest {
@@ -54,10 +52,6 @@ const monitoringValues: Map<number, number[]> = new Map()
 // Setup UI and Websocket
 
 const UI = CreateUI()
-
-// Test GUI windows
-const gui = new GUIManager()
-createTestSet(gui)
 
 const ws = new WSConnection('192.168.0.241')
 ws.onConsoleLine = UI.log.line
@@ -249,7 +243,7 @@ function handleControllerData(payload: ArrayBuffer) {
         taskList.forEach(pointer => requestInfo(MSG_TYPE.TASK_INFO, pointer))
     })
 
-    if (!monitoringViews.has(data.pointer)) monitoringViews.set(data.pointer, new ObjectView(data, 'Controller'))
+    if (!monitoringViews.has(data.pointer)) monitoringViews.set(data.pointer, UI.createObjectView(data, 'Controller'))
     else monitoringViews.get(data.pointer).updateValues(data)
 
     setTimeout(() => requestInfo(MSG_TYPE.CONTROLLER_INFO, 0), 5000)
@@ -273,7 +267,7 @@ function handleTaskData(payload: ArrayBuffer) {
         circuitList.forEach(pointer => requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer))
     })
 
-    if (!monitoringViews.has(data.pointer)) monitoringViews.set(data.pointer, new ObjectView(data, 'Task'))
+    if (!monitoringViews.has(data.pointer)) monitoringViews.set(data.pointer, UI.createObjectView(data, 'Task'))
     else monitoringViews.get(data.pointer).updateValues(data)
 
     setTimeout(() => requestInfo(MSG_TYPE.TASK_INFO, data.pointer), 5000)
@@ -367,7 +361,7 @@ function showMonitoringValues(pointer: number) {
     let view = monitoringViews.get(pointer)
     if (!view) {
         const func = functionBlocks.get(pointer)
-        view = new ObjectView(obj, `${func.name} [${toHex(pointer)}]`)
+        view = UI.createObjectView(obj, `${func.name} [${toHex(pointer)}]`)
         monitoringViews.set(pointer, view)
     }
     else view.updateValues(obj)

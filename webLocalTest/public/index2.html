@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>CTRL32 GUI</title>
     <style>
         body {
             background-color: gray;
@@ -13,12 +13,14 @@
             margin: 0;
             user-select: none;
             -webkit-user-select: none;
-            font-family: monospace
+            font-family: monospace;
+            box-sizing: border-box;
         }
         table, td {
-            table-layout: fixed;
+            table-layout: auto;
             font-family: monospace;
             border-collapse: collapse;
+            padding-right: 1em;
         }
         pre {
             margin: 0;
@@ -59,10 +61,10 @@
         .console {
             background-color: darkslategray;
             color: lemonchiffon;
-            flex-grow: 1;
+            /* flex-grow: 1; */
             margin: 0px;
             margin-top: 0.5em;
-            overflow-x: hidden;
+            overflow-x: auto;
             overflow-y: auto;
         }
         .horizontalBar
@@ -73,6 +75,15 @@
         p {
             margin: 0
         }
+        .desktop {
+            flex-grow: 1;
+            margin: 0px;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            background-color: dimgrey;
+            box-sizing: border-box;
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -81,10 +92,14 @@
             <div id='connectionControls' class='toolbar'>
                 <p id='connectionStatus'>[STATUS]</p>
             </div>
-            <div id='consoleControls' class='toolbar'></div>
+            <div id='consoleControls' class='toolbar'>
+            </div>
         </div>
-        <div id='panel' class='panel horizontalBar'></div>
-        <div id='console' class='console'></div>
+        <div id='desktop' class='desktop'>
+        </div>
+        <div id='panel' class='panel horizontalBar'>
+        </div>
+        <!-- <div id='console' class='console'></div> -->
         <script type='module' src='localControl.js'></script>
     </div>
 </body>

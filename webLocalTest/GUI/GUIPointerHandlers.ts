@@ -13,7 +13,9 @@ export class GUIPointerHandler {
         }
         node.onpointerup = ev => {
             this.isDown = false
-            if (node.hasPointerCapture(ev.pointerId)) node.releasePointerCapture(ev.pointerId)
+            if (node.hasPointerCapture(ev.pointerId)) {
+                node.releasePointerCapture(ev.pointerId)
+            }
             this.userOnUp?.()
         }
         node.onpointermove = ev => {
@@ -27,11 +29,15 @@ export class GUIPointerHandler {
             }
             else this.userOnHover?.()
         }
+        node.onclick = ev => {
+            this.userOnClick?.()
+        }
     }
     userOnDown: () => void
     userOnUp: () => void
     userOnDrag: (offset: Vec2) => void
     userOnHover: () => void
+    userOnClick: () => void
 }
 
 

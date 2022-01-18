@@ -112,7 +112,7 @@ export function readArrayOfStructs<T extends StructDefinition>(buffer: ArrayBuff
         console.error('Read Struct Array: Buffer overflow. Given struct array length too big', len)
         len = maxLen
     }
-    if ((buffer.byteLength - startByteOffset) % structByteLength != 0) console.warn('Read Struct Array: Given buffer length is not a multiple of struct length')
+    if ((buffer.byteLength - startByteOffset) % structByteLength != 0 && len == maxLen) console.warn('Read Struct Array: Given buffer length is not a multiple of struct length')
     const array: StructValues<T>[] = []
     // console.log('Read Struct Array: len = %d / %d = %d\n', (buffer.byteLength - startByteOffset), sizeOfStruct(struct), len);
 

@@ -1,18 +1,18 @@
 
-export function htmlElement<K extends keyof HTMLElementTagNameMap>(tagName: K, options?: {
+export function htmlElement<K extends keyof HTMLElementTagNameMap>(tagName: K, options: {
     style?: Partial<CSSStyleDeclaration>,
     attributes?: {[key: string]: string},
     textContent?: string,
     parent?: HTMLElement,
     setup?: (elem: HTMLElementTagNameMap[K]) => void
- }): HTMLElementTagNameMap[K]
+ } = {}): HTMLElementTagNameMap[K]
 {
     const elem = document.createElement(tagName)
+    options.parent?.appendChild(elem)
     if (options.style) Object.assign(elem.style, options.style)
     for (let attr in options.attributes) {
         elem.setAttribute(attr, options.attributes[attr])
     }
-    options.parent?.appendChild(elem)
     if (options.textContent) elem.textContent = options.textContent
 
     options.setup?.(elem)
@@ -24,7 +24,7 @@ type TableCellIterator = (cell: HTMLTableCellElement, row: number, col: number) 
 
 export class HTMLTable
 {
-    element: HTMLTableElement
+    node: HTMLTableElement
     private rows: HTMLTableRowElement[] = []
     private cells: HTMLTableCellElement[][] = []
 
@@ -39,17 +39,17 @@ export class HTMLTable
         cellIterator?: TableCellIterator
     }) 
     {
-        this.element = htmlElement('table', {
+        this.node = htmlElement('table', {
             style: options.tableStyle,
             parent: options.parentElement,
         })
 
-        if (options.caption) htmlElement('caption', { textContent: options.caption, parent: this.element })
+        if (options.caption) htmlElement('caption', { textContent: options.caption, parent: this.node })
 
         for (let y = 0; y < options.rows; y++) {
             const row = htmlElement('tr', {
                 style: options.rowStyle,
-                parent: this.element
+                parent: this.node
             })
             this.rows[y] = row
             this.cells[y] = []
@@ -67,8 +67,8 @@ export class HTMLTable
     delete() {
         this.rows = null,
         this.cells = null
-        this.element.remove()
-        this.element = null
+        this.node.remove()
+        this.node = null
     }
 
     getCell(row: number, col: number) { return this.cells[row][col] }

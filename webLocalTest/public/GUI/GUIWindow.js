@@ -3,24 +3,31 @@ import { htmlElement } from '../HTML.js';
 import { GUIElement, Movable, Clickable, Resizable } from './GUIElement.js';
 const windowStyle = {
     backgroundColor: 'grey',
-    userSelect: 'none',
     border: 'solid black 1px',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
 };
 export class GUIWindow extends GUIElement {
-    constructor(pos, size) {
-        super(pos, size, windowStyle);
+    constructor(pos, options) {
+        super(pos, options.size ?? vec2(300, 300), windowStyle);
+        this.options = options;
+        this.didResize = () => {
+            this.status.textContent = this.userContentSize.toString();
+        };
         this.topBar = htmlElement('div', {
             style: {
                 width: '100%',
                 display: 'flex',
+                alignItems: 'center'
             },
             parent: this.node
         });
         this.title = htmlElement('div', {
-            textContent: 'A Fancy window',
-            style: { width: '100%' },
+            textContent: options.title || 'GUIWindow',
+            style: {
+                flexGrow: '1',
+                padding: '0px 3px'
+            },
             parent: this.topBar
         });
         new Movable(this.title, this);
@@ -47,14 +54,14 @@ export class GUIWindow extends GUIElement {
             parent: this.topBar
         });
         new Clickable(this.closeBtn, () => { this.remove(); });
-        this.userContent = htmlElement('div', {
+        this.userContainer = htmlElement('div', {
             style: {
                 backgroundColor: 'darkslategray',
                 color: 'lemonchiffon',
                 flexGrow: '1',
                 margin: '0px',
-                overflowX: 'hidden',
-                overflowY: 'auto',
+                padding: '0px',
+                overflow: options.scrollbars ? 'auto' : 'hidden',
             },
             parent: this.node
         });
@@ -62,32 +69,53 @@ export class GUIWindow extends GUIElement {
             style: {
                 width: '100%',
                 display: 'flex',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                alignItems: 'center'
             },
             parent: this.node
         });
+        this.userControls = htmlElement('div', {
+            style: {
+                display: 'flex',
+                flexGrow: '1'
+            },
+            parent: this.bottomBar
+        });
         this.status = htmlElement('div', {
-            textContent: 'status text',
-            style: { width: '100%' },
             parent: this.bottomBar
         });
         this.resizeSymbol = htmlElement('div', {
             textContent: '⋰',
             style: {
-                padding: '0px 2px'
+                padding: '0px 3px',
             },
             parent: this.bottomBar
         });
         new Resizable(this.resizeSymbol, this);
         this.node.appendChild(this.bottomBar);
+        if (options.content) {
+            this.setContent(options.content);
+        }
+    }
+    setContent(content) {
+        content.style.boxSizing = 'border-box';
+        this.userContainer.appendChild(content);
+        this.userContent = content;
+        if (this.options.autoSize)
+            setTimeout(() => this.resizeToContent(), 100);
     }
     resizeToContent() {
         const contentSize = vec2(this.userContent.scrollWidth, this.userContent.scrollHeight);
-        const visibleSize = vec2(this.userContent.clientWidth, this.userContent.clientHeight);
+        const visibleSize = vec2(this.userContainer.clientWidth, this.userContainer.clientHeight);
         console.log('contentSize', contentSize);
         console.log('visible', visibleSize);
+        console.log('clientRect', this.userContentSize);
         const hiddenSize = Vec2.sub(contentSize, visibleSize);
-        const newSize = Vec2.add(this.currentSize, hiddenSize);
+        const newSize = Vec2.add(this.currentSize, hiddenSize).limit(vec2(200, 40));
         this.setSize(newSize);
+    }
+    get userContentSize() {
+        const box = this.userContainer.getBoundingClientRect();
+        return vec2(box.width, box.height);
     }
 }

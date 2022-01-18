@@ -1,4 +1,4 @@
-export default class OnlineTrendGraph
+export class OnlineTrendGraph
 {
     public lineColor = '#44D'
     public bgColor = '#EEE'
@@ -17,6 +17,23 @@ export default class OnlineTrendGraph
 
         this.offset += 1;
         if (this.offset >= this.width) this.offset = 0;
+    }
+
+    addValues(values: number[]) {
+        const w = this.offScreenCanvas.width;
+        values.forEach(value => {
+            const length = Math.round(value * w)
+            this.drawBufferLine(this.offset, length);            
+            this.offset += 1;
+            if (this.offset >= this.width) this.offset = 0;
+        })
+        this.blit();
+    }
+
+    clear() {
+        this.bufferCtx.fillStyle = this.bgColor
+        this.bufferCtx.fillRect(0, 0, this.height, this.width)
+        this.offset = 0
     }
 
     protected screenCanvas: HTMLCanvasElement
@@ -51,11 +68,10 @@ export default class OnlineTrendGraph
         
         this.screenCanvas.style.overflow = 'hidden'
 
-        this.bufferCtx.fillStyle = this.bgColor
-        this.bufferCtx.fillRect(0, 0, height, width)
+        this.clear()
 
         // Blit buffer to screen with 90deg rotated
-        this.blit();
+        this.blit()
     }
 
     protected drawBufferLine(pos: number, length: number) {

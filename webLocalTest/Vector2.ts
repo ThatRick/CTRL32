@@ -90,11 +90,15 @@ export default class Vec2 implements IVec2
     return this
   }
 
-  limit(min: Vec2, max: Vec2) {
-    this.x = Math.max(this.x, min.x)
-    this.x = Math.min(this.x, max.x)
-    this.y = Math.max(this.y, min.y)
-    this.y = Math.min(this.y, max.y)
+  limit(min?: Vec2, max?: Vec2) {
+    if (min) {
+      this.x = Math.max(this.x, min.x)
+      this.y = Math.max(this.y, min.y)
+    }
+    if (max) {
+      this.x = Math.min(this.x, max.x)
+      this.y = Math.min(this.y, max.y)
+    }
     return this
   }
   
@@ -156,12 +160,17 @@ export default class Vec2 implements IVec2
     return Math.sqrt(a.x * a.x + a.y * a.y)
   }
 
-  static limit(v: Vec2, min: Vec2, max: Vec2) {
-    v.x = Math.max(v.x, min.x)
-    v.x = Math.min(v.x, max.x)
-    v.y = Math.max(v.y, min.y)
-    v.y = Math.min(v.y, max.y)
-    return v
+  static limit(v: Vec2, min?: Vec2, max?: Vec2) {
+    const n = vec2(v)
+    if (min) {
+      n.x = Math.max(v.x, min.x)
+      n.y = Math.max(v.y, min.y)
+    }
+    if (max) {
+      n.x = Math.min(v.x, max.x)
+      n.y = Math.min(v.y, max.y)
+    }
+    return n
   }
   
   static normalize(a: Vec2): Vec2 {

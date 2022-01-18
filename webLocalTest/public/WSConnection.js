@@ -46,8 +46,8 @@ export class WSConnection {
         this.hostAddr = 'ws://' + hostIP + '/ws';
         this.connect();
     }
-    setStatus(text) { var _a; (_a = this.onSetStatus) === null || _a === void 0 ? void 0 : _a.call(this, text); }
-    consoleLine(text) { var _a; (_a = this.onConsoleLine) === null || _a === void 0 ? void 0 : _a.call(this, text); }
+    setStatus(text) { this.onSetStatus?.(text); }
+    consoleLine(text) { this.onConsoleLine?.(text); }
     send(data) {
         if (this.ws.readyState == WebSocket.OPEN)
             this.ws.send(data);
