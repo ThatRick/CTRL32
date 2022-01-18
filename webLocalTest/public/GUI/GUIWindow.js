@@ -2,23 +2,40 @@ import Vec2, { vec2 } from '../Vector2.js';
 import { htmlElement } from '../HTML.js';
 import { GUIElement, Movable, Clickable, Resizable } from './GUIElement.js';
 const windowStyle = {
-    backgroundColor: 'grey',
-    border: 'solid black 1px',
+    backgroundColor: 'DimGray',
+    border: 'solid Gray 1px',
+    borderRadius: '3px',
     display: 'flex',
     flexDirection: 'column',
+};
+const barStyle = {
+    backgroundColor: 'Gray',
+    color: 'White',
+    display: 'flex',
+    width: '100%',
+    alignItems: 'center',
+};
+const userContentStyle = {
+    color: 'White',
+    flexGrow: '1',
+    margin: '0px',
+    padding: '0px',
+};
+const buttonStyle = {
+    padding: '0px 3px',
+    borderWidth: '1px',
+    borderRadius: '3px',
+    height: '20px',
+    backgroundColor: 'Silver',
+    lineHeight: '0px'
 };
 export class GUIWindow extends GUIElement {
     constructor(pos, options) {
         super(pos, options.size ?? vec2(300, 300), windowStyle);
         this.options = options;
-        this.didResize = () => {
-            this.status.textContent = this.userContentSize.toString();
-        };
         this.topBar = htmlElement('div', {
             style: {
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center'
+                ...barStyle
             },
             parent: this.node
         });
@@ -26,14 +43,14 @@ export class GUIWindow extends GUIElement {
             textContent: options.title || 'GUIWindow',
             style: {
                 flexGrow: '1',
-                padding: '0px 3px'
+                padding: '0px 3px',
             },
             parent: this.topBar
         });
         new Movable(this.title, this);
         this.maximizeBtn = htmlElement('button', {
             style: {
-                padding: '0px 3px'
+                ...buttonStyle
             },
             textContent: '◰',
             setup: elem => {
@@ -44,8 +61,8 @@ export class GUIWindow extends GUIElement {
         new Clickable(this.maximizeBtn, () => { this.resizeToContent(); });
         this.closeBtn = htmlElement('button', {
             style: {
-                backgroundColor: 'FireBrick',
-                padding: '0px 3px'
+                ...buttonStyle,
+                color: 'FireBrick'
             },
             textContent: '✕',
             setup: elem => {
@@ -56,43 +73,54 @@ export class GUIWindow extends GUIElement {
         new Clickable(this.closeBtn, () => { this.remove(); });
         this.userContainer = htmlElement('div', {
             style: {
-                backgroundColor: 'darkslategray',
-                color: 'lemonchiffon',
-                flexGrow: '1',
-                margin: '0px',
-                padding: '0px',
+                ...userContentStyle,
                 overflow: options.scrollbars ? 'auto' : 'hidden',
             },
             parent: this.node
         });
-        this.bottomBar = htmlElement('div', {
-            style: {
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            },
-            parent: this.node
-        });
-        this.userControls = htmlElement('div', {
-            style: {
-                display: 'flex',
-                flexGrow: '1'
-            },
-            parent: this.bottomBar
-        });
-        this.status = htmlElement('div', {
-            parent: this.bottomBar
-        });
-        this.resizeSymbol = htmlElement('div', {
-            textContent: '⋰',
-            style: {
-                padding: '0px 3px',
-            },
-            parent: this.bottomBar
-        });
-        new Resizable(this.resizeSymbol, this);
-        this.node.appendChild(this.bottomBar);
+        if (options.noStatusBar) {
+            this.resizeSymbol = htmlElement('div', {
+                textContent: '⋰',
+                style: {
+                    padding: '0px 3px',
+                    position: 'absolute',
+                    right: '0px',
+                    bottom: '0px'
+                },
+                parent: this.node
+            });
+            new Resizable(this.resizeSymbol, this);
+        }
+        else {
+            this.bottomBar = htmlElement('div', {
+                style: {
+                    ...barStyle,
+                    justifyContent: 'space-between',
+                },
+                parent: this.node
+            });
+            this.userControls = htmlElement('div', {
+                style: {
+                    display: 'flex',
+                    flexGrow: '1'
+                },
+                parent: this.bottomBar
+            });
+            this.status = htmlElement('div', {
+                parent: this.bottomBar
+            });
+            this.resizeSymbol = htmlElement('div', {
+                textContent: '⋰',
+                style: {
+                    padding: '0px 3px',
+                },
+                parent: this.bottomBar
+            });
+            new Resizable(this.resizeSymbol, this);
+            this.didResize = () => {
+                this.status.textContent = this.userContentSize.toString();
+            };
+        }
         if (options.content) {
             this.setContent(options.content);
         }

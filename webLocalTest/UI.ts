@@ -9,7 +9,7 @@ import { Checkbox } from './UI/UICheckbox.js'
 import { ActionButton } from './UI/UIActionButton.js'
 import { ObjectView } from './UI/UIObjectView.js'
 
-import { OnlineTrendGraph } from './OnlineTrendGraph.js'
+import { LineGraph } from './LineGraph.js'
 
 export { ActionButton, ObjectView }
 
@@ -30,10 +30,18 @@ const popupOffset = vec2(100, 40)
 
 function createObjectView(data: Record<string, number>, title: string) {
     const objView = new ObjectView(data)
-    const window = new GUIWindow(popupPos, { content: objView.node, title, autoSize: true })
+    const window = new GUIWindow(popupPos, { content: objView.node, title, autoSize: true, noStatusBar: true })
     gui.addElement(window)
     popupPos.add(popupOffset)
     return objView
+}
+
+function createDataView(data: ArrayBuffer, title = 'Data Viewer') {
+    const dataViewer = new DataViewer()
+    dataViewer.setData(data)
+    const dataViewerWindow = new GUIWindow(vec2(100, 400), { content: dataViewer.node, autoSize: true, title })
+    gui.addElement(dataViewerWindow)
+    return dataViewer
 }
 
 export function CreateUI() {
@@ -44,8 +52,9 @@ export function CreateUI() {
     gui = new GUIManager(UI.desktop)
 
     const log = new Console()
-    log.node.classList.add('console')
-    const consoleWindow = new GUIWindow(vec2(100, 400), { size: vec2(700, 300), content: log.node, scrollbars: true })
+
+    const consoleWindow = new GUIWindow(vec2(100, 400), { size: vec2(700, 300), content: log.node, scrollbars: true, title: 'Console' })
+    consoleWindow.userContainer.classList.add('console')
     gui.addElement(consoleWindow)
 
     log.line('Hello World!')
@@ -63,6 +72,7 @@ export function CreateUI() {
         setStatus,
         log,
         createObjectView,
+        createDataView,
         connectionControls: UI.connectionControls,
         consoleControls:    UI.consoleControls,
     }
@@ -89,19 +99,19 @@ Wireless connectivity:
             resize: 'none'
         }
     })
-    const textWindow = new GUIWindow(vec2(100, 100), { content: textArea, autoSize: true })
+    const textWindow = new GUIWindow(vec2(100, 100), { content: textArea, autoSize: true, noStatusBar: true, title: 'ESP32 info' })
     gui.addElement(textWindow)
 
-    const graph = new OnlineTrendGraph(400, 300)
+    const graph = new LineGraph(400, 300)
     setTimeout(() => {
         console.log(graph.canvas)
-        const trendWindow = new GUIWindow(vec2(420, 100), { content: graph.canvas, autoSize: true })
+        const trendWindow = new GUIWindow(vec2(420, 100), { content: graph.canvas, autoSize: true, title: 'Sine wave' })
         gui.addElement(trendWindow)
     })
 
     setInterval( () => {
-        const value = (Math.sin(Date.now() / 2000) + 1) * 0.4
+        const value = (Math.sin(Date.now() / 2000) * 0.4 + 0.5)
         graph.addValue(value)
     }, 100)
-        
+
 }

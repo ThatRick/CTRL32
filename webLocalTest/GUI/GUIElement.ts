@@ -32,7 +32,7 @@ export class GUIElement {
     }
 
     highlight(enabled: boolean) {
-        this.node.style.borderColor = enabled ? 'silver' : 'grey'
+        this.node.style.borderColor = enabled ? 'silver' : 'gray'
         this.node.style.zIndex = enabled ? '3' : '2'
     }
 

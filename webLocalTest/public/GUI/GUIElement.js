@@ -16,7 +16,7 @@ export class GUIElement {
         this.node.onpointerdown = this.onMouseDown;
     }
     highlight(enabled) {
-        this.node.style.borderColor = enabled ? 'silver' : 'grey';
+        this.node.style.borderColor = enabled ? 'silver' : 'gray';
         this.node.style.zIndex = enabled ? '3' : '2';
     }
     setPos(pos) {

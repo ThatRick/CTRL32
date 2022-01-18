@@ -17,6 +17,9 @@ ws.onConsoleLine = UI.log.line;
 ws.onSetStatus = UI.setStatus;
 new ActionButton(UI.connectionControls, 'Connect', ws.connect);
 new ActionButton(UI.connectionControls, 'Disconnect', ws.disconnect);
+// TESTING
+let logData = false;
+new ActionButton(UI.consoleControls, 'Log Data', () => { logData = true; });
 let msgID = 1;
 ///////////////////////////////////////////////////////////////////////////
 //                    Send Commands to Controller
@@ -102,6 +105,10 @@ ws.handleMessageData = (buffer) => {
     const { msgType, msgID, result, timeStamp } = readStruct(buffer, 0, MsgResponseHeader_t);
     const payload = buffer.slice(sizeOfStruct(MsgResponseHeader_t));
     UI.log.line(`[Response #${(msgID + '  ' + msgTypeNames[msgType]).padEnd(msgTypeNamesMaxLength)}  result: ${result}  time: ${timeStamp}  payload len: ${payload.byteLength}]`);
+    if (logData) {
+        logData = false;
+        UI.createDataView(buffer, 'Received data: ' + msgTypeNames[msgType]);
+    }
     switch (msgType) {
         case 0 /* PING */:
             requestInfo(1 /* CONTROLLER_INFO */, 0);

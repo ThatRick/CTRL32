@@ -200,11 +200,11 @@ export class DataTable
 
 export class DataViewer
 {
+    readonly node: HTMLDivElement
     private dataBuffer: ArrayBuffer
-    private root: HTMLDivElement
+    title:  HTMLSpanElement
     private header: {
         root:   HTMLDivElement
-        title:  HTMLSpanElement
         open:   HTMLButtonElement
         save:   HTMLButtonElement
         selectionOffset:    HTMLSpanElement
@@ -218,26 +218,24 @@ export class DataViewer
     private base16 = false
     private fileName: string
 
-    constructor(parent: HTMLElement)
+    constructor(parent?: HTMLElement)
     {
-        this.root = htmlElement('div', {
+        this.node = htmlElement('div', {
             style: {
+                display: 'flex',
+                flexDirection: 'column',
                 whiteSpace: 'pre',
                 fontFamily: 'monospace',
+                //position: 'relative'
             },
             parent: parent
         })
 
         const headerRoot = htmlElement('div', {
             style: {
-                backgroundColor: '#CCC',
-                position: 'fixed',
-                left: '0px', top: '0px',
-                padding: '0.5em',
-                width: '100%',
-                height: '2em'
+                display: 'flex',
             },
-            parent: this.root,
+            parent: this.node,
             setup: (elem) => {
                 elem.ondragover = (ev: DragEvent) => ev.preventDefault()
                 elem.ondrop = (ev: DragEvent) => this.openFile(ev)
@@ -246,11 +244,6 @@ export class DataViewer
 
         this.header = {
             root: headerRoot,
-            title: htmlElement('span', {
-                textContent: config.appName + ' - example data',
-                style: { paddingRight: '1em' },
-                parent: headerRoot
-            }),
             open: htmlElement('button', {
                 textContent: 'Open',
                 parent: headerRoot,
@@ -297,12 +290,12 @@ export class DataViewer
             }),
             selectionEndianess: htmlElement('select', {
                 setup: elem => {
-                    ['little endian', 'big endian'].forEach(endianess => htmlElement('option', {
+                    ['LE', 'BE'].forEach(endianess => htmlElement('option', {
                         setup: elem => elem.value = endianess,
                         textContent: endianess,
                         parent: elem
                     }))
-                    elem.onchange = ev => this.dataTable?.setEndianess(elem.value == 'little endian' ? true : false)
+                    elem.onchange = ev => this.dataTable?.setEndianess(elem.value == 'LE' ? true : false)
                 },
                 parent: headerRoot
             }),
@@ -325,11 +318,14 @@ export class DataViewer
         
         const verticalSpacer = htmlElement('div', {
             style: { height: headerRoot.clientHeight + 'px' },
-            parent: this.root
+            parent: this.node
         })
 
         this.content = htmlElement('div', {
-            parent: this.root,
+            parent: this.node,
+            style: {
+                flexGrow: '1'
+            },
             setup: elem => elem.tabIndex = -1
         })
     }
@@ -341,7 +337,7 @@ export class DataViewer
         const file = ev.dataTransfer.files[0]
         console.log(file.name)
         this.fileName = file.name
-        this.header.title.textContent = config.appName + ' - ' + file.name
+        if (this.title) this.title.textContent = config.appName + ' - ' + file.name
         const reader = new FileReader()
         reader.onload = ev => {
             const data = ev.target.result as ArrayBuffer

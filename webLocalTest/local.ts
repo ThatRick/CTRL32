@@ -1,4 +1,4 @@
-import { OnlineTrendGraph } from './OnlineTrendGraph.js'
+import { LineGraph } from './LineGraph.js'
 import {readStruct, DataType} from './TypedStructs.js'
 
 const WS_MSG_HEADER_SIZE = 4
@@ -24,7 +24,7 @@ Object.entries(UI).forEach(([key, elem]) => {
     if (!elem) console.error(`UI Element '${key}' not found`)
 });
 
-const graph = new OnlineTrendGraph(1024, 480)
+const graph = new LineGraph(1024, 480)
 
 UI.graph.appendChild(graph.canvas)
 

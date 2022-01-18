@@ -1,4 +1,8 @@
-export class OnlineTrendGraph
+interface LineGraphOptions {
+
+}
+
+export class LineGraph
 {
     public lineColor = '#44D'
     public bgColor = '#EEE'
@@ -36,13 +40,6 @@ export class OnlineTrendGraph
         this.offset = 0
     }
 
-    protected screenCanvas: HTMLCanvasElement
-    protected offScreenCanvas: HTMLCanvasElement
-    protected screenCtx: CanvasRenderingContext2D
-    protected bufferCtx: CanvasRenderingContext2D
-
-    protected offset: number = 0
-
     constructor(width: number, height: number)
     {
         this.screenCanvas = document.createElement('canvas')
@@ -73,6 +70,13 @@ export class OnlineTrendGraph
         // Blit buffer to screen with 90deg rotated
         this.blit()
     }
+
+    protected screenCanvas: HTMLCanvasElement
+    protected offScreenCanvas: HTMLCanvasElement
+    protected screenCtx: CanvasRenderingContext2D
+    protected bufferCtx: CanvasRenderingContext2D
+
+    protected offset: number = 0
 
     protected drawBufferLine(pos: number, length: number) {
         const w = this.offScreenCanvas.width

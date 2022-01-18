@@ -2,33 +2,55 @@ import Vec2, {vec2} from '../Vector2.js'
 import { htmlElement } from '../HTML.js'
 import { GUIElement, Movable, Clickable, Resizable } from './GUIElement.js'
 
-const windowStyle: Partial<CSSStyleDeclaration> = {
-    backgroundColor: 'grey',
-    border: 'solid black 1px',
-    display: 'flex',
-    flexDirection: 'column',
-}
-
 interface GUIWindowOptions {
-    size?:          Vec2,
-    content?:       HTMLElement,
-    title?:         string
-    scrollbars?:    boolean,
-    autoSize?:      boolean
+    size?:              Vec2
+    content?:           HTMLElement
+    title?:             string
+    scrollbars?:        boolean
+    autoSize?:          boolean
+    noStatusBar?:       boolean
+}
+const windowStyle: Partial<CSSStyleDeclaration> = {
+    backgroundColor:    'DimGray',
+    border:             'solid Gray 1px',
+    borderRadius:       '3px',
+    display:            'flex',
+    flexDirection:      'column',
+}
+const barStyle: Partial<CSSStyleDeclaration> = {
+    backgroundColor:    'Gray',
+    color:              'White',
+    display:            'flex',
+    width:              '100%',
+    alignItems:         'center',
+}
+const userContentStyle: Partial<CSSStyleDeclaration> = {
+    color:              'White',
+    flexGrow:           '1',
+    margin:             '0px',
+    padding:            '0px',
+}
+const buttonStyle: Partial<CSSStyleDeclaration> = {
+    padding:            '0px 3px',
+    borderWidth:        '1px',
+    borderRadius:       '3px',
+    height:             '20px',
+    backgroundColor:    'Silver',
+    lineHeight:         '0px'
 }
 
 export class GUIWindow extends GUIElement {
-    topBar:         HTMLDivElement
-    title:          HTMLDivElement
-    closeBtn:       HTMLButtonElement
-    maximizeBtn:    HTMLButtonElement
-    userContainer:  HTMLDivElement
-    bottomBar:      HTMLDivElement
-    status:         HTMLDivElement
-    userControls:   HTMLDivElement
-    resizeSymbol:   HTMLDivElement
+    topBar:             HTMLDivElement
+        title:          HTMLDivElement
+        closeBtn:       HTMLButtonElement
+        maximizeBtn:    HTMLButtonElement
+    userContainer:      HTMLDivElement
+        userContent:    HTMLElement
+    bottomBar:          HTMLDivElement
+        status:         HTMLDivElement
+        userControls:   HTMLDivElement
+        resizeSymbol:   HTMLDivElement
 
-    userContent:    HTMLElement
 
     constructor(pos: Vec2, protected options: GUIWindowOptions)
     {
@@ -36,9 +58,7 @@ export class GUIWindow extends GUIElement {
 
         this.topBar = htmlElement('div', {
             style: {
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center'
+                ...barStyle
             },
             parent: this.node
         })
@@ -47,7 +67,7 @@ export class GUIWindow extends GUIElement {
             textContent: options.title || 'GUIWindow',
             style: {
                 flexGrow: '1',
-                padding: '0px 3px'
+                padding: '0px 3px',
             },
             parent: this.topBar
         })
@@ -55,9 +75,9 @@ export class GUIWindow extends GUIElement {
 
         this.maximizeBtn = htmlElement('button', {
             style: {
-                padding: '0px 3px'
+                ...buttonStyle
             },
-            textContent: '◰',
+            textContent: '◰', // ◰
             setup: elem => {
                 elem.type = 'button'
             },
@@ -67,10 +87,10 @@ export class GUIWindow extends GUIElement {
 
         this.closeBtn = htmlElement('button', {
             style: {
-                backgroundColor: 'FireBrick',
-                padding: '0px 3px'
+                ...buttonStyle,
+                color: 'FireBrick'
             },
-            textContent: '✕',
+            textContent: '✕',//'✕',
             setup: elem => {
                 elem.type = 'button'
             },
@@ -80,46 +100,56 @@ export class GUIWindow extends GUIElement {
 
         this.userContainer = htmlElement('div', {
             style: {
-                backgroundColor: 'darkslategray',
-                color: 'lemonchiffon',
-                flexGrow: '1',
-                margin: '0px',
-                padding: '0px',
+                ...userContentStyle,
                 overflow: options.scrollbars ? 'auto' : 'hidden',
             },
             parent: this.node
         })
 
-        this.bottomBar = htmlElement('div', {
-            style: {
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            },
-            parent: this.node
-        })
-        this.userControls = htmlElement('div', {
-            style: {
-                display: 'flex',
-                flexGrow: '1'
-            },
-            parent: this.bottomBar
-        })
-        this.status = htmlElement('div', {
-            parent: this.bottomBar
-        })
-        this.resizeSymbol = htmlElement('div', {
-            textContent: '⋰',
-            style: {
-                padding: '0px 3px',
-            },
-            parent: this.bottomBar
-        })
-        new Resizable(this.resizeSymbol, this)
-        
-        this.node.appendChild(this.bottomBar)
+        if (options.noStatusBar) {
+            this.resizeSymbol = htmlElement('div', {
+                textContent: '⋰',
+                style: {
+                    padding: '0px 3px',
+                    position: 'absolute',
+                    right: '0px',
+                    bottom: '0px'
+                },
+                parent: this.node
+            })
+            new Resizable(this.resizeSymbol, this)
+        } else {
+            this.bottomBar = htmlElement('div', {
+                style: {
+                    ...barStyle,
+                    justifyContent: 'space-between',
+                },
+                parent: this.node
+            })
+            this.userControls = htmlElement('div', {
+                style: {
+                    display: 'flex',
+                    flexGrow: '1'
+                },
+                parent: this.bottomBar
+            })
+            this.status = htmlElement('div', {
+                parent: this.bottomBar
+            })
+            this.resizeSymbol = htmlElement('div', {
+                textContent: '⋰',
+                style: {
+                    padding: '0px 3px',
+                },
+                parent: this.bottomBar
+            })
+            new Resizable(this.resizeSymbol, this)
 
+            this.didResize = () => {
+                this.status.textContent = this.userContentSize.toString()
+            }
+        }
+        
         if (options.content) {
             this.setContent(options.content)
         }
@@ -148,7 +178,4 @@ export class GUIWindow extends GUIElement {
         return vec2(box.width, box.height)
     }
 
-    didResize = () => {
-        this.status.textContent = this.userContentSize.toString()
-    }
 }
