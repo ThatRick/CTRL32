@@ -4,8 +4,8 @@ export class GUIElement {
     constructor(pos, size, style) {
         this.currentPos = vec2(0, 0);
         this.currentSize = vec2(0, 0);
-        this.onMouseDown = (ev) => {
-            this.gui?.selectElement(this);
+        this.onMouseDown = () => {
+            this._gui?.selectElement(this);
         };
         this.node = document.createElement('div');
         style && Object.assign(this.node.style, style);
@@ -47,23 +47,28 @@ export class GUIElement {
             this.didResize && setTimeout(this.didResize);
         }
     }
-    setGUI(gui) { this.gui = gui; }
+    setGUI(gui) { this._gui = gui; }
+    get gui() { return this._gui; }
     remove() {
-        this.gui?.removeElement(this);
+        this._gui?.removeElement(this);
         this.node.remove();
     }
 }
 export class Movable extends GUIPointerHandler {
     constructor(eventTarget, moveTarget) {
         super(eventTarget);
+        this.eventTarget = eventTarget;
         this.moveTarget = moveTarget;
         this.userOnDown = () => {
+            if (this.eventTarget == this.moveTarget.node)
+                this.moveTarget.onMouseDown();
             this.initPos.set(this.moveTarget.currentPos);
             this.node.style.cursor = 'grabbing';
             const parent = this.moveTarget.node.parentElement;
             this.maxPos = vec2(parent.clientWidth - this.moveTarget.currentSize.x, parent.clientHeight - this.moveTarget.currentSize.y);
         };
         this.userOnDrag = (offset) => {
+            offset.scale(1 / this.moveTarget.gui.scale);
             const draggedPos = Vec2.add(this.initPos, offset).limit(vec2(0, 0), this.maxPos);
             this.moveTarget.setPos(draggedPos);
         };

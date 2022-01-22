@@ -11,15 +11,17 @@ export class GUIManager
     
     selection: GUIElement
 
-    constructor(parent?: HTMLElement) {
+    private _scale = 1
+
+    constructor(parent?: HTMLElement, style: Partial<CSSStyleDeclaration> = {}) {
         this.node = htmlElement('div', {
             style: {
                 position:   'relative',
                 margin:     '0px',
                 padding:    '0px',
-                width:      '100%',
-                height:     '100%',
-                boxSizing:  'border-box'
+                boxSizing:  'border-box',
+                transformOrigin: 'top left',
+                ...style
             },
             parent
         })
@@ -64,10 +66,18 @@ export class GUIManager
 
     onPointerDown = (ev: PointerEvent) => {
         if (ev.target == this.node) this.deselect()
+        // ev.stopPropagation()
     }
 
     update() {
         this.elements.forEach(elem => elem.update())
         requestAnimationFrame(this.update.bind(this))
     }
+
+    setScale(scale: number) {
+        this._scale = scale
+        this.node.style.transform = `scale(${scale})`
+    }
+
+    get scale() { return this._scale }
 }

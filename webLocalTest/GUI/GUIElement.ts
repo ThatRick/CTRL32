@@ -4,6 +4,7 @@ import { GUIPointerHandler } from './GUIPointerHandlers.js'
 interface IGUI {
     selectElement(elem: GUIElement): void
     removeElement(elem: GUIElement): void
+    scale: number
 }
 
 export class GUIElement {
@@ -15,7 +16,7 @@ export class GUIElement {
     private newPos: Vec2
     private newSize: Vec2
 
-    private gui: IGUI
+    private _gui: IGUI
 
     constructor(pos: Vec2, size: Vec2, style?: Partial<CSSStyleDeclaration>) {
         this.node = document.createElement('div')
@@ -27,8 +28,8 @@ export class GUIElement {
         this.node.onpointerdown = this.onMouseDown
     }
 
-    onMouseDown = (ev: PointerEvent) => {
-        this.gui?.selectElement(this)
+    onMouseDown = () => {
+        this._gui?.selectElement(this)
     }
 
     highlight(enabled: boolean) {
@@ -63,10 +64,12 @@ export class GUIElement {
         }
     }
 
-    setGUI(gui: IGUI) { this.gui = gui }
+    setGUI(gui: IGUI) { this._gui = gui }
+
+    get gui() { return this._gui }
 
     remove() {
-        this.gui?.removeElement(this)
+        this._gui?.removeElement(this)
         this.node.remove()
     }
 
@@ -78,24 +81,26 @@ export class GUIElement {
 export class Movable extends GUIPointerHandler {
     initPos: Vec2
     maxPos: Vec2
-    constructor(eventTarget: HTMLElement, protected moveTarget: GUIElement) {
+    constructor(protected eventTarget: HTMLElement, protected moveTarget: GUIElement) {
         super(eventTarget)
         moveTarget.node.style.position = 'absolute'
         this.initPos = vec2(moveTarget.currentPos)
         eventTarget.style.cursor = 'grab'
     }
     userOnDown = () => {
+        if (this.eventTarget == this.moveTarget.node) this.moveTarget.onMouseDown()
         this.initPos.set(this.moveTarget.currentPos)
         this.node.style.cursor = 'grabbing'
         const parent = this.moveTarget.node.parentElement
         this.maxPos = vec2(parent.clientWidth - this.moveTarget.currentSize.x, parent.clientHeight - this.moveTarget.currentSize.y)
     }
     userOnDrag = (offset: Vec2) => {
+        offset.scale( 1/this.moveTarget.gui.scale )
         const draggedPos = Vec2.add(this.initPos, offset).limit(vec2(0, 0), this.maxPos)
             this.moveTarget.setPos(draggedPos)
         }
     userOnUp = () => {
-        this.node.style.cursor = 'grab'            
+        this.node.style.cursor = 'grab'
     }
 }
 

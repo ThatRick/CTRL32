@@ -163,7 +163,7 @@ export class GUIWindow extends GUIElement {
     }
 
     resizeToContent() {
-        const contentSize = vec2(this.userContent.scrollWidth, this.userContent.scrollHeight)
+        const contentSize = this.userContentSize
         const visibleSize = vec2(this.userContainer.clientWidth, this.userContainer.clientHeight)
         console.log('contentSize', contentSize)
         console.log('visible', visibleSize)
@@ -174,7 +174,7 @@ export class GUIWindow extends GUIElement {
     }
 
     get userContentSize() {
-        const box = this.userContainer.getBoundingClientRect()
+        const box = this.userContent.getBoundingClientRect()
         return vec2(box.width, box.height)
     }
 

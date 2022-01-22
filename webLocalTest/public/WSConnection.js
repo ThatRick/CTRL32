@@ -44,7 +44,7 @@ export class WSConnection {
         };
         this.hostIP = hostIP;
         this.hostAddr = 'ws://' + hostIP + '/ws';
-        this.connect();
+        // this.connect()
     }
     setStatus(text) { this.onSetStatus?.(text); }
     consoleLine(text) { this.onConsoleLine?.(text); }

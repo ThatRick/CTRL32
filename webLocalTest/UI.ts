@@ -1,6 +1,6 @@
 import { toHex, Vec2, vec2 } from './Util.js'
-import { htmlElement, HTMLTable } from './HTML.js'
-import { GUIManager, GUIWindow } from './GUI/GUI.js'
+import { backgroundGridStyle, htmlElement, HTMLTable } from './HTML.js'
+import { GUIElement, GUIManager, GUIWindow } from './GUI/GUI.js'
 
 import { DataViewer } from './DataViewer.js'
 
@@ -10,6 +10,7 @@ import { ActionButton } from './UI/UIActionButton.js'
 import { ObjectView } from './UI/UIObjectView.js'
 
 import { LineGraph } from './LineGraph.js'
+import { Movable } from './GUI/GUIElement.js'
 
 export { ActionButton, ObjectView }
 
@@ -45,26 +46,46 @@ function createDataView(data: ArrayBuffer, title = 'Data Viewer') {
 }
 
 export function CreateUI() {
+    // Check that all node elements are found in document
     Object.entries(UI).forEach(([key, elem]) => {
         if (!elem) console.error(`UI Element '${key}' not found`)
     });
+    // Create a graphical user interface manager
+    gui = new GUIManager(UI.desktop, { width: '100%', height: '100%' })
 
-    gui = new GUIManager(UI.desktop)
-
+    // Create a console log window
     const log = new Console()
-
     const consoleWindow = new GUIWindow(vec2(100, 400), { size: vec2(700, 300), content: log.node, scrollbars: true, title: 'Console' })
     consoleWindow.userContainer.classList.add('console')
-    gui.addElement(consoleWindow)
-
-    log.line('Hello World!')
-
-    const clearButton = new ActionButton(consoleWindow.userControls, 'Clear', log.clear)
-
-    const autoScrollToggle = new Checkbox(consoleWindow.userControls, 'auto scroll', toggled => {
+    new ActionButton(consoleWindow.userControls, 'Clear', log.clear)
+    new Checkbox(consoleWindow.userControls, 'auto scroll', toggled => {
         log.autoScroll = toggled
         if (toggled) log.scrollToEnd()
     })
+    gui.addElement(consoleWindow)
+    log.line('Hello World!')    
+
+    // Create a circuit window
+    const circuitGUI = new GUIManager(null, {
+        width: '800px', height: '600px',
+        position: 'relative',
+        backgroundColor: '#446',
+        ...backgroundGridStyle(vec2(14, 14), '#556'),
+    })
+    circuitGUI.setScale(0.5)
+    const circuitWindow = new GUIWindow(vec2(200, 300), { size: vec2(500, 400), content: circuitGUI.node, title: 'Circuit', scrollbars: true })
+
+    gui.addElement(circuitWindow)
+
+    // Populate circuit window with test elements
+    for (let i = 0; i < 4; i++) {
+        const elem = new GUIElement(vec2(100*i), vec2(200, 200), {
+            backgroundColor: 'dimgrey',
+            border: 'solid 1px grey'
+        })
+        new Movable(elem.node, elem)
+        circuitGUI.addElement(elem)
+    }
 
     createTestSet(gui)
 
