@@ -25,8 +25,8 @@ type TableCellIterator = (cell: HTMLTableCellElement, row: number, col: number) 
 export class HTMLTable
 {
     node: HTMLTableElement
-    private rows: HTMLTableRowElement[] = []
-    private cells: HTMLTableCellElement[][] = []
+    rows: HTMLTableRowElement[] = []
+    cells: HTMLTableCellElement[][] = []
 
     constructor (options: {
         rows: number,

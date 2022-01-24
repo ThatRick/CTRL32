@@ -28,7 +28,7 @@ function setStatus(text: string) { UI.connectionStatus.textContent = text }
 const popupPos = vec2(200, 200)
 const popupOffset = vec2(100, 40)
 
-function createObjectView(data: Record<string, number>, title: string) {
+function createObjectView(data: Record<string, number>, title: string, ) {
     const objView = new ObjectView(data)
     const window = new GUIWindow(popupPos, { content: objView.node, title, autoSize: true, noStatusBar: true })
     gui.addElement(window)

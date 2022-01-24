@@ -49,6 +49,11 @@ const requestCallbacks: Map<number, PendingRequest> = new Map()
 
 const monitoringValues: Map<number, number[]> = new Map()
 
+const objViewLinks = [
+    { dataKey: 'taskList',      dataSource: tasks },
+    { dataKey: 'circuitList',   dataSource: circuits },
+    { dataKey: 'circuitList',   dataSource: circuits },
+]
 // Setup UI and Websocket
 
 const UI = CreateUI()
@@ -238,7 +243,6 @@ ws.handleMessageData = (buffer: ArrayBuffer) => {
 ///////////////////////////////////////////////////////////////////////////
 //                      Message data handlers
 ///////////////////////////////////////////////////////////////////////////
-
 
 // ------------------------------------------------------------------------
 //      Controller info

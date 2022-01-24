@@ -1,0 +1,36 @@
+class WebSocketClient
+
+    constructor( config: {
+        onBinaryDataReceived
+        onTextReceived
+        onConnected
+        onDisconnected
+        onError
+        address
+    } )
+
+    sendBinaryData()
+    sendText()
+
+    connect()
+    disconnect()
+
+    get sendBytes()
+    get receivedBytes()
+
+    get aliveTime()
+
+    getAddress()
+    setAddress()
+
+
+class C32Link
+
+class C32Controller
+
+class C32Task
+
+class C32Circuit
+
+class C32Function
+
