@@ -42,7 +42,7 @@ export class WSConnection {
     constructor(hostIP: string) {
         this.hostIP = hostIP
         this.hostAddr = 'ws://' + hostIP + '/ws'
-        this.connect()
+        // this.connect()
     }
 
     connect = () => {
