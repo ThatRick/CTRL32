@@ -1,5 +1,5 @@
 import Vec2, {vec2} from "../Vector2.js"
-import { GUIElement } from "./GUIElement.js"
+import { GUIDynamicElement } from "./GUIDynamicElement.js"
 import { htmlElement } from "../HTML.js"
 
 
@@ -7,9 +7,9 @@ export class GUIManager
 {
     node: HTMLDivElement
 
-    elements = new Set<GUIElement>()
+    elements = new Set<GUIDynamicElement>()
     
-    selection: GUIElement
+    selection: GUIDynamicElement
 
     private _scale = 1
 
@@ -30,16 +30,9 @@ export class GUIManager
 
         requestAnimationFrame(this.update.bind(this))
     }
-
-    createElement(pos: Vec2, size: Vec2) {
-        const element = new GUIElement(pos, size)
-        this.addElement(element)
-        return element
-    }
     
-    addElement(element: GUIElement) {
+    addElement(element: GUIDynamicElement) {
         this.elements.add(element)
-        element.setGUI(this)
         this.node.appendChild(element.node)
     }
 
@@ -50,7 +43,7 @@ export class GUIManager
         this.selection = null
     }
 
-    selectElement(element: GUIElement) {
+    selectElement(element: GUIDynamicElement) {
         if (!this.elements.has(element)) return
         if (this.selection && this.selection != element) {
             this.deselect()
@@ -59,7 +52,7 @@ export class GUIManager
         element.highlight(true)
     }
 
-    removeElement(element: GUIElement) {
+    removeElement(element: GUIDynamicElement) {
         if (this.selection == element) this.selection = null
         this.elements.delete(element)
     }

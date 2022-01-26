@@ -1,8 +1,9 @@
 import { readStruct, sizeOfStruct, writeStruct, sizeOfType, typedArray, readTypedValues, readArrayOfStructs } from './TypedStructs.js';
-import { msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, ioTypeNames, MsgRequestHeader_t, MsgControllerInfo_t, MsgTaskInfo_t, MsgCircuitInfo_t, MsgFunctionInfo_t, IO_FLAG_CONV_TYPE_MASK, ioConvNames, msgTypeNamesMaxLength, MsgMonitoringCollection_t, MsgMonitoringCollectionItem_t, MsgResponseHeader_t, } from './ESP32.js';
+import { msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, MsgRequestHeader_t, MsgControllerInfo_t, MsgTaskInfo_t, MsgCircuitInfo_t, MsgFunctionInfo_t, msgTypeNamesMaxLength, MsgMonitoringCollection_t, MsgMonitoringCollectionItem_t, MsgResponseHeader_t, } from './ESP32.js';
 import { toHex } from './Util.js';
-import { ActionButton, CreateUI } from './UI.js';
+import { CreateUI } from './UI.js';
 import { WSConnection } from './WSConnection.js';
+import { Button } from './GUI/UIElement.js';
 let controller;
 const tasks = new Map();
 const circuits = new Map();
@@ -15,11 +16,11 @@ const UI = CreateUI();
 const ws = new WSConnection('192.168.0.241');
 ws.onConsoleLine = UI.log.line;
 ws.onSetStatus = UI.setStatus;
-new ActionButton(UI.connectionControls, 'Connect', ws.connect);
-new ActionButton(UI.connectionControls, 'Disconnect', ws.disconnect);
+UI.connectionControls.appendChild(Button('Connect', ws.connect).node);
+UI.connectionControls.appendChild(Button('Disconnect', ws.disconnect).node);
 // TESTING
 let logData = false;
-new ActionButton(UI.consoleControls, 'Log Data', () => { logData = true; });
+UI.consoleControls.appendChild(Button('Log Data', () => { logData = true; }).node);
 let msgID = 1;
 ///////////////////////////////////////////////////////////////////////////
 //                    Send Commands to Controller
@@ -281,7 +282,6 @@ function handleFunctionData(payload) {
     function checkIfComplete() {
         if (func.ioValues && func.name) {
             func.complete = true;
-            printFunctionBlock(func);
             monitoringEnable(func.data.pointer);
         }
     }
@@ -311,77 +311,4 @@ function showMonitoringValues(pointer) {
     }
     else
         view.updateValues(obj);
-}
-// ------------------------------------------------------------------------
-//      Parse opcode to library id and function id
-function parseOpcode(opcode) {
-    const lib_id = (opcode & 0xFF00) >>> 8;
-    const func_id = opcode & 0x00FF;
-    return { lib_id, func_id };
-}
-// ------------------------------------------------------------------------
-//      Print Function Block data to log
-function printFunctionBlock(func, withFlags = true) {
-    if (!func.complete) {
-        console.error('printFunctionBlock: FunctionBlock data is not complete');
-        return;
-    }
-    const valuePad = 18;
-    const typePad = 8;
-    const lines = [];
-    lines.push('');
-    const { lib_id, func_id } = parseOpcode(func.data.opcode);
-    lines.push(`Function Block ${func.name}:  id: ${lib_id}/${func_id}  ptr: ${toHex(func.data.pointer)}  flags: ${'b' + func.data.flags.toString(2).padStart(8, '0')}`);
-    lines.push('');
-    const topLine = ''.padStart(valuePad) + ' ┌─' + ''.padEnd(2 * typePad, '─') + '─┐  ' + ''.padEnd(valuePad);
-    lines.push(topLine);
-    const monValues = monitoringValues.get(func.data.pointer);
-    for (let i = 0; i < Math.max(func.data.numInputs, func.data.numOutputs); i++) {
-        let text;
-        // Input value
-        if (i < func.data.numInputs) {
-            const ioType = func.ioFlags[i] & IO_FLAG_TYPE_MASK;
-            const connected = func.ioFlags[i] & 16 /* REF */;
-            const inputValue = monValues ? monValues[i] : func.ioValues[i];
-            const ioTypeName = ioTypeNames[ioType];
-            const valueStr = (!monValues && connected) ? toHex(func.ioValues[i])
-                : (ioType == 3 /* FLOAT */) ? inputValue.toPrecision(8)
-                    : inputValue.toString();
-            const border = connected ? ' ┤>' : ' ┤ ';
-            text = valueStr.padStart(valuePad) + border + ioTypeName.padEnd(typePad);
-        }
-        else
-            text = ''.padStart(valuePad) + ' │ ' + ''.padEnd(typePad);
-        // Output value
-        const outputNum = func.data.numInputs + i;
-        if (outputNum < func.ioValues.length) {
-            const outputValue = monValues ? monValues[outputNum] : func.ioValues[outputNum];
-            const ioType = func.ioFlags[outputNum] & IO_FLAG_TYPE_MASK;
-            const ioTypeName = ioTypeNames[ioType];
-            const valueStr = (ioType == 3 /* FLOAT */) ? outputValue.toPrecision(8) : outputValue.toString();
-            text += ioTypeName.padStart(typePad) + ' ├ ' + valueStr.padEnd(valuePad);
-        }
-        else
-            text += ''.padStart(typePad) + ' │ ' + ''.padEnd(valuePad);
-        lines.push(text);
-    }
-    const bottomLine = ''.padStart(valuePad) + ' └─' + ''.padEnd(2 * typePad, '─') + '─┘  ' + ''.padEnd(valuePad);
-    lines.push(bottomLine);
-    if (withFlags) {
-        lines.push('IO Flags:');
-        func.ioFlags.forEach((flags, i) => {
-            let ioType = flags & IO_FLAG_TYPE_MASK;
-            let convType = flags & IO_FLAG_CONV_TYPE_MASK;
-            let line = '';
-            line = (line + i + ': ').padStart(20) + flags.toString(2).padStart(8, '0') + '  ' + ioTypeNames[ioType];
-            if (flags & 16 /* REF */) {
-                line += ' conn. ' + toHex(func.ioValues[i]) + ((flags & 32 /* REF_INVERT */) ? ' (inv) ' : '       ');
-                if (convType) {
-                    line += 'from ' + ioConvNames[convType];
-                }
-            }
-            lines.push(line);
-        });
-    }
-    UI.log.entry(lines);
 }

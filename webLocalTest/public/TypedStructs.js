@@ -1,3 +1,9 @@
+/*
+    Typed Structs Library for Typescript
+    Copyright (c) 2021 Markus Polvilampi <polvilampi@me.com>
+
+    Helper functions for reading and writing structs and arrays of binary data
+*/
 // Little endian if true
 const LE = true;
 export function defineStruct(structDefinition) {

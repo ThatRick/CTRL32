@@ -1,4 +1,3 @@
-import { GUIElement } from "./GUIElement.js";
 import { htmlElement } from "../HTML.js";
 export class GUIManager {
     constructor(parent, style = {}) {
@@ -23,14 +22,8 @@ export class GUIManager {
         this.node.onpointerdown = this.onPointerDown;
         requestAnimationFrame(this.update.bind(this));
     }
-    createElement(pos, size) {
-        const element = new GUIElement(pos, size);
-        this.addElement(element);
-        return element;
-    }
     addElement(element) {
         this.elements.add(element);
-        element.setGUI(this);
         this.node.appendChild(element.node);
     }
     deselect() {

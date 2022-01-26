@@ -1,24 +1,26 @@
 export class EventEmitter {
     constructor(eventSource) {
         this.eventSource = eventSource;
-        this.subscribers = new Map();
+        this.subscribers = new Set();
     }
-    subscribe(fn, eventMask) {
-        const typeMask = eventMask ? eventMask.reduce((mask, type) => mask += (1 << type), 0) : null;
-        this.subscribers.set(fn, typeMask);
+    subscribe(eventNames, callback) {
+        this.subscribers.add({ eventNames, callback });
     }
-    unsubscribe(fn) {
-        const successful = this.subscribers.delete(fn);
+    unsubscribe(callback) {
+        let successful = false;
+        this.subscribers.forEach(sub => {
+            if (sub.callback == callback)
+                successful = this.subscribers.delete(sub);
+        });
         if (!successful)
-            console.error('Could not unsubscribe event listener', fn, [...this.subscribers.keys()]);
+            console.error('Could not unsubscribe event subscriber', callback);
     }
-    emit(type) {
+    emit(eventName) {
         if (this.subscribers.size == 0)
             return;
-        const event = { type, source: this.eventSource };
-        this.subscribers.forEach((typeMask, fn) => {
-            if (typeMask == null || ((1 << type) & typeMask))
-                fn(event);
+        this.subscribers.forEach(({ eventNames, callback }) => {
+            if (eventNames.includes(eventName))
+                callback(eventName, this.eventSource);
         });
     }
     clear() {

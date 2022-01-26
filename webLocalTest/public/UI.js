@@ -1,14 +1,13 @@
 import { vec2 } from './Util.js';
 import { backgroundGridStyle, htmlElement } from './HTML.js';
-import { GUIElement, GUIManager, GUIWindow } from './GUI/GUI.js';
+import { GUIDynamicElement, GUIManager, GUIWindow } from './GUI/GUI.js';
 import { DataViewer } from './DataViewer.js';
 import { Console } from './UI/UIConsole.js';
-import { Checkbox } from './UI/UICheckbox.js';
-import { ActionButton } from './UI/UIActionButton.js';
 import { ObjectView } from './UI/UIObjectView.js';
 import { LineGraph } from './LineGraph.js';
-import { Movable } from './GUI/GUIElement.js';
-export { ActionButton, ObjectView };
+import { Button, Checkbox } from './GUI/UIElement.js';
+import { MoveHandle } from './GUI/GUIPointerHandlers.js';
+export { ObjectView };
 let gui;
 const UI = {
     connectionStatus: document.getElementById('connectionStatus'),
@@ -22,16 +21,14 @@ const popupPos = vec2(200, 200);
 const popupOffset = vec2(100, 40);
 function createObjectView(data, title) {
     const objView = new ObjectView(data);
-    const window = new GUIWindow(popupPos, { content: objView.node, title, autoSize: true, noStatusBar: true });
-    gui.addElement(window);
+    new GUIWindow(popupPos, gui, { content: objView.node, title, autoSize: true, noStatusBar: true });
     popupPos.add(popupOffset);
     return objView;
 }
 function createDataView(data, title = 'Data Viewer') {
     const dataViewer = new DataViewer();
     dataViewer.setData(data);
-    const dataViewerWindow = new GUIWindow(vec2(100, 400), { content: dataViewer.node, autoSize: true, title });
-    gui.addElement(dataViewerWindow);
+    new GUIWindow(vec2(100, 400), gui, { content: dataViewer.node, autoSize: true, title });
     return dataViewer;
 }
 export function CreateUI() {
@@ -44,34 +41,30 @@ export function CreateUI() {
     gui = new GUIManager(UI.desktop, { width: '100%', height: '100%' });
     // Create a console log window
     const log = new Console();
-    const consoleWindow = new GUIWindow(vec2(100, 400), { size: vec2(700, 300), content: log.node, scrollbars: true, title: 'Console' });
-    consoleWindow.userContainer.classList.add('console');
-    new ActionButton(consoleWindow.userControls, 'Clear', log.clear);
-    new Checkbox(consoleWindow.userControls, 'auto scroll', toggled => {
+    new GUIWindow(vec2(100, 400), gui, { title: 'Console', content: log.node, size: vec2(700, 300), scrollbars: true })
+        .classList('console')
+        .setup(elem => elem.userControls.content(Button('Clear', log.clear), Checkbox('auto scroll', toggled => {
         log.autoScroll = toggled;
         if (toggled)
             log.scrollToEnd();
-    });
-    gui.addElement(consoleWindow);
+    })));
     log.line('Hello World!');
     // Create a circuit window
     const circuitGUI = new GUIManager(null, {
         width: '800px', height: '600px',
         position: 'relative',
         backgroundColor: '#446',
+        boxSizing: 'border-box',
         ...backgroundGridStyle(vec2(14, 14), '#556'),
     });
-    circuitGUI.setScale(0.5);
-    const circuitWindow = new GUIWindow(vec2(200, 300), { size: vec2(500, 400), content: circuitGUI.node, title: 'Circuit', scrollbars: true });
-    gui.addElement(circuitWindow);
+    //circuitGUI.setScale(0.5)
+    new GUIWindow(vec2(200, 300), gui, { title: 'Circuit', content: circuitGUI.node, size: vec2(500, 400), scrollbars: true });
     // Populate circuit window with test elements
     for (let i = 0; i < 4; i++) {
-        const elem = new GUIElement(vec2(100 * i), vec2(200, 200), {
-            backgroundColor: 'dimgrey',
-            border: 'solid 1px grey'
-        });
-        new Movable(elem.node, elem);
-        circuitGUI.addElement(elem);
+        new GUIDynamicElement(vec2(100 * i), vec2(200, 200), circuitGUI)
+            .backgroundColor('dimgrey')
+            .style({ border: 'solid 1px grey', boxSizing: 'border-box' })
+            .setup(elem => new MoveHandle(elem.node, elem));
     }
     createTestSet(gui);
     return {
@@ -102,13 +95,11 @@ Wireless connectivity:
             resize: 'none'
         }
     });
-    const textWindow = new GUIWindow(vec2(100, 100), { content: textArea, autoSize: true, noStatusBar: true, title: 'ESP32 info' });
-    gui.addElement(textWindow);
+    const textWindow = new GUIWindow(vec2(100, 100), gui, { content: textArea, autoSize: true, noStatusBar: true, title: 'ESP32 info' });
     const graph = new LineGraph(400, 300);
     setTimeout(() => {
         console.log(graph.canvas);
-        const trendWindow = new GUIWindow(vec2(420, 100), { content: graph.canvas, autoSize: true, title: 'Sine wave' });
-        gui.addElement(trendWindow);
+        const trendWindow = new GUIWindow(vec2(420, 100), gui, { content: graph.canvas, autoSize: true, title: 'Sine wave' });
     });
     setInterval(() => {
         const value = (Math.sin(Date.now() / 2000) * 0.4 + 0.5);

@@ -1,6 +1,7 @@
 import Vec2, { vec2 } from '../Vector2.js';
-import { htmlElement } from '../HTML.js';
-import { GUIElement, Movable, Clickable, Resizable } from './GUIElement.js';
+import { GUIDynamicElement } from './GUIDynamicElement.js';
+import { MoveHandle, ResizeHandle } from './GUIPointerHandlers.js';
+import { Button, Div, TextElem } from './UIElement.js';
 const windowStyle = {
     backgroundColor: 'DimGray',
     border: 'solid Gray 1px',
@@ -29,96 +30,48 @@ const buttonStyle = {
     backgroundColor: 'Silver',
     lineHeight: '0px'
 };
-export class GUIWindow extends GUIElement {
-    constructor(pos, options) {
-        super(pos, options.size ?? vec2(300, 300), windowStyle);
+export class GUIWindow extends GUIDynamicElement {
+    constructor(pos, gui, options) {
+        super(pos, options.size ?? vec2(300, 300), gui);
         this.options = options;
-        this.topBar = htmlElement('div', {
-            style: {
-                ...barStyle
-            },
-            parent: this.node
-        });
-        this.title = htmlElement('div', {
-            textContent: options.title || 'GUIWindow',
-            style: {
-                flexGrow: '1',
-                padding: '0px 3px',
-            },
-            parent: this.topBar
-        });
-        new Movable(this.title, this);
-        this.maximizeBtn = htmlElement('button', {
-            style: {
-                ...buttonStyle
-            },
-            textContent: '◰',
-            setup: elem => {
-                elem.type = 'button';
-            },
-            parent: this.topBar
-        });
-        new Clickable(this.maximizeBtn, () => { this.resizeToContent(); });
-        this.closeBtn = htmlElement('button', {
-            style: {
-                ...buttonStyle,
-                color: 'FireBrick'
-            },
-            textContent: '✕',
-            setup: elem => {
-                elem.type = 'button';
-            },
-            parent: this.topBar
-        });
-        new Clickable(this.closeBtn, () => { this.remove(); });
-        this.userContainer = htmlElement('div', {
-            style: {
-                ...userContentStyle,
-                overflow: options.scrollbars ? 'auto' : 'hidden',
-            },
-            parent: this.node
-        });
+        this.style(windowStyle);
+        this.content(Div(TextElem(options.title || 'GUIWindow')
+            .style({ flexGrow: '1', padding: '0px 3px' })
+            .setupNode(node => new MoveHandle(node, this)), Button('◰', () => this.resizeToContent())
+            .style(buttonStyle), Button('✕', () => this.remove())
+            .style(buttonStyle)
+            .color('FireBrick'))
+            .style(barStyle), Div()
+            .setup(elem => this.userContainer = elem)
+            .style({
+            ...userContentStyle,
+            overflow: options.scrollbars ? 'auto' : 'hidden',
+        }));
         if (options.noStatusBar) {
-            this.resizeSymbol = htmlElement('div', {
-                textContent: '⋰',
-                style: {
-                    padding: '0px 3px',
-                    position: 'absolute',
-                    right: '0px',
-                    bottom: '0px'
-                },
-                parent: this.node
-            });
-            new Resizable(this.resizeSymbol, this);
+            this.content(TextElem('⋰')
+                .style({
+                padding: '0px 3px',
+                position: 'absolute',
+                right: '0px',
+                bottom: '0px'
+            })
+                .setupNode(node => new ResizeHandle(node, this)));
         }
         else {
-            this.bottomBar = htmlElement('div', {
-                style: {
-                    ...barStyle,
-                    justifyContent: 'space-between',
-                },
-                parent: this.node
-            });
-            this.userControls = htmlElement('div', {
-                style: {
-                    display: 'flex',
-                    flexGrow: '1'
-                },
-                parent: this.bottomBar
-            });
-            this.status = htmlElement('div', {
-                parent: this.bottomBar
-            });
-            this.resizeSymbol = htmlElement('div', {
-                textContent: '⋰',
-                style: {
-                    padding: '0px 3px',
-                },
-                parent: this.bottomBar
-            });
-            new Resizable(this.resizeSymbol, this);
+            this.content(Div(Div()
+                .setup(elem => this.userControls = elem)
+                .style({
+                display: 'flex',
+                flexGrow: '1'
+            }), Div().setup(elem => this.status = elem), TextElem('⋰')
+                .style({ padding: '0px 3px' })
+                .setupNode(node => new ResizeHandle(node, this)))
+                .style({
+                ...barStyle,
+                justifyContent: 'space-between',
+            }));
             this.didResize = () => {
-                this.status.textContent = this.userContentSize.toString();
+                this.status.textContent(this.userContentSize.toString());
             };
         }
         if (options.content) {
@@ -127,14 +80,14 @@ export class GUIWindow extends GUIElement {
     }
     setContent(content) {
         content.style.boxSizing = 'border-box';
-        this.userContainer.appendChild(content);
+        this.userContainer.contentNodes(content);
         this.userContent = content;
         if (this.options.autoSize)
             setTimeout(() => this.resizeToContent(), 100);
     }
     resizeToContent() {
         const contentSize = this.userContentSize;
-        const visibleSize = vec2(this.userContainer.clientWidth, this.userContainer.clientHeight);
+        const visibleSize = vec2(this.userContainer.node.clientWidth, this.userContainer.node.clientHeight);
         console.log('contentSize', contentSize);
         console.log('visible', visibleSize);
         console.log('clientRect', this.userContentSize);
