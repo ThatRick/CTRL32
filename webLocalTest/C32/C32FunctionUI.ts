@@ -1,6 +1,6 @@
-import { toHex } from "../Util.js"
-import { C32Function } from "./C32Function.js"
-import { ioConvNames, ioTypeNames, IO_FLAG, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE_MASK, IO_TYPE, parseOpcode } from "./C32Types.js"
+import { toHex } from '../Util.js'
+import { C32Function } from './C32Function.js'
+import { ioConvNames, ioTypeNames, IO_FLAG, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE_MASK, IO_TYPE, parseOpcode } from './C32Types.js'
 
 
 // ------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { WebSocketClient } from "../WebSocketClient.js"
+import { WebSocketClient } from '../WebSocketClient.js'
 import { readStruct, DataType, sizeOfStruct, writeStruct, StructValues, sizeOfType, typedArray, readTypedValues, readStructElement, DataSize, StructDefinition, readArrayOfStructs } from '../TypedStructs.js'
 import {
     MSG_TYPE,
@@ -16,10 +16,10 @@ import {
     MsgMonitoringCollectionItem_t,
     MsgResponseHeader_t,
 } from './C32Types.js'
-import { C32Function } from "./C32Function.js"
-import { C32Circuit } from "./C32Circuit.js"
-import { C32Task } from "./C32Task.js"
-import { C32Controller } from "./C32Controller.js"
+import { C32Function } from './C32Function.js'
+import { C32Circuit } from './C32Circuit.js'
+import { C32Task } from './C32Task.js'
+import { C32Controller } from './C32Controller.js'
 
 interface MemDataRequest {
     pointer:    number
@@ -46,6 +46,7 @@ export class C32DataLink
 
     constructor(client: WebSocketClient) {
         this.client = client
+        this.client.onBinaryDataReceived = this.handleMessageData
     }
 
     ///////////////////////////////////////////////////////////////////////////

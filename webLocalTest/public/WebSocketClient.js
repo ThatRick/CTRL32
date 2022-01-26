@@ -1,44 +1,50 @@
 import { EventEmitter } from "./Events.js";
 export class WebSocketClient {
-    constructor(config) {
-        this.config = config;
-        this._status = '';
+    constructor() {
+        this.events = new EventEmitter(this);
+        this._status = 'Offline';
         this._sentBytes = 0;
         this._receivedBytes = 0;
         this._connectionStartTime = 0;
-        this.events = new EventEmitter(this);
-        if (config.address)
-            this.setHostIp(config.address);
+        this._connected = false;
+        this.onopen = (ev) => {
+            this._connectionStartTime = Date.now();
+            this._connected = true;
+            this.setStatus(`Online: ${this.hostAddr}`);
+            this.events.emit('connected');
+        };
+        this.onclose = (ev) => {
+            this._connected = false;
+            this.setStatus(`Offline`);
+            this.events.emit('disconnected');
+        };
+        this.onerror = (ev) => {
+            this._connected = false;
+            this.setStatus(`Error: ${this.hostAddr}`);
+            this.events.emit('error');
+        };
+        this.onmessage = (ev) => {
+            if (typeof ev.data == 'string') {
+                this._receivedBytes += ev.data.length;
+                this.onTextReceived?.(ev.data);
+            }
+            else if (typeof ev.data == 'object') {
+                const data = ev.data;
+                this._receivedBytes += data.byteLength;
+                this.onBinaryDataReceived?.(data);
+            }
+            else {
+                console.error('Unknown message data type:', typeof ev.data);
+            }
+            this.events.emit('received');
+        };
     }
-    setStatus(status) {
-        this._status = status;
-        this.events.emit('statusChanged');
-    }
-    onopen(ev) {
-        this.events.emit('connected');
-        this._connectionStartTime = Date.now();
-    }
-    onclose(ev) {
-        this.events.emit('disconnected');
-    }
-    onerror(ev) {
-        this.events.emit('error');
-    }
-    onmessage(ev) {
-        if (typeof ev.data == 'string') {
-            this._receivedBytes += ev.data.length;
-            this.config.onTextReceived?.(ev.data);
-        }
-        else if (typeof ev.data == 'object') {
-            const data = ev.data;
-            this._receivedBytes += data.byteLength;
-            this.config.onBinaryDataReceived?.(data);
-        }
-        else {
-            console.error('Unknown message data type:', typeof ev.data);
-        }
-        this.events.emit('received');
-    }
+    get statusText() { return this._status; }
+    get hostAddr() { return this._hostAddr; }
+    get sentBytes() { return this._sentBytes; }
+    get receivedBytes() { return this._receivedBytes; }
+    get aliveTime() { return (Date.now() - this._connectionStartTime) / 1000; }
+    get connected() { return this._connected; }
     sendBinaryData(data) {
         if (this._ws.readyState == WebSocket.OPEN) {
             this._sentBytes += data.byteLength;
@@ -53,11 +59,11 @@ export class WebSocketClient {
             this.events.emit('sent');
         }
     }
-    connect() {
-        if (!this._hostIp)
-            return;
-        this.setStatus("Connecting to " + this._hostIp);
-        const ws = new WebSocket(this._hostIp);
+    connect(hostIp) {
+        this._hostAddr = hostIp;
+        const url = 'ws://' + hostIp + '/ws';
+        this.setStatus('Connecting: ' + this._hostAddr);
+        const ws = new WebSocket(url);
         ws.binaryType = 'arraybuffer';
         ws.onmessage = this.onmessage;
         ws.onopen = this.onopen;
@@ -67,14 +73,11 @@ export class WebSocketClient {
     }
     disconnect() {
         this._ws.close();
+        if (!this.connected)
+            this.setStatus('Offline');
     }
-    setHostIp(address) {
-        this._hostIp = address;
-        this.events.emit('hostIpChanged');
+    setStatus(status) {
+        this._status = status;
+        this.events.emit('statusChanged');
     }
-    get statusText() { return this._status; }
-    get hostIp() { return this._hostIp; }
-    get sendBytes() { return this._sentBytes; }
-    get receivedBytes() { return this._receivedBytes; }
-    get aliveTime() { return (Date.now() - this._connectionStartTime) / 1000; }
 }

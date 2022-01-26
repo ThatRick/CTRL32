@@ -1,9 +1,9 @@
 import { readStruct, sizeOfStruct, writeStruct, sizeOfType, typedArray, readTypedValues, readArrayOfStructs } from '../TypedStructs.js';
 import { msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, MsgRequestHeader_t, MsgControllerInfo_t, MsgTaskInfo_t, MsgCircuitInfo_t, MsgFunctionInfo_t, msgTypeNamesMaxLength, MsgMonitoringCollection_t, MsgMonitoringCollectionItem_t, MsgResponseHeader_t, } from './C32Types.js';
-import { C32Function } from "./C32Function.js";
-import { C32Circuit } from "./C32Circuit.js";
-import { C32Task } from "./C32Task.js";
-import { C32Controller } from "./C32Controller.js";
+import { C32Function } from './C32Function.js';
+import { C32Circuit } from './C32Circuit.js';
+import { C32Task } from './C32Task.js';
+import { C32Controller } from './C32Controller.js';
 export class C32DataLink {
     constructor(client) {
         this.tasks = new Map();
@@ -85,6 +85,7 @@ export class C32DataLink {
             }
         };
         this.client = client;
+        this.client.onBinaryDataReceived = this.handleMessageData;
     }
     ///////////////////////////////////////////////////////////////////////////
     //      REQUESTS TO CONTROLLER

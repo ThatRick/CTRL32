@@ -1,7 +1,7 @@
-import { EventEmitter } from "../Events.js";
-import { DataType, StructValues } from "../TypedStructs.js";
-import { C32DataLink } from "./C32DataLink.js";
-import { ITask, MsgTaskInfo_t, MSG_TYPE } from "./C32Types.js";
+import { EventEmitter } from '../Events.js';
+import { DataType, StructValues } from '../TypedStructs.js';
+import { C32DataLink } from './C32DataLink.js';
+import { ITask, MsgTaskInfo_t, MSG_TYPE } from './C32Types.js';
 
 export class C32Task implements ITask {
 

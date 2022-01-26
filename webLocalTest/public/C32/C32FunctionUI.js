@@ -1,5 +1,5 @@
-import { toHex } from "../Util.js";
-import { ioConvNames, ioTypeNames, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE_MASK, parseOpcode } from "./C32Types.js";
+import { toHex } from '../Util.js';
+import { ioConvNames, ioTypeNames, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE_MASK, parseOpcode } from './C32Types.js';
 // ------------------------------------------------------------------------
 //      Print Function Block data to log
 function functionToString(func, withFlags = true) {

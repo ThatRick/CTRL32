@@ -1,7 +1,7 @@
 import Vec2, {vec2} from '../Vector2.js'
 import { GUIDynamicElement, IGUI } from './GUIDynamicElement.js'
 import { MoveHandle, ResizeHandle } from './GUIPointerHandlers.js'
-import { Button, Div, TextElem, UIElement } from './UIElement.js'
+import { Button, Div, TextNode, UIElement } from './UIElement.js'
 
 
 const windowStyle: Partial<CSSStyleDeclaration> = {
@@ -56,7 +56,7 @@ export class GUIWindow extends GUIDynamicElement {
 
         this.content(
             Div(
-                TextElem(options.title || 'GUIWindow')
+                TextNode(options.title || 'GUIWindow')
                     .style({ flexGrow: '1', padding: '0px 3px' })
                     .setupNode(node => new MoveHandle(node, this)),
 
@@ -80,7 +80,7 @@ export class GUIWindow extends GUIDynamicElement {
         if (options.noStatusBar)
         {
             this.content(
-                TextElem('⋰')
+                TextNode('⋰')
                     .style({
                         padding: '0px 3px',
                         position: 'absolute',
@@ -103,7 +103,7 @@ export class GUIWindow extends GUIDynamicElement {
 
                     Div().setup(elem => this.status = elem),
                 
-                    TextElem('⋰')
+                    TextNode('⋰')
                         .style({ padding: '0px 3px' })
                         .setupNode(node => new ResizeHandle(node, this))
                 )

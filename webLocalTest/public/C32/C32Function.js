@@ -1,6 +1,6 @@
 import { EventEmitter } from "../Events.js";
 import { readTypedValues } from "../TypedStructs.js";
-import { IO_FLAG_TYPE_MASK, IO_TYPE_MAP } from "./C32Types.js";
+import { IO_FLAG_TYPE_MASK, IO_TYPE_MAP } from './C32Types.js';
 export class C32Function {
     constructor(data, link) {
         this.events = new EventEmitter(this);

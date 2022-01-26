@@ -1,22 +1,30 @@
+import { htmlElement } from "./HTML"
 
 export class EventEmitter<SourceType extends Object, EventNames extends string>
 {
-    subscribe(eventNames: EventNames[], callback: (event: EventNames, source: SourceType) => void): void {
-        this.subscribers.add({ eventNames, callback })
+    subscribe(eventName: EventNames, callback: (source: SourceType, event?: EventNames) => void): void {
+        if (this.subscribers.has(eventName)) {
+            this.subscribers.get(eventName).push(callback)
+        } else {
+            this.subscribers.set(eventName, [callback])
+        }
+    }
+
+    subscribeEvents(events: Partial<Record<EventNames, (source: SourceType, event?: EventNames) => void>>) {
+        Object.entries(events).forEach(([eventName, callback]) => {
+            this.subscribe(eventName as EventNames, callback as (source: SourceType, event?: EventNames) => void)
+        })
     }
 
     unsubscribe(callback: () => void) {
-        let successful = false
-        this.subscribers.forEach(sub => {
-            if (sub.callback == callback) successful = this.subscribers.delete(sub)
+        this.subscribers.forEach(callbacks => {
+            callbacks = callbacks.filter(entry => entry != callback)
         })
-        if (!successful) console.error('Could not unsubscribe event subscriber', callback)
     }
     emit(eventName: EventNames) {
         if (this.subscribers.size == 0) return
-        this.subscribers.forEach(({eventNames, callback}) => {
-            if (eventNames.includes(eventName)) callback(eventName, this.eventSource)
-        })
+        const callbacks = this.subscribers.get(eventName)
+        callbacks?.forEach(callback => callback(this.eventSource, eventName))
     }
 
     clear() {
@@ -24,8 +32,7 @@ export class EventEmitter<SourceType extends Object, EventNames extends string>
     }
 
     constructor(protected eventSource: SourceType) {
-
     }
     
-    protected subscribers = new Set<{eventNames: EventNames[], callback: (name: EventNames, source: SourceType) => void}>()
+    protected subscribers = new Map<string, Array<(source: SourceType, event: EventNames) => void>>()
 }

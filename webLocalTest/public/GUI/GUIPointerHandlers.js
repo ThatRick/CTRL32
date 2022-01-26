@@ -9,6 +9,9 @@ export class GUIPointerHandler {
             this.isDown = true;
             this.downPos.set(ev.pageX, ev.pageY);
             this.userOnDown?.();
+            if (this.userOnDrag) {
+                node.setPointerCapture(ev.pointerId);
+            }
         });
         node.addEventListener('pointerup', ev => {
             this.isDown = false;
@@ -20,9 +23,6 @@ export class GUIPointerHandler {
         node.addEventListener('pointermove', ev => {
             this.currentPos.set(ev.pageX, ev.pageY);
             if (this.isDown && this.userOnDrag) {
-                if (!node.hasPointerCapture(ev.pointerId)) {
-                    node.setPointerCapture(ev.pointerId);
-                }
                 const dragOffset = Vec2.sub(this.currentPos, this.downPos);
                 this.userOnDrag?.(dragOffset);
             }
@@ -31,6 +31,12 @@ export class GUIPointerHandler {
         });
         node.addEventListener('click', ev => {
             this.userOnClick?.();
+        });
+        node.addEventListener('pointerover', ev => {
+            this.userOnOver?.();
+        });
+        node.addEventListener('pointerout', ev => {
+            this.userOnOut?.();
         });
     }
 }
@@ -74,5 +80,43 @@ export class ResizeHandle extends GUIPointerHandler {
         };
         this.initSize = vec2(resizeTarget.currentSize);
         eventTarget.style.cursor = 'nwse-resize';
+    }
+}
+export class PanelHorizontalResizeHandle extends GUIPointerHandler {
+    constructor(eventTarget, resizeTarget, minWidth, maxWidth) {
+        super(eventTarget);
+        this.eventTarget = eventTarget;
+        this.resizeTarget = resizeTarget;
+        this.userOnDown = () => {
+            this.initWidth = this.resizeTarget.clientWidth;
+        };
+        this.userOnDrag = (offset) => {
+            let newWidth = (this.initWidth + offset.x);
+            if (this.minWidth)
+                newWidth = Math.max(this.minWidth, newWidth);
+            if (this.maxWidth)
+                newWidth = Math.min(this.maxWidth, newWidth);
+            if (this.targetWidth == null) {
+                requestAnimationFrame(this.resize);
+            }
+            this.targetWidth = newWidth;
+        };
+        this.userOnOver = () => {
+            this.effectTimer = setTimeout(() => this.eventTarget.style.opacity = '0.2', 100);
+        };
+        this.userOnOut = () => {
+            clearTimeout(this.effectTimer);
+            this.eventTarget.style.opacity = '0';
+        };
+        this.resize = () => {
+            if (this.targetWidth) {
+                this.resizeTarget.style.width = this.targetWidth + 'px';
+                this.targetWidth = null;
+            }
+        };
+        this.minWidth = minWidth;
+        this.maxWidth = maxWidth;
+        this.initWidth = resizeTarget.clientWidth;
+        eventTarget.style.cursor = 'ew-resize';
     }
 }

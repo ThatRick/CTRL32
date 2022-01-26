@@ -1,4 +1,4 @@
-import { EventEmitter } from "../Events.js";
+import { EventEmitter } from '../Events.js';
 export class C32Task {
     constructor(data, link) {
         this.events = new EventEmitter(this);

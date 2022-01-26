@@ -1,7 +1,7 @@
 import Vec2, { vec2 } from '../Vector2.js';
 import { GUIDynamicElement } from './GUIDynamicElement.js';
 import { MoveHandle, ResizeHandle } from './GUIPointerHandlers.js';
-import { Button, Div, TextElem } from './UIElement.js';
+import { Button, Div, TextNode } from './UIElement.js';
 const windowStyle = {
     backgroundColor: 'DimGray',
     border: 'solid Gray 1px',
@@ -35,7 +35,7 @@ export class GUIWindow extends GUIDynamicElement {
         super(pos, options.size ?? vec2(300, 300), gui);
         this.options = options;
         this.style(windowStyle);
-        this.content(Div(TextElem(options.title || 'GUIWindow')
+        this.content(Div(TextNode(options.title || 'GUIWindow')
             .style({ flexGrow: '1', padding: '0px 3px' })
             .setupNode(node => new MoveHandle(node, this)), Button('◰', () => this.resizeToContent())
             .style(buttonStyle), Button('✕', () => this.remove())
@@ -48,7 +48,7 @@ export class GUIWindow extends GUIDynamicElement {
             overflow: options.scrollbars ? 'auto' : 'hidden',
         }));
         if (options.noStatusBar) {
-            this.content(TextElem('⋰')
+            this.content(TextNode('⋰')
                 .style({
                 padding: '0px 3px',
                 position: 'absolute',
@@ -63,7 +63,7 @@ export class GUIWindow extends GUIDynamicElement {
                 .style({
                 display: 'flex',
                 flexGrow: '1'
-            }), Div().setup(elem => this.status = elem), TextElem('⋰')
+            }), Div().setup(elem => this.status = elem), TextNode('⋰')
                 .style({ padding: '0px 3px' })
                 .setupNode(node => new ResizeHandle(node, this)))
                 .style({

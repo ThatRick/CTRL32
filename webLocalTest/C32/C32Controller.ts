@@ -1,7 +1,7 @@
-import { EventEmitter } from "../Events";
-import { DataType, StructValues } from "../TypedStructs";
-import { C32DataLink } from "./C32DataLink";
-import { IController, MsgControllerInfo_t, MSG_TYPE } from "./C32Types";
+import { EventEmitter } from '../Events.js'
+import { DataType, StructValues } from '../TypedStructs.js'
+import { C32DataLink } from './C32DataLink.js'
+import { IController, MsgControllerInfo_t, MSG_TYPE } from './C32Types.js'
 
 export class C32Controller implements IController {
 

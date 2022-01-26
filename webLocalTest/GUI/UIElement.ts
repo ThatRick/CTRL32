@@ -1,4 +1,3 @@
-import { GUIPointerHandler } from "./GUIPointerHandlers"
 
 export interface IElement {
     node: HTMLElement
@@ -10,13 +9,11 @@ export function Div(...content: IElement[]) {
     return new UIElement('div').content(...content)
 }
 
-
 // TEXT
 
-export function TextElem(text: string) {
+export function TextNode(text: string) {
     return new UIElement('div').textContent(text)
 }
-
 
 //  BUTTON
 
@@ -28,6 +25,26 @@ export function Button(name: string, onClick: () => void) {
     return button
 }
 
+// HORIZONTAL CONTAINER
+
+export function HorizontalContainer(...children: IElement[]) {
+    return Div(...children)
+        .style({
+            display:    'flex',
+            flexFlow:   'row',
+        })
+}
+
+// VERTICAL CONTAINER
+
+export function VerticalContainer(...children: IElement[]) {
+    return Div(...children)
+        .style({
+            display:    'flex',
+            flexFlow:   'column',
+            height:     '100%'
+        })
+}
 
 // CHECKBOX
 
@@ -49,9 +66,14 @@ export function Checkbox(label: string, onChange: (checked: boolean) => void, la
     return container
 }
 
+// INPUT
+
+export function Input() {
+    return new UIElement('input')
+}
+
 
 // UIElement
-
 
 export class UIElement<NodeType extends keyof HTMLElementTagNameMap> {
     
@@ -138,6 +160,16 @@ export class UIElement<NodeType extends keyof HTMLElementTagNameMap> {
 
     backgroundColor(color: string) {
         this.node.style.backgroundColor = color
+        return this
+    }
+
+    height(height: string) {
+        this.node.style.height = height
+        return this
+    }
+
+    appendTo(parent: IElement) {
+        parent.node.appendChild(this.node)
         return this
     }
 

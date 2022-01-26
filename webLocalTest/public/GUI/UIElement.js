@@ -3,7 +3,7 @@ export function Div(...content) {
     return new UIElement('div').content(...content);
 }
 // TEXT
-export function TextElem(text) {
+export function TextNode(text) {
     return new UIElement('div').textContent(text);
 }
 //  BUTTON
@@ -12,6 +12,23 @@ export function Button(name, onClick) {
         .textContent(name)
         .onClick(onClick);
     return button;
+}
+// HORIZONTAL CONTAINER
+export function HorizontalContainer(...children) {
+    return Div(...children)
+        .style({
+        display: 'flex',
+        flexFlow: 'row',
+    });
+}
+// VERTICAL CONTAINER
+export function VerticalContainer(...children) {
+    return Div(...children)
+        .style({
+        display: 'flex',
+        flexFlow: 'column',
+        height: '100%'
+    });
 }
 // CHECKBOX
 export function Checkbox(label, onChange, labelOnLeft = false) {
@@ -26,6 +43,10 @@ export function Checkbox(label, onChange, labelOnLeft = false) {
     const container = new UIElement('div')
         .content(...(labelOnLeft ? [labelNode, checkbox] : [checkbox, labelNode]));
     return container;
+}
+// INPUT
+export function Input() {
+    return new UIElement('input');
 }
 // UIElement
 export class UIElement {
@@ -94,6 +115,14 @@ export class UIElement {
     }
     backgroundColor(color) {
         this.node.style.backgroundColor = color;
+        return this;
+    }
+    height(height) {
+        this.node.style.height = height;
+        return this;
+    }
+    appendTo(parent) {
+        parent.node.appendChild(this.node);
         return this;
     }
     static getUniqueID() {

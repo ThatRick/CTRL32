@@ -1,5 +1,6 @@
 import Vec2, {vec2} from "../Vector2.js"
 import { GUIDynamicElement } from "./GUIDynamicElement.js"
+import { UIElement } from "./UIElement.js"
 
 
 export class GUIPointerHandler
@@ -14,6 +15,9 @@ export class GUIPointerHandler
             this.isDown = true
             this.downPos.set(ev.pageX, ev.pageY)
             this.userOnDown?.()
+            if (this.userOnDrag) {
+                node.setPointerCapture(ev.pointerId)
+            }
         })
 
         node.addEventListener('pointerup', ev => {
@@ -27,9 +31,6 @@ export class GUIPointerHandler
         node.addEventListener('pointermove', ev => {
             this.currentPos.set(ev.pageX, ev.pageY)
             if (this.isDown && this.userOnDrag) {
-                if (!node.hasPointerCapture(ev.pointerId)) {
-                    node.setPointerCapture(ev.pointerId)
-                }
                 const dragOffset = Vec2.sub(this.currentPos, this.downPos)
                 this.userOnDrag?.(dragOffset)
             }
@@ -39,6 +40,14 @@ export class GUIPointerHandler
         node.addEventListener('click', ev => {
             this.userOnClick?.()
         })
+
+        node.addEventListener('pointerover', ev => {
+            this.userOnOver?.()
+        })
+
+        node.addEventListener('pointerout', ev => {
+            this.userOnOut?.()
+        })
     }
 
     userOnDown: () => void
@@ -46,6 +55,8 @@ export class GUIPointerHandler
     userOnDrag: (offset: Vec2) => void
     userOnHover: () => void
     userOnClick: () => void
+    userOnOver: () => void
+    userOnOut: () => void
 }
 
 export class MoveHandle extends GUIPointerHandler {
@@ -96,4 +107,50 @@ export class ResizeHandle extends GUIPointerHandler {
     }
 }
 
+export class PanelHorizontalResizeHandle extends GUIPointerHandler {
+    minWidth: number
+    maxWidth: number
+    initWidth: number
+    targetWidth: number
+
+    constructor(protected eventTarget: HTMLElement, protected resizeTarget: HTMLElement, minWidth?: number, maxWidth?: number) {
+        super(eventTarget)
+        this.minWidth = minWidth
+        this.maxWidth = maxWidth
+        this.initWidth = resizeTarget.clientWidth
+        eventTarget.style.cursor = 'ew-resize'
+    }
+
+    effectTimer: number
+
+    userOnDown = () => {
+        this.initWidth = this.resizeTarget.clientWidth
+    }
+
+    userOnDrag = (offset: Vec2) => {
+        let newWidth = (this.initWidth + offset.x)
+        if (this.minWidth) newWidth = Math.max(this.minWidth, newWidth)
+        if (this.maxWidth) newWidth = Math.min(this.maxWidth, newWidth)
+        if (this.targetWidth == null) {
+            requestAnimationFrame(this.resize)
+        }
+        this.targetWidth = newWidth
+    }
+
+    userOnOver = () => {
+        this.effectTimer = setTimeout(() => this.eventTarget.style.opacity = '0.2', 100)
+    }
+
+    userOnOut = () => {
+        clearTimeout(this.effectTimer)
+        this.eventTarget.style.opacity = '0'
+    }
+
+    protected resize = () => {
+        if (this.targetWidth) {
+            this.resizeTarget.style.width = this.targetWidth + 'px'
+            this.targetWidth = null
+        }
+    }
+}
 

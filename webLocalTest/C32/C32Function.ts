@@ -6,7 +6,7 @@ import {
     IO_FLAG,
     IO_FLAG_TYPE_MASK,
     IO_TYPE_MAP,
-    MsgFunctionInfo_t } from "./C32Types.js"
+    MsgFunctionInfo_t } from './C32Types.js'
 
 
 export class C32Function implements IFunctionBlock
