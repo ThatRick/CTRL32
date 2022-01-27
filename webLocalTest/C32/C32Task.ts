@@ -9,21 +9,42 @@ export class C32Task implements ITask {
     get circuits()  { return this._circuits }
     get complete()  { return (this._circuits != null) }
 
-    readonly events = new EventEmitter<typeof this, 'complete' | 'removed'>(this)
+    readonly link: C32DataLink
 
-    constructor(data: StructValues<typeof MsgTaskInfo_t>, link: C32DataLink) {
-        link.requestMemData(data.circuitList, data.circuitCount, DataType.uint32, circuitList => {
-            this._circuits = circuitList
-            if (this.complete) this.events.emit('complete')
-            circuitList.forEach(pointer => link.requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer))
-        })
+    readonly events = new EventEmitter<typeof this, 'complete' | 'removed' | 'dataUpdated' | 'circuitsLoaded'>(this)
+
+    updateData(data: StructValues<typeof MsgTaskInfo_t>) {
+        const circuitListModified = ( data.circuitCount != this._data.circuitCount || data.circuitList != this._data.circuitList )
+
+        this._data = data
+        this.events.emit('dataUpdated')
+
+        if (circuitListModified) this.getCircuitList()
     }
 
-    remove() {
-        this.events.emit('removed')
+    requestData() { this.link.requestInfo(MSG_TYPE.TASK_INFO, this.data.pointer) }
+
+    remove() { this.events.emit('removed') }
+
+    constructor(data: StructValues<typeof MsgTaskInfo_t>, link: C32DataLink) {
+        this._data = data
+        this.link = link
+        this.getCircuitList()
     }
 
     protected _data:       StructValues<typeof MsgTaskInfo_t>
     protected _circuits:   number[]
-    protected _complete:   boolean
+    protected hasCompleted = false
+
+    protected getCircuitList() {
+        this.link.requestMemData(this._data.circuitList, this._data.circuitCount, DataType.uint32, circuitList => {
+            this._circuits = circuitList
+            this.events.emit('circuitsLoaded')
+            if (!this.hasCompleted && this.complete) {
+                this.events.emit('complete')
+                this.hasCompleted = true
+            }
+            circuitList.forEach(pointer => this.link.requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer))
+        })
+    }
 }

@@ -1,3 +1,4 @@
+import { DataTable } from "../DataViewer"
 
 export interface IElement {
     node: HTMLElement
@@ -13,6 +14,12 @@ export function Div(...content: IElement[]) {
 
 export function TextNode(text: string) {
     return new UIElement('div').textContent(text)
+}
+
+// TEXT SPAN
+
+export function TextSpan(text: string) {
+    return new UIElement('span').textContent(text)
 }
 
 //  BUTTON
@@ -47,21 +54,27 @@ export function VerticalContainer(...children: IElement[]) {
 }
 
 // CHECKBOX
-
-export function Checkbox(label: string, onChange: (checked: boolean) => void, labelOnLeft = false) {
+export interface CheckboxHandle {
+    checkbox?: HTMLInputElement
+    label?: HTMLLabelElement
+}
+export function Checkbox(label: string, onChange: (checked: boolean) => void, handle?: CheckboxHandle) {
     const id = UIElement.getUniqueID()
 
-    const checkbox = new UIElement('input')
-        .type('checkbox')
-        .id(id)
+    const checkbox = new UIElement('input').type('checkbox').id(id)
         .setupNode(node => node.addEventListener('change', () => onChange(node.checked)))
 
-    const labelNode = new UIElement('label')
+    const labelNode = new UIElement('label').paddingLeft(2)
         .textContent(label)
         .labelFor(id)
 
-    const container = new UIElement('div')
-        .content(...(labelOnLeft ? [labelNode, checkbox] : [checkbox, labelNode]))
+    const container = HorizontalContainer( checkbox, labelNode )
+        .style({ alignItems: 'center' })
+
+    if (handle) {
+        handle.checkbox = checkbox.node
+        handle.label = labelNode.node
+    }
 
     return container
 }
@@ -72,6 +85,23 @@ export function Input() {
     return new UIElement('input')
 }
 
+// TABLE
+
+export function Table(...content: { node: HTMLTableRowElement }[] ) {
+    return new UIElement('table').content(...content)
+        .style({
+            tableLayout: 'auto',
+            borderCollapse: 'collapse',
+        })
+}
+
+export function TableRow(...content: { node: HTMLTableCellElement }[] ) {
+    return new UIElement('tr').content(...content)
+}
+
+export function TableCell(text: string) {
+    return new UIElement('td').textContent(text)
+}
 
 // UIElement
 
@@ -95,8 +125,12 @@ export class UIElement<NodeType extends keyof HTMLElementTagNameMap> {
         return this
     }
 
-    textContent(text: string) {
-        this.node.textContent = text
+    textContent(value: string | number) {
+        const text = (typeof value == 'number') ? value.toString() : value
+
+        if (text != this.node.textContent) {
+            this.node.textContent = text
+        }
         return this
     }
 
@@ -163,8 +197,13 @@ export class UIElement<NodeType extends keyof HTMLElementTagNameMap> {
         return this
     }
 
-    height(height: string) {
-        this.node.style.height = height
+    height(value: number) {
+        this.node.style.height = value + 'px'
+        return this
+    }
+
+    width(value: number) {
+        this.node.style.width = value + 'px'
         return this
     }
 
@@ -172,6 +211,29 @@ export class UIElement<NodeType extends keyof HTMLElementTagNameMap> {
         parent.node.appendChild(this.node)
         return this
     }
+
+    paddingLeft(value: number)   { this.node.style.paddingLeft = value + 'px';    return this }
+    paddingRight(value: number)  { this.node.style.paddingRight = value + 'px';   return this }
+    paddingTop(value: number)    { this.node.style.paddingTop = value + 'px';     return this }
+    paddingBottom(value: number) { this.node.style.paddingBottom = value + 'px';  return this }
+
+    paddingHorizontal(value: number) {
+        this.node.style.paddingLeft = value + 'px'
+        this.node.style.paddingRight = value + 'px'
+        return this
+    }
+
+    paddingVertical(value: number) {
+        this.node.style.paddingTop = value + 'px'
+        this.node.style.paddingBottom = value + 'px'
+        return this
+    }
+
+    padding(value: number) { this.node.style.padding = value + 'px';  return this }
+
+    flexGrow(value = 1) { this.node.style.flexGrow = value.toString();  return this }
+
+    align(value: 'left' | 'right' | 'center') { this.node.style.textAlign = value;  return this }
 
     private static idCounter = 1
 

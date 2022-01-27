@@ -4,11 +4,13 @@ import { C32Function } from './C32Function.js';
 import { C32Circuit } from './C32Circuit.js';
 import { C32Task } from './C32Task.js';
 import { C32Controller } from './C32Controller.js';
+import { EventEmitter } from '../Events.js';
 export class C32DataLink {
     constructor(client) {
         this.tasks = new Map();
         this.circuits = new Map();
         this.functionBlocks = new Map();
+        this.events = new EventEmitter(this);
         this.msgID = 1;
         this.memDataRequests = new Map();
         this.requestCallbacks = new Map();
@@ -158,18 +160,24 @@ export class C32DataLink {
     //      Controller info
     handleControllerData(payload) {
         const data = readStruct(payload, 0, MsgControllerInfo_t);
-        this.controller = new C32Controller(data, this);
+        if (this.controller)
+            this.controller.updateData(data);
+        else {
+            this.controller = new C32Controller(data, this);
+            this.events.emit('controllerLoaded', this.controller);
+        }
     }
     // ------------------------------------------------------------------------
     //      Task info
     handleTaskData(payload) {
         const data = readStruct(payload, 0, MsgTaskInfo_t);
-        const task = new C32Task(data, this);
-        if (this.tasks.has(data.pointer)) {
-            const oldtask = this.tasks.get(data.pointer);
-            oldtask.remove();
+        if (this.tasks.has(data.pointer))
+            this.tasks.get(data.pointer).updateData(data);
+        else {
+            const task = new C32Task(data, this);
+            this.tasks.set(data.pointer, task);
+            this.events.emit('taskLoaded', task);
         }
-        this.tasks.set(data.pointer, task);
     }
     // ------------------------------------------------------------------------
     //      Circuit info

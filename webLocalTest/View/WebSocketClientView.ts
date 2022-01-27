@@ -1,42 +1,65 @@
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input } from "../GUI/UIElement.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TableCell, Table, TableRow } from "../GUI/UIElement.js"
 import { WebSocketClient } from "../WebSocketClient.js"
-import { Color } from "./Colors.js"
 import { PanelElementView } from "./PanelElementView.js"
+import { valueWithSeparators } from "../Util.js"
+import { Color } from "./Colors.js"
 
 export function WebSocketClientView(client: WebSocketClient)
 {
     const HostInput = Input().type('url')
-        .style({ width: '120px' })
+        .style({
+            width: '0px',
+            flexGrow: '1',
+        })
         .setupNode(node => {
             node.placeholder = 'host ip'
             node.value = '192.168.0.241'
         })
-    const ConnectButton = Button('Open', () => { (!client.connected) ? client.connect(HostInput.node.value) : client.disconnect() })
-    const Status = TextNode(client.statusText).style({ paddingBottom: '4px' })
-    const SentBytes = TextNode('0 bytes')
-    const ReceivedBytes = TextNode('0 bytes')
-
-    client.events.subscribeEvents({
-        statusChanged:  () => { Status.textContent(client.statusText) },
-        sent:           () => { SentBytes.textContent(`${client.sentBytes} bytes`)},
-        received:       () => { ReceivedBytes.textContent(`${client.receivedBytes} bytes`)},
-        connected:      () => {
-            Status.color('#AAFFAA')
-            ConnectButton.textContent('Close')
-        },
-        disconnected:   () => {
-            Status.color('#AAAAAA')
-            ConnectButton.textContent('Open')
-        },
-        error:          () => { Status.color('#FFAAAA') },
+    const ConnectButton = Button('Connect', () => {
+        (!client.connected) ? client.connect(HostInput.node.value) : client.disconnect()
     })
+    const Status        = TextNode('Ready').paddingBottom(6)
+
+    const SentBytes     = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText)
+    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText)
 
     const Content = VerticalContainer(
-        HorizontalContainer( HostInput, ConnectButton ).style({ flexWrap: 'wrap' }),
-        Status,
-        HorizontalContainer( TextNode('Sent:'), SentBytes).style({ justifyContent: 'space-between' }),
-        HorizontalContainer( TextNode('Received:'), ReceivedBytes).style({ justifyContent: 'space-between' }),
+        HorizontalContainer( HostInput, ConnectButton ),
+        HorizontalContainer( Status ),
+        Table(
+            TableRow( TableCell('Sent'),     SentBytes,     TableCell('bytes') ),
+            TableRow( TableCell('Received'), ReceivedBytes, TableCell('bytes') ),
+        ).color(Color.SecondaryText)
     )
+
+    const PanelElement = new PanelElementView('WebSocket', Content.node)
+
+    PanelElement.status.textContent('Offline')
+    PanelElement.status.color('#AAAAAA')
+
+
+    client.events.subscribeEvents(
+    {
+        sent:      () => { SentBytes.textContent( valueWithSeparators(client.sentBytes) )},
+        received:  () => { ReceivedBytes.textContent( valueWithSeparators(client.receivedBytes) )},
+        connected: () => {
+            PanelElement.status.textContent('Online')
+            PanelElement.status.color('#AAFFAA')
+            ConnectButton.textContent('Close')
+            HostInput.node.disabled = true
+        },
+        disconnected: () => {
+            PanelElement.status.textContent('Offline')
+            PanelElement.status.color('#AAAAAA')
+            ConnectButton.textContent('Connect')
+            HostInput.node.disabled = false
+        },
+        error: () => {
+            PanelElement.status.textContent('Error')
+            PanelElement.status.color('#FFAAAA')
+        },
+        statusChanged: () => { Status.textContent(client.statusText)}
+    })
     
-    return new PanelElementView('Web Socket Link', Content.node)
+    return PanelElement
 }

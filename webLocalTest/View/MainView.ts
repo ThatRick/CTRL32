@@ -11,7 +11,7 @@ const Toolbar = HorizontalContainer().id('Toolbar')
         padding:            '4px'
     })
     .content(
-        TextNode('CONTROL-32 IDE'),
+        TextNode('CONTROL-32 IDE').color('#DDDDAA'),
     )
 
 const SidePanel = VerticalContainer().id('SidePanel')
@@ -33,7 +33,7 @@ Div().id('SidePanelResizeHandle')
         right:              '-4px',
         opacity:            '0'
     })
-    .setupNode(node => new PanelHorizontalResizeHandle(node, SidePanel.node, 100, 600))
+    .setupNode(node => new PanelHorizontalResizeHandle(node, SidePanel.node, 200, 600))
     .appendTo(SidePanel)
 
 

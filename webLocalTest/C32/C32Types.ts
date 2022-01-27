@@ -168,7 +168,7 @@ export const MsgControllerInfo_t = {
     freeHeap:           DataType.uint32,
     cpuFreq:            DataType.uint32,
     RSSI:               DataType.int32,
-    aliveTime:          DataType.float,
+    aliveTime:          DataType.uint32,
     tickCount:          DataType.uint32,
     taskCount:          DataType.uint32,
     taskList:           DataType.uint32,
@@ -183,9 +183,11 @@ export const MsgTaskInfo_t = {
     avgCPUTime:         DataType.float,
     lastActInterval:    DataType.uint32,
     avgActInterval:     DataType.float,
+    driftTime:          DataType.uint32,
     circuitCount:       DataType.uint32,
     circuitList:        DataType.uint32,
 }
+
 export const MsgCircuitInfo_t = {
     pointer:            DataType.uint32,
     funcCount:          DataType.uint32,

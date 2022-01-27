@@ -28,6 +28,7 @@ Time ControllerTask::tick() {
     if (!running) return UINT64_MAX;
     Time now = controller->getTime();
     if (now >= nextUpdateTime()) {
+        drift_us = now - nextUpdateTime();
         do baseTimer += interval_ms * 1000;
         while (nextUpdateTime() <= now);
         update();
@@ -35,7 +36,7 @@ Time ControllerTask::tick() {
     return nextUpdateTime();
 }
 
-inline uint64_t ControllerTask::nextUpdateTime() { return baseTimer + offset_ms * 1000; }
+inline Time ControllerTask::nextUpdateTime() { return baseTimer + offset_ms * 1000; }
 
 void ControllerTask::update() {
     Time startTime = controller->getTime();

@@ -72,7 +72,7 @@ export const MsgControllerInfo_t = {
     freeHeap: 5 /* uint32 */,
     cpuFreq: 5 /* uint32 */,
     RSSI: 4 /* int32 */,
-    aliveTime: 6 /* float */,
+    aliveTime: 5 /* uint32 */,
     tickCount: 5 /* uint32 */,
     taskCount: 5 /* uint32 */,
     taskList: 5 /* uint32 */,
@@ -86,6 +86,7 @@ export const MsgTaskInfo_t = {
     avgCPUTime: 6 /* float */,
     lastActInterval: 5 /* uint32 */,
     avgActInterval: 6 /* float */,
+    driftTime: 5 /* uint32 */,
     circuitCount: 5 /* uint32 */,
     circuitList: 5 /* uint32 */,
 };

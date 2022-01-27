@@ -1,12 +1,14 @@
 export const Color = {
-    Base: '#343434',
-    Panel: '#424242',
-    PanelElement: '#606060',
-    PanelElementHeader: '#707070',
-    Bar: '#565656',
+    Base: '#303030',
+    Panel: '#383838',
+    PanelElement: '#484848',
+    PanelElementHeader: '#5a5a5a',
+    Bar: '#505050',
     BorderDark: '#262626',
-    BorderLight: '#707070',
+    BorderLight: '#808080',
     Header: '#c0c0c0',
     Light: '#d3d3d3',
-    Selection: '#aaaaff'
+    Selection: '#aaaaff',
+    PrimaryText: '#fff',
+    SecondaryText: '#ccc'
 };

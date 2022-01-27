@@ -25,7 +25,7 @@
 #define CONTROLLER_PRIORITY 2
 
 #define MIN_CONTROLLER_INTERVAL 1U
-#define MAX_CONTROLLER_INTERVAL 100U
+#define MAX_CONTROLLER_INTERVAL 10U
 
 Controller* controller;
 Link* commLink;
@@ -151,9 +151,10 @@ void IRAM_ATTR onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, A
 
 void IRAM_ATTR ControllerLoop(void *) {
     for (;;) {
+        Time nextUpdateTime = controller->tick();
         commLink->processData();
-        uint32_t remainingToNextUpdate = controller->tick();
-        uint32_t delayTime = min(max(remainingToNextUpdate, MIN_CONTROLLER_INTERVAL), MAX_CONTROLLER_INTERVAL);
+        uint32_t remainingTimeToUpdate = nextUpdateTime - esp_timer_get_time();
+        uint32_t delayTime = min(max(remainingTimeToUpdate, MIN_CONTROLLER_INTERVAL), MAX_CONTROLLER_INTERVAL);
         delay(delayTime);
     }
 }
@@ -262,5 +263,5 @@ void setup()
 void loop()
 {
     delay(100);
-    ws.cleanupClients();
+    // ws.cleanupClients();
 }

@@ -14,14 +14,14 @@ public:
 
     Controller();
 
-    // Returns remaining time to next pending update in ms
-    uint32_t tick();
+    // Returns next pending update time in ms
+    Time tick();
 
     void connected();
     void disconnected();
 
-    uint32_t freeHeap();
-    uint32_t cpuFreq();
-    Time getTime();
-    int8_t getRSSI();
+    uint32_t    freeHeap();
+    uint32_t    cpuFreq();
+    Time        getTime();
+    int8_t      getRSSI();
 };

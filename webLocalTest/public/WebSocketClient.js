@@ -10,17 +10,17 @@ export class WebSocketClient {
         this.onopen = (ev) => {
             this._connectionStartTime = Date.now();
             this._connected = true;
-            this.setStatus(`Online: ${this.hostAddr}`);
+            this.setStatus(`Connected: ${this.hostAddr}`);
             this.events.emit('connected');
         };
         this.onclose = (ev) => {
             this._connected = false;
-            this.setStatus(`Offline`);
+            this.setStatus(`Closed: ${ev.reason} (${ev.code}) ${ev.wasClean ? 'OK' : 'BAD'}`);
             this.events.emit('disconnected');
         };
         this.onerror = (ev) => {
             this._connected = false;
-            this.setStatus(`Error: ${this.hostAddr}`);
+            this.setStatus(`Error: ${ev.type}`);
             this.events.emit('error');
         };
         this.onmessage = (ev) => {

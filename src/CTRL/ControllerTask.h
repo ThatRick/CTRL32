@@ -31,6 +31,8 @@ public:
     uint32_t    lastActualInterval_ms = 0;
     uint32_t    cumulativeActualInterval_ms = 0;
 
+    uint32_t    drift_us = 0;
+
     ControllerTask(Controller* controller, uint32_t interval_ms, uint32_t offset_ms=0);
 
     // Returns next pending update time

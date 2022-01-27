@@ -95,7 +95,7 @@ struct MsgControllerInfo_t {
     uint32_t    freeHeap;
     uint32_t    cpuFreq;
     int32_t     RSSI;
-    float       aliveTime;
+    uint32_t    aliveTime;
     uint32_t    tickCount;
     uint32_t    taskCount;
     ptr32_t     taskList;
@@ -110,6 +110,7 @@ struct MsgTaskInfo_t {
     float       avgCPUTime;
     uint32_t    lastActInterval;
     float       avgActInterval;
+    uint32_t    driftTime;
     uint32_t    circuitCount;
     ptr32_t     circuitList;
 };
@@ -216,4 +217,6 @@ public:
     void monitoringValueHandler(void* func, void* values, uint32_t byteSize);
     
     void processData();
+
+    void sendControllerInfo();
 };

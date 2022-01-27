@@ -6,6 +6,10 @@ export function Div(...content) {
 export function TextNode(text) {
     return new UIElement('div').textContent(text);
 }
+// TEXT SPAN
+export function TextSpan(text) {
+    return new UIElement('span').textContent(text);
+}
 //  BUTTON
 export function Button(name, onClick) {
     const button = new UIElement('button').type('button')
@@ -30,23 +34,38 @@ export function VerticalContainer(...children) {
         height: '100%'
     });
 }
-// CHECKBOX
-export function Checkbox(label, onChange, labelOnLeft = false) {
+export function Checkbox(label, onChange, handle) {
     const id = UIElement.getUniqueID();
-    const checkbox = new UIElement('input')
-        .type('checkbox')
-        .id(id)
+    const checkbox = new UIElement('input').type('checkbox').id(id)
         .setupNode(node => node.addEventListener('change', () => onChange(node.checked)));
-    const labelNode = new UIElement('label')
+    const labelNode = new UIElement('label').paddingLeft(2)
         .textContent(label)
         .labelFor(id);
-    const container = new UIElement('div')
-        .content(...(labelOnLeft ? [labelNode, checkbox] : [checkbox, labelNode]));
+    const container = HorizontalContainer(checkbox, labelNode)
+        .style({ alignItems: 'center' });
+    if (handle) {
+        handle.checkbox = checkbox.node;
+        handle.label = labelNode.node;
+    }
     return container;
 }
 // INPUT
 export function Input() {
     return new UIElement('input');
+}
+// TABLE
+export function Table(...content) {
+    return new UIElement('table').content(...content)
+        .style({
+        tableLayout: 'auto',
+        borderCollapse: 'collapse',
+    });
+}
+export function TableRow(...content) {
+    return new UIElement('tr').content(...content);
+}
+export function TableCell(text) {
+    return new UIElement('td').textContent(text);
 }
 // UIElement
 export class UIElement {
@@ -62,8 +81,11 @@ export class UIElement {
         nodes.forEach(node => this.node.appendChild(node));
         return this;
     }
-    textContent(text) {
-        this.node.textContent = text;
+    textContent(value) {
+        const text = (typeof value == 'number') ? value.toString() : value;
+        if (text != this.node.textContent) {
+            this.node.textContent = text;
+        }
         return this;
     }
     style(cssStyle) {
@@ -117,14 +139,35 @@ export class UIElement {
         this.node.style.backgroundColor = color;
         return this;
     }
-    height(height) {
-        this.node.style.height = height;
+    height(value) {
+        this.node.style.height = value + 'px';
+        return this;
+    }
+    width(value) {
+        this.node.style.width = value + 'px';
         return this;
     }
     appendTo(parent) {
         parent.node.appendChild(this.node);
         return this;
     }
+    paddingLeft(value) { this.node.style.paddingLeft = value + 'px'; return this; }
+    paddingRight(value) { this.node.style.paddingRight = value + 'px'; return this; }
+    paddingTop(value) { this.node.style.paddingTop = value + 'px'; return this; }
+    paddingBottom(value) { this.node.style.paddingBottom = value + 'px'; return this; }
+    paddingHorizontal(value) {
+        this.node.style.paddingLeft = value + 'px';
+        this.node.style.paddingRight = value + 'px';
+        return this;
+    }
+    paddingVertical(value) {
+        this.node.style.paddingTop = value + 'px';
+        this.node.style.paddingBottom = value + 'px';
+        return this;
+    }
+    padding(value) { this.node.style.padding = value + 'px'; return this; }
+    flexGrow(value = 1) { this.node.style.flexGrow = value.toString(); return this; }
+    align(value) { this.node.style.textAlign = value; return this; }
     static getUniqueID() {
         return (this.idCounter++).toString();
     }

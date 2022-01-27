@@ -3,6 +3,8 @@
 #include "ControllerTask.h"
 #include "Esp.h"
 
+#define LOG_INFO 0
+
 Link::Link(Controller* controller, send_data_callback_t onSendData, send_text_callback_t onSendText) :
     controller (controller),
     sendData (onSendData), 
@@ -64,7 +66,7 @@ void Link::handleRequest(void* data, size_t len) {
     size_t payloadSize = len - sizeof(header);
     MESSAGE_TYPE msgType = (MESSAGE_TYPE)header.msgType;
 
-    Serial.printf("Received ws request type: %d ptr: %p size: %d \n", header.msgType, pointer, len);
+    if (LOG_INFO) Serial.printf("Received ws request type: %d ptr: %p size: %d \n", header.msgType, pointer, len);
 
     if ((header.pointer < ADDRESS_MIN || header.pointer >= ADDRESS_MAX) && header.msgType > MSG_TYPE_CONTROLLER_INFO) {
         Serial.printf("INVALID REQUEST: invalid pointer %p in message header \n", pointer);
@@ -84,7 +86,7 @@ void Link::handleRequest(void* data, size_t len) {
                 .freeHeap        = ESP.getFreeHeap(),
                 .cpuFreq         = ESP.getCpuFreqMHz(),
                 .RSSI            = controller->getRSSI(),
-                .aliveTime       = (float)esp_timer_get_time() / 1000000,
+                .aliveTime       = (uint32_t)(esp_timer_get_time() / 1000000),
                 .tickCount       = controller->tickCount,
                 .taskCount       = controller->tasks.size(),
                 .taskList        = (uint32_t)controller->tasks.data(),
@@ -104,6 +106,7 @@ void Link::handleRequest(void* data, size_t len) {
                 .avgCPUTime      = task->averageCPUTime(),
                 .lastActInterval = task->lastActualInterval_ms,
                 .avgActInterval  = task->averageActualInterval_ms(),
+                .driftTime       = task->drift_us,
                 .circuitCount    = task->circuits.size(),
                 .circuitList     = (uint32_t)task->circuits.data()
             };
@@ -299,7 +302,7 @@ void Link::sendConfirmation(MsgRequestHeader_t request, REQUEST_RESULT result) {
         .timeStamp  = (uint32_t)(controller->getTime() / 1000ULL)
     };
     sendData(&response, sizeof(response));
-    Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, sizeof(response));
+    if (LOG_INFO) Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, sizeof(response));
 }
 
 void Link::sendResponse(MsgRequestHeader_t request, void* payload, size_t payloadSize) {
@@ -313,7 +316,7 @@ void Link::sendResponse(MsgRequestHeader_t request, void* payload, size_t payloa
     header->timeStamp = (uint32_t)(controller->getTime() / 1000ULL);
     if (payload) memcpy(data + sizeof(MsgResponseHeader_t), payload, payloadSize);
     sendData(data, size);
-    Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, size);
+    if (LOG_INFO) Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, size);
 }
 
 void Link::monitoringCollectionStart(void* reportingTask, size_t maxItemCount) {
@@ -369,7 +372,7 @@ void Link::monitoringCollectionSend() {
         dataOffset += item.size;
     }
 
-    Serial.printf("   Sent ws response type: %u payload len: %u \n", header->msgType, dataSize - sizeof(MsgResponseHeader_t));
+    if (LOG_INFO) Serial.printf("   Sent ws response type: %u payload len: %u \n", header->msgType, dataSize - sizeof(MsgResponseHeader_t));
     sendData(data, dataSize);
 
     monitoringCollectionCount = 0;

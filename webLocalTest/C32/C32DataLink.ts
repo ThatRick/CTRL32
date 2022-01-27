@@ -20,6 +20,7 @@ import { C32Function } from './C32Function.js'
 import { C32Circuit } from './C32Circuit.js'
 import { C32Task } from './C32Task.js'
 import { C32Controller } from './C32Controller.js'
+import { EventEmitter } from '../Events.js'
 
 interface MemDataRequest {
     pointer:    number
@@ -38,7 +39,7 @@ type RequestCallback = (result: number) => void
 
 export class C32DataLink
 {
-    controller: IController
+    controller: C32Controller
 
     tasks            = new Map<number, C32Task>()
     circuits         = new Map<number, C32Circuit>()
@@ -48,6 +49,8 @@ export class C32DataLink
         this.client = client
         this.client.onBinaryDataReceived = this.handleMessageData
     }
+
+    readonly events = new EventEmitter<typeof this, 'controllerLoaded' | 'taskLoaded' | 'circuitLoaded' | 'functionLoaded'>(this)
 
     ///////////////////////////////////////////////////////////////////////////
     //      REQUESTS TO CONTROLLER
@@ -225,19 +228,25 @@ export class C32DataLink
 
     protected handleControllerData(payload: ArrayBuffer) {
         const data = readStruct(payload, 0, MsgControllerInfo_t)
-        this.controller = new C32Controller(data, this)
+        if (this.controller)
+            this.controller.updateData(data)
+        else {
+            this.controller = new C32Controller(data, this)
+            this.events.emit('controllerLoaded', this.controller)
+        }
     }
     // ------------------------------------------------------------------------
     //      Task info
 
     protected handleTaskData(payload: ArrayBuffer) {
         const data = readStruct(payload, 0, MsgTaskInfo_t)
-        const task = new C32Task(data, this)
-        if (this.tasks.has(data.pointer)) {
-            const oldtask = this.tasks.get(data.pointer)
-            oldtask.remove()
+        if (this.tasks.has(data.pointer))
+            this.tasks.get(data.pointer).updateData(data)
+        else {
+            const task = new C32Task(data, this)
+            this.tasks.set(data.pointer, task)
+            this.events.emit('taskLoaded', task)
         }
-        this.tasks.set(data.pointer, task)
     }
     // ------------------------------------------------------------------------
     //      Circuit info

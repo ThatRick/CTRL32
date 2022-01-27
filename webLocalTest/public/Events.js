@@ -21,11 +21,11 @@ export class EventEmitter {
             callbacks = callbacks.filter(entry => entry != callback);
         });
     }
-    emit(eventName) {
+    emit(eventName, payload) {
         if (this.subscribers.size == 0)
             return;
         const callbacks = this.subscribers.get(eventName);
-        callbacks?.forEach(callback => callback(this.eventSource, eventName));
+        callbacks?.forEach(callback => callback(this.eventSource, payload));
     }
     clear() {
         this.subscribers.clear();

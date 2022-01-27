@@ -60,8 +60,10 @@ export class WebSocketClient
     protected _ws: WebSocket
     protected _hostAddr: string
     protected _status = 'Offline'
+
     protected _sentBytes = 0
     protected _receivedBytes = 0
+
     protected _connectionStartTime = 0
     protected _connected = false
 
@@ -73,19 +75,19 @@ export class WebSocketClient
     protected onopen = (ev: MessageEvent) => {
         this._connectionStartTime = Date.now()
         this._connected = true
-        this.setStatus(`Online: ${this.hostAddr}`)
+        this.setStatus(`Connected: ${this.hostAddr}`)
         this.events.emit('connected')
     }
 
     protected onclose = (ev: CloseEvent) => {
         this._connected = false
-        this.setStatus(`Offline`)
+        this.setStatus(`Closed: ${ev.reason} (${ev.code}) ${ev.wasClean ? 'OK' : 'BAD'}`)
         this.events.emit('disconnected')
     }
 
     protected onerror = (ev: MessageEvent) => {
         this._connected = false
-        this.setStatus(`Error: ${this.hostAddr}`)
+        this.setStatus(`Error: ${ev.type}`)
         this.events.emit('error')
     }
 
