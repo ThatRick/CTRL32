@@ -119,6 +119,7 @@ struct MsgCircuitInfo_t {
     uint32_t    pointer;
     uint32_t    funcCount;
     ptr32_t     funcList;
+    uint32_t    outputRefCount;
     ptr32_t     outputRefList;
 };
 

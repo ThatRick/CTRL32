@@ -9,8 +9,6 @@ import {
     MsgTaskInfo_t,
     MsgCircuitInfo_t,
     MsgFunctionInfo_t,
-    IController,
-    ITask,
     msgTypeNamesMaxLength,
     MsgMonitoringCollection_t,
     MsgMonitoringCollectionItem_t,
@@ -21,6 +19,8 @@ import { C32Circuit } from './C32Circuit.js'
 import { C32Task } from './C32Task.js'
 import { C32Controller } from './C32Controller.js'
 import { EventEmitter } from '../Events.js'
+
+const logInfo = false
 
 interface MemDataRequest {
     pointer:    number
@@ -51,6 +51,8 @@ export class C32DataLink
     }
 
     readonly events = new EventEmitter<typeof this, 'controllerLoaded' | 'taskLoaded' | 'circuitLoaded' | 'functionLoaded'>(this)
+
+    infoLog = false
 
     ///////////////////////////////////////////////////////////////////////////
     //      REQUESTS TO CONTROLLER
@@ -150,8 +152,8 @@ export class C32DataLink
     }
 
     protected log = {
-        line: (line: string)    => console.log(line),
-        list: (list: number[])  => list.forEach(line => console.log(line))
+        line: (line: string)    => this.infoLog && console.log(line),
+        list: (list: number[])  => this.infoLog && list.forEach(line => console.log(line))
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -210,12 +212,12 @@ export class C32DataLink
             {
                 this.log.line('Error: Unknown message type')
             }
+        }
 
-            const pendingRequest = this.requestCallbacks.get(msgID)
-            if (pendingRequest) {
-                pendingRequest.callback(result)
-                this.requestCallbacks.delete(msgID)
-            }
+        const pendingRequest = this.requestCallbacks.get(msgID)
+        if (pendingRequest) {
+            pendingRequest.callback(result)
+            this.requestCallbacks.delete(msgID)
         }
     }
 
@@ -253,24 +255,26 @@ export class C32DataLink
 
     protected handleCircuitData(payload: ArrayBuffer) {
         const data = readStruct(payload, 0, MsgCircuitInfo_t)
-        const circuit = new C32Circuit(data, this)
-        if (this.circuits.has(data.pointer)) {
-            const oldcircuit = this.circuits.get(data.pointer)
-            oldcircuit.remove()
+        if (this.circuits.has(data.pointer))
+            this.circuits.get(data.pointer).updateData(data)
+        else {
+            const circuit = new C32Circuit(data, this)
+            this.circuits.set(data.pointer, circuit)
+            this.events.emit('circuitLoaded', circuit)
         }
-        this.circuits.set(data.pointer, circuit)
     }
     // ------------------------------------------------------------------------
     //      Function Block info
 
     protected handleFunctionData(payload: ArrayBuffer) {
         const data = readStruct(payload, 0, MsgFunctionInfo_t)
-        const func = new C32Function(data, this)
-        if (this.functionBlocks.has(data.pointer)) {
-            const oldfunc = this.functionBlocks.get(data.pointer)
-            oldfunc.remove()
+        if (this.functionBlocks.has(data.pointer))
+            this.functionBlocks.get(data.pointer).updateData(data)
+        else {
+            const func = new C32Function(data, this)
+            this.functionBlocks.set(data.pointer, func)
+            this.events.emit('functionLoaded', func)
         }
-        this.functionBlocks.set(data.pointer, func)
     }
 
     // ------------------------------------------------------------------------

@@ -1,7 +1,8 @@
-import { VerticalContainer, Checkbox, TableCell, TableRow, Table } from "../GUI/UIElement.js";
-import { toHex } from "../Util.js";
-import { Color } from "./Colors.js";
-import { PanelElementView } from "./PanelElementView.js";
+import { VerticalContainer, TextNode, TextSpan, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElement.js";
+import { toHex } from "../../Util.js";
+import { Color } from "../../View/Colors.js";
+import { PanelElementView } from "../../View/PanelElementView.js";
+import { C32CircuitView } from "./C32CircuitView.js";
 export function C32TaskView(task) {
     const tableData = [
         { dataName: 'pointer', label: 'Pointer', unit: '' },
@@ -13,7 +14,6 @@ export function C32TaskView(task) {
         { dataName: 'lastActInterval', label: 'last interval', unit: 'ms' },
         { dataName: 'avgActInterval', label: 'avg. interval', unit: 'ms' },
         { dataName: 'driftTime', label: 'Drift time', unit: 'ms' },
-        { dataName: 'circuitCount', label: 'Circuit count', unit: '' },
     ];
     const valueCellMap = new Map();
     const table = Table(...tableData.map(lineInfo => {
@@ -28,17 +28,22 @@ export function C32TaskView(task) {
         else
             clearInterval(intervalTimerID);
     };
+    toggleUpdate(true);
     let checkboxHandle = {};
-    const UpdateCheckBox = Checkbox('auto update', toggleUpdate, checkboxHandle).paddingTop(4);
+    const ToggleUpdate = Checkbox('update data', toggleUpdate, checkboxHandle).paddingTop(4);
     checkboxHandle.checkbox.checked = true;
-    const Content = VerticalContainer(table, UpdateCheckBox);
-    const PanelElement = new PanelElementView(`Task ${task.index}`, Content.node);
-    PanelElement.status.textContent(task.data.interval + ' ms');
-    PanelElement.status.color('#bbb');
-    PanelElement.onHideChanged = hidden => {
-        checkboxHandle.checkbox.checked = !hidden;
-        checkboxHandle.checkbox.dispatchEvent(new InputEvent('change'));
-    };
+    const CircuitList = VerticalContainer();
+    const Content = VerticalContainer(table, CircuitList, ToggleUpdate);
+    const PanelElement = new PanelElementView(`Task ${task.index}`, {
+        userContent: Content.node,
+        statusText: `(${task.data.interval} ms)`,
+        statusColor: '#bbb',
+        onHideChanged: hidden => {
+            checkboxHandle.checkbox.checked = !hidden;
+            checkboxHandle.checkbox.dispatchEvent(new InputEvent('change'));
+        },
+    });
+    const circuitPanels = new Map();
     task.events.subscribeEvents({
         dataUpdated: () => {
             valueCellMap.forEach((valueCell, dataName) => {
@@ -49,9 +54,26 @@ export function C32TaskView(task) {
                             : value.toString();
                 valueCell.textContent(text);
             });
+        },
+        callListLoaded: () => {
+            CircuitList.clear().append(TextNode(`Task calls: (${task.circuits.length})`).paddingVertical(4), ...task.circuits.map((circuitPtr, index) => {
+                return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {
+                    if (circuitPanels.has(circuitPtr)) {
+                        const circuitPanel = circuitPanels.get(circuitPtr);
+                        if (circuitPanel.node.parentElement)
+                            circuitPanel.remove();
+                        else
+                            circuitPanel.setHidden(false).appendTo(PanelElement);
+                    }
+                    else {
+                        const circuit = task.link.circuits.get(circuitPtr);
+                        const circuitPanel = C32CircuitView(circuit).appendTo(PanelElement);
+                        circuitPanels.set(circuitPtr, circuitPanel);
+                    }
+                });
+            }));
         }
     });
-    toggleUpdate(true);
     return PanelElement;
 }
 /*

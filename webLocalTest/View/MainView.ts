@@ -10,7 +10,7 @@ const Toolbar = HorizontalContainer().id('Toolbar')
         columnGap:          '4px',
         padding:            '4px'
     })
-    .content(
+    .append(
         TextNode('CONTROL-32 IDE').color('#DDDDAA'),
     )
 
@@ -57,11 +57,11 @@ const Root = VerticalContainer().id('Root')
         fontFamily:         'monospace',
         boxSizing:          'border-box'
     })
-    .content(
+    .append(
         Toolbar,
         HorizontalContainer().id('Workspace')
             .style({ flexGrow: '1' })
-            .content(
+            .append(
                 SidePanel,
                 Desktop
             )

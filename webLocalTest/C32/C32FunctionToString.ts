@@ -6,7 +6,7 @@ import { ioConvNames, ioTypeNames, IO_FLAG, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE
 // ------------------------------------------------------------------------
 //      Print Function Block data to log
 
-function functionToString(func: C32Function, withFlags = true) {
+export function functionToString(func: C32Function, withFlags = true) {
     if (!func.complete) {
         console.error('printFunctionBlock: FunctionBlock data is not complete')
         return

@@ -1,6 +1,6 @@
 import Vec2, {vec2} from "../Vector2.js"
 import { GUIDynamicElement } from "./GUIDynamicElement.js"
-import { UIElement } from "./UIElement.js"
+import { NodeElement } from "./UIElement.js"
 
 
 export class GUIPointerHandler

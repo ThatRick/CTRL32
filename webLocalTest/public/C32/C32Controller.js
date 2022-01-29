@@ -21,12 +21,15 @@ export class C32Controller {
     getTaskList() {
         this.link.requestMemData(this._data.taskList, this._data.taskCount, 5 /* uint32 */, taskList => {
             this._tasks = taskList;
-            this.events.emit('tasklistLoaded');
             if (!this.hasCompleted && this.complete) {
                 this.events.emit('complete');
                 this.hasCompleted = true;
             }
-            taskList.forEach(pointer => this.link.requestInfo(2 /* TASK_INFO */, pointer));
+            let callbackCounter = 0;
+            taskList.forEach(pointer => this.link.requestInfo(2 /* TASK_INFO */, pointer, () => {
+                if (++callbackCounter == this._tasks.length)
+                    this.events.emit('tasklistLoaded');
+            }));
         });
     }
 }

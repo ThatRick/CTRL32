@@ -20,8 +20,8 @@ export function WebSocketClientView(client: WebSocketClient)
     })
     const Status        = TextNode('Ready').paddingBottom(6)
 
-    const SentBytes     = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText)
-    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText)
+    const SentBytes     = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow()
+    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow()
 
     const Content = VerticalContainer(
         HorizontalContainer( HostInput, ConnectButton ),
@@ -32,10 +32,11 @@ export function WebSocketClientView(client: WebSocketClient)
         ).color(Color.SecondaryText)
     )
 
-    const PanelElement = new PanelElementView('WebSocket', Content.node)
-
-    PanelElement.status.textContent('Offline')
-    PanelElement.status.color('#AAAAAA')
+    const PanelElement = new PanelElementView('WebSocket', {
+        userContent:    Content.node,
+        statusText:     'Offline',
+        statusColor:    '#AAAAAA',
+    })
 
 
     client.events.subscribeEvents(

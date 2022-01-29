@@ -7,11 +7,13 @@ export class C32Task implements ITask {
 
     get data()      { return this._data }
     get circuits()  { return this._circuits }
+
     get complete()  { return (this._circuits != null) }
+    get index()     { return [...this.link.tasks.values()].findIndex(task => task == this) }
 
     readonly link: C32DataLink
 
-    readonly events = new EventEmitter<typeof this, 'complete' | 'removed' | 'dataUpdated' | 'circuitsLoaded'>(this)
+    readonly events = new EventEmitter<typeof this, 'complete' | 'removed' | 'dataUpdated' | 'callListLoaded'>(this)
 
     updateData(data: StructValues<typeof MsgTaskInfo_t>) {
         const circuitListModified = ( data.circuitCount != this._data.circuitCount || data.circuitList != this._data.circuitList )
@@ -39,12 +41,16 @@ export class C32Task implements ITask {
     protected getCircuitList() {
         this.link.requestMemData(this._data.circuitList, this._data.circuitCount, DataType.uint32, circuitList => {
             this._circuits = circuitList
-            this.events.emit('circuitsLoaded')
+            
             if (!this.hasCompleted && this.complete) {
                 this.events.emit('complete')
                 this.hasCompleted = true
             }
-            circuitList.forEach(pointer => this.link.requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer))
+            let callbackCounter = 0
+            circuitList.forEach(pointer => this.link.requestInfo(MSG_TYPE.CIRCUIT_INFO, pointer, () => {
+                this.link.circuits.get(pointer)?.setTask(this)
+                if (++callbackCounter == this._circuits.length) this.events.emit('callListLoaded')
+            }))
         })
     }
 }

@@ -1,6 +1,6 @@
 // DIV
 export function Div(...content) {
-    return new UIElement('div').content(...content);
+    return new UIElement('div').append(...content);
 }
 // TEXT
 export function TextNode(text) {
@@ -31,7 +31,7 @@ export function VerticalContainer(...children) {
         .style({
         display: 'flex',
         flexFlow: 'column',
-        height: '100%'
+        //height:     '100%'
     });
 }
 export function Checkbox(label, onChange, handle) {
@@ -55,14 +55,14 @@ export function Input() {
 }
 // TABLE
 export function Table(...content) {
-    return new UIElement('table').content(...content)
+    return new UIElement('table').append(...content)
         .style({
         tableLayout: 'auto',
         borderCollapse: 'collapse',
     });
 }
 export function TableRow(...content) {
-    return new UIElement('tr').content(...content);
+    return new UIElement('tr').append(...content);
 }
 export function TableCell(text) {
     return new UIElement('td').textContent(text);
@@ -73,11 +73,11 @@ export class UIElement {
         this.tagName = tagName;
         this.node = document.createElement(tagName);
     }
-    content(...children) {
+    append(...children) {
         children.forEach(child => this.node.appendChild(child.node));
         return this;
     }
-    contentNodes(...nodes) {
+    appendNodes(...nodes) {
         nodes.forEach(node => this.node.appendChild(node));
         return this;
     }
@@ -113,6 +113,7 @@ export class UIElement {
         return this;
     }
     onClick(callback) {
+        this.node.style.cursor = 'pointer';
         this.node.addEventListener('click', callback);
         return this;
     }
@@ -149,6 +150,11 @@ export class UIElement {
     }
     appendTo(parent) {
         parent.node.appendChild(this.node);
+        return this;
+    }
+    clear() {
+        while (this.node.lastChild)
+            this.node.lastChild.remove();
         return this;
     }
     paddingLeft(value) { this.node.style.paddingLeft = value + 'px'; return this; }

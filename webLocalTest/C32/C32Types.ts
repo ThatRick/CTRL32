@@ -192,6 +192,7 @@ export const MsgCircuitInfo_t = {
     pointer:            DataType.uint32,
     funcCount:          DataType.uint32,
     funcList:           DataType.uint32,
+    outputRefCount:     DataType.uint32,
     outputRefList:      DataType.uint32,
 }
 
@@ -261,7 +262,7 @@ export interface IFunctionBlock
 export interface ICircuit
 {
     data:       StructValues<typeof MsgCircuitInfo_t>
-    funcCalls:  number[]
+    funcList:   number[]
     outputRefs: number[]
     complete:   boolean
 }

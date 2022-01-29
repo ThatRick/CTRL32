@@ -9,7 +9,7 @@ const Toolbar = HorizontalContainer().id('Toolbar')
     columnGap: '4px',
     padding: '4px'
 })
-    .content(TextNode('CONTROL-32 IDE').color('#DDDDAA'));
+    .append(TextNode('CONTROL-32 IDE').color('#DDDDAA'));
 const SidePanel = VerticalContainer().id('SidePanel')
     .style({
     backgroundColor: Color.Panel,
@@ -49,9 +49,9 @@ const Root = VerticalContainer().id('Root')
     fontFamily: 'monospace',
     boxSizing: 'border-box'
 })
-    .content(Toolbar, HorizontalContainer().id('Workspace')
+    .append(Toolbar, HorizontalContainer().id('Workspace')
     .style({ flexGrow: '1' })
-    .content(SidePanel, Desktop));
+    .append(SidePanel, Desktop));
 export const MainView = {
     Color,
     Root,

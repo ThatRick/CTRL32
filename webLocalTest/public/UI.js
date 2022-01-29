@@ -43,7 +43,7 @@ export function CreateUI() {
     const log = new Console();
     new GUIWindow(vec2(100, 400), gui, { title: 'Console', content: log.node, size: vec2(700, 300), scrollbars: true })
         .classList('console')
-        .setup(elem => elem.userControls.content(Button('Clear', log.clear), Checkbox('auto scroll', toggled => {
+        .setup(elem => elem.userControls.append(Button('Clear', log.clear), Checkbox('auto scroll', toggled => {
         log.autoScroll = toggled;
         if (toggled)
             log.scrollToEnd();

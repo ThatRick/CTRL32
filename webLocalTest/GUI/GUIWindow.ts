@@ -1,7 +1,7 @@
 import Vec2, {vec2} from '../Vector2.js'
 import { GUIDynamicElement, IGUI } from './GUIDynamicElement.js'
 import { MoveHandle, ResizeHandle } from './GUIPointerHandlers.js'
-import { Button, Div, TextNode, UIElement } from './UIElement.js'
+import { Button, Div, TextNode, NodeElement } from './UIElement.js'
 
 
 const windowStyle: Partial<CSSStyleDeclaration> = {
@@ -43,18 +43,18 @@ interface GUIWindowOptions {
 }
 
 export class GUIWindow extends GUIDynamicElement {
-    userContainer:      UIElement<'div'>
+    userContainer:      NodeElement<'div'>
     userContent:        HTMLElement
 
-    status:             UIElement<'div'>
-    userControls:       UIElement<'div'>
+    status:             NodeElement<'div'>
+    userControls:       NodeElement<'div'>
 
     constructor(pos: Vec2, gui: IGUI, protected options: GUIWindowOptions)
     {
         super(pos, options.size ?? vec2(300, 300), gui)
         this.style(windowStyle)
 
-        this.content(
+        this.append(
             Div(
                 TextNode(options.title || 'GUIWindow')
                     .style({ flexGrow: '1', padding: '0px 3px' })
@@ -79,7 +79,7 @@ export class GUIWindow extends GUIDynamicElement {
 
         if (options.noStatusBar)
         {
-            this.content(
+            this.append(
                 TextNode('⋰')
                     .style({
                         padding: '0px 3px',
@@ -92,7 +92,7 @@ export class GUIWindow extends GUIDynamicElement {
         }
         else
         {
-            this.content(
+            this.append(
                 Div(
                     Div()
                         .setup(elem => this.userControls = elem)
@@ -125,7 +125,7 @@ export class GUIWindow extends GUIDynamicElement {
 
     setContent(content: HTMLElement) {
         content.style.boxSizing = 'border-box'
-        this.userContainer.contentNodes(content)
+        this.userContainer.appendNodes(content)
         this.userContent = content
         if (this.options.autoSize) setTimeout(() => this.resizeToContent(), 100)
     }

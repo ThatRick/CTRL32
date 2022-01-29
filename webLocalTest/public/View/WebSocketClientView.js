@@ -16,12 +16,14 @@ export function WebSocketClientView(client) {
         (!client.connected) ? client.connect(HostInput.node.value) : client.disconnect();
     });
     const Status = TextNode('Ready').paddingBottom(6);
-    const SentBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText);
-    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText);
+    const SentBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow();
+    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow();
     const Content = VerticalContainer(HorizontalContainer(HostInput, ConnectButton), HorizontalContainer(Status), Table(TableRow(TableCell('Sent'), SentBytes, TableCell('bytes')), TableRow(TableCell('Received'), ReceivedBytes, TableCell('bytes'))).color(Color.SecondaryText));
-    const PanelElement = new PanelElementView('WebSocket', Content.node);
-    PanelElement.status.textContent('Offline');
-    PanelElement.status.color('#AAAAAA');
+    const PanelElement = new PanelElementView('WebSocket', {
+        userContent: Content.node,
+        statusText: 'Offline',
+        statusColor: '#AAAAAA',
+    });
     client.events.subscribeEvents({
         sent: () => { SentBytes.textContent(valueWithSeparators(client.sentBytes)); },
         received: () => { ReceivedBytes.textContent(valueWithSeparators(client.receivedBytes)); },

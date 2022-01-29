@@ -94,6 +94,7 @@ export const MsgCircuitInfo_t = {
     pointer: 5 /* uint32 */,
     funcCount: 5 /* uint32 */,
     funcList: 5 /* uint32 */,
+    outputRefCount: 5 /* uint32 */,
     outputRefList: 5 /* uint32 */,
 };
 export const MsgFunctionInfo_t = {

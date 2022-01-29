@@ -10,5 +10,6 @@ export const Color = {
     Light: '#d3d3d3',
     Selection: '#aaaaff',
     PrimaryText: '#fff',
-    SecondaryText: '#ccc'
+    SecondaryText: '#ccc',
+    Link: '#90c2ff'
 };

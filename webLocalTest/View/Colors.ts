@@ -16,5 +16,7 @@ export const Color = {
     Selection:              '#aaaaff',
 
     PrimaryText:            '#fff',
-    SecondaryText:          '#ccc'
+    SecondaryText:          '#ccc',
+
+    Link:                   '#90c2ff'
 }

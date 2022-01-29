@@ -1,6 +1,6 @@
 import Vec2, {vec2} from "../Vector2.js"
 import { GUIPointerHandler } from './GUIPointerHandlers.js'
-import { UIElement } from "./UIElement.js"
+import { NodeElement } from "./UIElement.js"
 
 export interface IGUI {
     selectElement(elem: GUIDynamicElement): void
@@ -9,7 +9,7 @@ export interface IGUI {
     scale: number
 }
 
-export class GUIDynamicElement extends UIElement<'div'> {
+export class GUIDynamicElement extends NodeElement<'div'> {
     readonly currentPos = vec2(0, 0)
     readonly currentSize = vec2(0, 0)
     

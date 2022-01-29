@@ -120,6 +120,7 @@ void Link::handleRequest(void* data, size_t len) {
                 .pointer         = (uint32_t)circuit,
                 .funcCount       = circuit->funcList.size(),
                 .funcList        = (uint32_t)circuit->funcList.data(),
+                .outputRefCount  = circuit->numOutputs,
                 .outputRefList   = (uint32_t)circuit->outputRefs,
             };
             sendResponse(header, &info, sizeof(info));

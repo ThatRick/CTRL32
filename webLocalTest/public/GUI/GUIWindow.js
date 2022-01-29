@@ -35,7 +35,7 @@ export class GUIWindow extends GUIDynamicElement {
         super(pos, options.size ?? vec2(300, 300), gui);
         this.options = options;
         this.style(windowStyle);
-        this.content(Div(TextNode(options.title || 'GUIWindow')
+        this.append(Div(TextNode(options.title || 'GUIWindow')
             .style({ flexGrow: '1', padding: '0px 3px' })
             .setupNode(node => new MoveHandle(node, this)), Button('◰', () => this.resizeToContent())
             .style(buttonStyle), Button('✕', () => this.remove())
@@ -48,7 +48,7 @@ export class GUIWindow extends GUIDynamicElement {
             overflow: options.scrollbars ? 'auto' : 'hidden',
         }));
         if (options.noStatusBar) {
-            this.content(TextNode('⋰')
+            this.append(TextNode('⋰')
                 .style({
                 padding: '0px 3px',
                 position: 'absolute',
@@ -58,7 +58,7 @@ export class GUIWindow extends GUIDynamicElement {
                 .setupNode(node => new ResizeHandle(node, this)));
         }
         else {
-            this.content(Div(Div()
+            this.append(Div(Div()
                 .setup(elem => this.userControls = elem)
                 .style({
                 display: 'flex',
@@ -80,7 +80,7 @@ export class GUIWindow extends GUIDynamicElement {
     }
     setContent(content) {
         content.style.boxSizing = 'border-box';
-        this.userContainer.contentNodes(content);
+        this.userContainer.appendNodes(content);
         this.userContent = content;
         if (this.options.autoSize)
             setTimeout(() => this.resizeToContent(), 100);
