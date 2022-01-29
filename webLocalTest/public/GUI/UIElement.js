@@ -1,18 +1,20 @@
+import { NodeElement } from "./NodeElement.js";
+export { NodeElement };
 // DIV
 export function Div(...content) {
-    return new UIElement('div').append(...content);
+    return new NodeElement('div').append(...content);
 }
 // TEXT
 export function TextNode(text) {
-    return new UIElement('div').textContent(text);
+    return new NodeElement('div').textContent(text);
 }
 // TEXT SPAN
 export function TextSpan(text) {
-    return new UIElement('span').textContent(text);
+    return new NodeElement('span').textContent(text);
 }
 //  BUTTON
 export function Button(name, onClick) {
-    const button = new UIElement('button').type('button')
+    const button = new NodeElement('button').type('button')
         .textContent(name)
         .onClick(onClick);
     return button;
@@ -31,151 +33,44 @@ export function VerticalContainer(...children) {
         .style({
         display: 'flex',
         flexFlow: 'column',
-        //height:     '100%'
     });
 }
-export function Checkbox(label, onChange, handle) {
-    const id = UIElement.getUniqueID();
-    const checkbox = new UIElement('input').type('checkbox').id(id)
-        .setupNode(node => node.addEventListener('change', () => onChange(node.checked)));
-    const labelNode = new UIElement('label').paddingLeft(2)
-        .textContent(label)
-        .labelFor(id);
-    const container = HorizontalContainer(checkbox, labelNode)
-        .style({ alignItems: 'center' });
-    if (handle) {
-        handle.checkbox = checkbox.node;
-        handle.label = labelNode.node;
+// CHECKBOX
+export class Checkbox extends NodeElement {
+    constructor(labelText, onCheckedChange) {
+        super('div');
+        this.onCheckedChange = onCheckedChange;
+        const id = NodeElement.getUniqueID();
+        const checkbox = new NodeElement('input').type('checkbox').id(id)
+            .setupNode(node => node.addEventListener('change', () => onCheckedChange(node.checked)));
+        const label = new NodeElement('label').paddingLeft(2)
+            .textContent(labelText)
+            .labelFor(id);
+        this.append(checkbox, label)
+            .style({ alignItems: 'center' });
     }
-    return container;
+    get isChecked() { return this.checkbox.node.checked; }
+    setChecked(checked) {
+        this.checkbox.node.checked = checked;
+        this.onCheckedChange(checked);
+        return this;
+    }
 }
 // INPUT
 export function Input() {
-    return new UIElement('input');
+    return new NodeElement('input');
 }
 // TABLE
 export function Table(...content) {
-    return new UIElement('table').append(...content)
+    return new NodeElement('table').append(...content)
         .style({
         tableLayout: 'auto',
         borderCollapse: 'collapse',
     });
 }
 export function TableRow(...content) {
-    return new UIElement('tr').append(...content);
+    return new NodeElement('tr').append(...content);
 }
 export function TableCell(text) {
-    return new UIElement('td').textContent(text);
+    return new NodeElement('td').textContent(text);
 }
-// UIElement
-export class UIElement {
-    constructor(tagName) {
-        this.tagName = tagName;
-        this.node = document.createElement(tagName);
-    }
-    append(...children) {
-        children.forEach(child => this.node.appendChild(child.node));
-        return this;
-    }
-    appendNodes(...nodes) {
-        nodes.forEach(node => this.node.appendChild(node));
-        return this;
-    }
-    textContent(value) {
-        const text = (typeof value == 'number') ? value.toString() : value;
-        if (text != this.node.textContent) {
-            this.node.textContent = text;
-        }
-        return this;
-    }
-    style(cssStyle) {
-        Object.assign(this.node.style, cssStyle);
-        return this;
-    }
-    classList(...tokens) {
-        this.node.classList.add(...tokens);
-        return this;
-    }
-    id(id) {
-        this.node.id = id;
-        return this;
-    }
-    type(type) {
-        if (this.tagName == 'input' || this.tagName == 'button') {
-            this.node.type = type;
-        }
-        return this;
-    }
-    labelFor(id) {
-        if (this.tagName == 'label') {
-            this.node.htmlFor = id;
-        }
-        return this;
-    }
-    onClick(callback) {
-        this.node.style.cursor = 'pointer';
-        this.node.addEventListener('click', callback);
-        return this;
-    }
-    onChange(callback) {
-        this.node.addEventListener('change', callback);
-        return this;
-    }
-    setup(callback) {
-        callback(this);
-        return this;
-    }
-    setupNode(callback) {
-        callback(this.node);
-        return this;
-    }
-    remove() {
-        this.node.remove();
-    }
-    color(color) {
-        this.node.style.color = color;
-        return this;
-    }
-    backgroundColor(color) {
-        this.node.style.backgroundColor = color;
-        return this;
-    }
-    height(value) {
-        this.node.style.height = value + 'px';
-        return this;
-    }
-    width(value) {
-        this.node.style.width = value + 'px';
-        return this;
-    }
-    appendTo(parent) {
-        parent.node.appendChild(this.node);
-        return this;
-    }
-    clear() {
-        while (this.node.lastChild)
-            this.node.lastChild.remove();
-        return this;
-    }
-    paddingLeft(value) { this.node.style.paddingLeft = value + 'px'; return this; }
-    paddingRight(value) { this.node.style.paddingRight = value + 'px'; return this; }
-    paddingTop(value) { this.node.style.paddingTop = value + 'px'; return this; }
-    paddingBottom(value) { this.node.style.paddingBottom = value + 'px'; return this; }
-    paddingHorizontal(value) {
-        this.node.style.paddingLeft = value + 'px';
-        this.node.style.paddingRight = value + 'px';
-        return this;
-    }
-    paddingVertical(value) {
-        this.node.style.paddingTop = value + 'px';
-        this.node.style.paddingBottom = value + 'px';
-        return this;
-    }
-    padding(value) { this.node.style.padding = value + 'px'; return this; }
-    flexGrow(value = 1) { this.node.style.flexGrow = value.toString(); return this; }
-    align(value) { this.node.style.textAlign = value; return this; }
-    static getUniqueID() {
-        return (this.idCounter++).toString();
-    }
-}
-UIElement.idCounter = 1;

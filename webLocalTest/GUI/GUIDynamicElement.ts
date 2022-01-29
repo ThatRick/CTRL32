@@ -1,6 +1,6 @@
 import Vec2, {vec2} from "../Vector2.js"
 import { GUIPointerHandler } from './GUIPointerHandlers.js'
-import { NodeElement } from "./UIElement.js"
+import { NodeElement } from "./UIElements.js"
 
 export interface IGUI {
     selectElement(elem: GUIDynamicElement): void

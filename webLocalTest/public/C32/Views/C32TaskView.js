@@ -22,25 +22,20 @@ export function C32TaskView(task) {
         return TableRow(TableCell(lineInfo.label), valueCell, TableCell(lineInfo.unit));
     })).color(Color.SecondaryText);
     let intervalTimerID;
-    const toggleUpdate = (enabled) => {
-        if (enabled)
+    const CheckboxUpdateData = new Checkbox('update data', checked => {
+        if (checked)
             intervalTimerID = setInterval(() => task.requestData(), 1000);
         else
             clearInterval(intervalTimerID);
-    };
-    toggleUpdate(true);
-    let checkboxHandle = {};
-    const ToggleUpdate = Checkbox('update data', toggleUpdate, checkboxHandle).paddingTop(4);
-    checkboxHandle.checkbox.checked = true;
+    }).paddingTop(4).setChecked(true);
     const CircuitList = VerticalContainer();
-    const Content = VerticalContainer(table, CircuitList, ToggleUpdate);
+    const Content = VerticalContainer(table, CircuitList, CheckboxUpdateData);
     const PanelElement = new PanelElementView(`Task ${task.index}`, {
         userContent: Content.node,
         statusText: `(${task.data.interval} ms)`,
         statusColor: '#bbb',
         onHideChanged: hidden => {
-            checkboxHandle.checkbox.checked = !hidden;
-            checkboxHandle.checkbox.dispatchEvent(new InputEvent('change'));
+            CheckboxUpdateData.setChecked(!hidden);
         },
     });
     const circuitPanels = new Map();

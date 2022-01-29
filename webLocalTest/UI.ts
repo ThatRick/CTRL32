@@ -8,7 +8,7 @@ import { Console } from './UI/UIConsole.js'
 import { ObjectView } from './UI/UIObjectView.js'
 
 import { LineGraph } from './LineGraph.js'
-import { Button, Checkbox } from './GUI/UIElement.js'
+import { Button, Checkbox } from './GUI/UIElements.js'
 import { MoveHandle } from './GUI/GUIPointerHandlers.js'
 
 export { ObjectView }
@@ -57,9 +57,9 @@ export function CreateUI() {
         .setup(elem => elem.userControls.append(
             Button('Clear', log.clear),
 
-            Checkbox('auto scroll', toggled => {
-                log.autoScroll = toggled
-                if (toggled) log.scrollToEnd()
+            new Checkbox('auto scroll', enabled => {
+                log.autoScroll = enabled
+                if (enabled) log.scrollToEnd()
             })
         ))
 

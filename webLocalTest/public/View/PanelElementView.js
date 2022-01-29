@@ -1,6 +1,6 @@
-import { HorizontalContainer, VerticalContainer, TextNode, UIElement } from "../GUI/UIElement.js";
+import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../GUI/UIElement.js";
 import { Color } from "./Colors.js";
-export class PanelElementView extends UIElement {
+export class PanelElementView extends NodeElement {
     constructor(titleText, config = {}) {
         super('div');
         this.hidden = false;
@@ -21,7 +21,7 @@ export class PanelElementView extends UIElement {
         if (config.closable)
             this.titleBar.append(TextNode('✕').paddingHorizontal(4)
                 .color(Color.SecondaryText)
-                .onClick(() => this.node.remove()));
+                .onClick(() => this.remove()));
         this.userContainer = VerticalContainer().padding(4).flexGrow();
         this.append(this.titleBar, this.userContainer);
         if (config.userContent)

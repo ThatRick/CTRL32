@@ -18,22 +18,17 @@ export function C32ControllerView(controller) {
         return TableRow(TableCell(lineInfo.label), valueCell, TableCell(lineInfo.unit));
     })).color(Color.SecondaryText);
     let intervalTimerID;
-    const toggleUpdate = (enabled) => {
-        if (enabled)
+    const CheckboxUpdateData = new Checkbox('update data', checked => {
+        if (checked)
             intervalTimerID = setInterval(() => controller.requestData(), 1000);
         else
             clearInterval(intervalTimerID);
-    };
-    toggleUpdate(true);
-    let checkboxHandle = {};
-    const UpdateCheckBox = Checkbox('update data', toggleUpdate, checkboxHandle).paddingTop(4);
-    checkboxHandle.checkbox.checked = true;
-    const Content = VerticalContainer(table, UpdateCheckBox);
+    }).paddingTop(4).setChecked(true);
+    const Content = VerticalContainer(table, CheckboxUpdateData);
     const PanelElement = new PanelElementView('Controller', {
         userContent: Content.node,
         onHideChanged: hidden => {
-            checkboxHandle.checkbox.checked = !hidden;
-            checkboxHandle.checkbox.dispatchEvent(new InputEvent('change'));
+            CheckboxUpdateData.setChecked(!hidden);
         }
     });
     controller.events.subscribeEvents({

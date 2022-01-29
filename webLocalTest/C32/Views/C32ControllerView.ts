@@ -1,5 +1,5 @@
 import { C32Controller } from "../C32Controller.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElement.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js"
 import { valueWithSeparators } from "../../Util.js"
 import { Color } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"

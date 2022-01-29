@@ -1,7 +1,7 @@
 import Vec2, {vec2} from '../Vector2.js'
 import { GUIDynamicElement, IGUI } from './GUIDynamicElement.js'
 import { MoveHandle, ResizeHandle } from './GUIPointerHandlers.js'
-import { Button, Div, TextNode, NodeElement } from './UIElement.js'
+import { Button, Div, TextNode, NodeElement } from './UIElements.js'
 
 
 const windowStyle: Partial<CSSStyleDeclaration> = {

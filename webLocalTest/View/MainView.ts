@@ -1,5 +1,5 @@
 import { PanelHorizontalResizeHandle } from "../GUI/GUIPointerHandlers.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div } from "../GUI/UIElement.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div } from "../GUI/UIElements.js"
 import { Color } from "./Colors.js"
 
 const Toolbar = HorizontalContainer().id('Toolbar')

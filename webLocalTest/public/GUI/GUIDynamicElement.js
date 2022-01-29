@@ -1,6 +1,6 @@
 import { vec2 } from "../Vector2.js";
-import { UIElement } from "./UIElement.js";
-export class GUIDynamicElement extends UIElement {
+import { NodeElement } from "./UIElement.js";
+export class GUIDynamicElement extends NodeElement {
     constructor(pos, size, gui) {
         super('div');
         this.currentPos = vec2(0, 0);

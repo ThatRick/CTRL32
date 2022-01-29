@@ -1,5 +1,5 @@
 import { C32Circuit } from "../C32Circuit.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, TableCell, TableRow, Table } from "../../GUI/UIElement.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, TableCell, TableRow, Table } from "../../GUI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
 import { Color } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
