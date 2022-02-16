@@ -3,7 +3,7 @@ import { msgTypeNames, IO_FLAG_TYPE_MASK, IO_TYPE_MAP, MsgRequestHeader_t, MsgCo
 import { toHex } from './Util.js';
 import { CreateUI } from './UI.js';
 import { WSConnection } from './WSConnection.js';
-import { Button } from './GUI/UIElement.js';
+import { Button } from './GUI/UIElements.js';
 let controller;
 const tasks = new Map();
 const circuits = new Map();

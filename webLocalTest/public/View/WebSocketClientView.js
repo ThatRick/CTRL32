@@ -1,13 +1,9 @@
-import { HorizontalContainer, VerticalContainer, TextNode, Button, Input, TableCell, Table, TableRow } from "../GUI/UIElement.js";
+import { HorizontalContainer, VerticalContainer, TextNode, Button, Input, TableCell, Table, TableRow } from "../GUI/UIElements.js";
 import { PanelElementView } from "./PanelElementView.js";
 import { valueWithSeparators } from "../Util.js";
 import { Color } from "./Colors.js";
 export function WebSocketClientView(client) {
-    const HostInput = Input().type('url')
-        .style({
-        width: '0px',
-        flexGrow: '1',
-    })
+    const HostInput = Input('url').width(0).flexGrow()
         .setupNode(node => {
         node.placeholder = 'host ip';
         node.value = '192.168.0.241';
@@ -25,8 +21,8 @@ export function WebSocketClientView(client) {
         statusColor: '#AAAAAA',
     });
     client.events.subscribeEvents({
-        sent: () => { SentBytes.textContent(valueWithSeparators(client.sentBytes)); },
-        received: () => { ReceivedBytes.textContent(valueWithSeparators(client.receivedBytes)); },
+        sent: () => requestAnimationFrame(() => { SentBytes.textContent(valueWithSeparators(client.sentBytes)); }),
+        received: () => requestAnimationFrame(() => { ReceivedBytes.textContent(valueWithSeparators(client.receivedBytes)); }),
         connected: () => {
             PanelElement.status.textContent('Online');
             PanelElement.status.color('#AAFFAA');

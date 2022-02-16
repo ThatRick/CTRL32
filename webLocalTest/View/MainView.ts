@@ -59,8 +59,7 @@ const Root = VerticalContainer().id('Root')
     })
     .append(
         Toolbar,
-        HorizontalContainer().id('Workspace')
-            .style({ flexGrow: '1' })
+        HorizontalContainer().id('Workspace').flexGrow()
             .append(
                 SidePanel,
                 Desktop

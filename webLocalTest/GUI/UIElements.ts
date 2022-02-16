@@ -62,15 +62,19 @@ export class Checkbox extends NodeElement<'div'> {
         super('div')
         const id = NodeElement.getUniqueID()
 
-        const checkbox = new NodeElement('input').type('checkbox').id(id)
+        this.checkbox = new NodeElement('input').type('checkbox').id(id)
             .setupNode(node => node.addEventListener('change', () => onCheckedChange(node.checked)))
     
-        const label = new NodeElement('label').paddingLeft(2)
+        this.label = new NodeElement('label').paddingLeft(2)
             .textContent(labelText)
             .labelFor(id)
     
-        this.append( checkbox, label )
-            .style({ alignItems: 'center' })
+        this.append( this.checkbox, this.label )
+            .style({
+                display:    'flex',
+                flexFlow:   'row',
+                alignItems: 'center'
+            })
     }
 
     get isChecked() { return this.checkbox.node.checked }
@@ -84,8 +88,8 @@ export class Checkbox extends NodeElement<'div'> {
 
 // INPUT
 
-export function Input() {
-    return new NodeElement('input')
+export function Input(type = 'text') {
+    return new NodeElement('input').type(type)
 }
 
 // TABLE

@@ -1,4 +1,4 @@
-import { VerticalContainer, TextNode, TextSpan, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElement.js";
+import { VerticalContainer, TextNode, TextSpan, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
 import { toHex } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -16,10 +16,10 @@ export function C32TaskView(task) {
         { dataName: 'driftTime', label: 'Drift time', unit: 'ms' },
     ];
     const valueCellMap = new Map();
-    const table = Table(...tableData.map(lineInfo => {
-        const valueCell = TableCell(task.data[lineInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText);
-        valueCellMap.set(lineInfo.dataName, valueCell);
-        return TableRow(TableCell(lineInfo.label), valueCell, TableCell(lineInfo.unit));
+    const table = Table(...tableData.map(rowData => {
+        const valueCell = TableCell(task.data[rowData.dataName]).align('right').paddingRight(4).color(Color.PrimaryText);
+        valueCellMap.set(rowData.dataName, valueCell);
+        return TableRow(TableCell(rowData.label), valueCell, TableCell(rowData.unit));
     })).color(Color.SecondaryText);
     let intervalTimerID;
     const CheckboxUpdateData = new Checkbox('update data', checked => {
@@ -40,7 +40,7 @@ export function C32TaskView(task) {
     });
     const circuitPanels = new Map();
     task.events.subscribeEvents({
-        dataUpdated: () => {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = task.data[dataName];
                 const text = (dataName.startsWith('avg')) ? value.toPrecision(5)
@@ -49,7 +49,7 @@ export function C32TaskView(task) {
                             : value.toString();
                 valueCell.textContent(text);
             });
-        },
+        }),
         callListLoaded: () => {
             CircuitList.clear().append(TextNode(`Task calls: (${task.circuits.length})`).paddingVertical(4), ...task.circuits.map((circuitPtr, index) => {
                 return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {

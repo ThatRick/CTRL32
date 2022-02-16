@@ -21,10 +21,10 @@ export function C32TaskView(task: C32Task)
     const valueCellMap = new Map<string, NodeElement<'td'>>()
 
     const table = Table(
-        ...tableData.map(lineInfo => {
-            const valueCell = TableCell(task.data[lineInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
-            valueCellMap.set(lineInfo.dataName, valueCell)
-            return TableRow( TableCell(lineInfo.label), valueCell, TableCell(lineInfo.unit) )
+        ...tableData.map(rowData => {
+            const valueCell = TableCell(task.data[rowData.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
+            valueCellMap.set(rowData.dataName, valueCell)
+            return TableRow( TableCell(rowData.label), valueCell, TableCell(rowData.unit) )
         })
     ).color(Color.SecondaryText)
 
@@ -55,7 +55,7 @@ export function C32TaskView(task: C32Task)
 
     task.events.subscribeEvents(
     {
-        dataUpdated: () => {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = task.data[dataName] as number
                 const text = (dataName.startsWith('avg')) ? value.toPrecision(5)
@@ -65,7 +65,7 @@ export function C32TaskView(task: C32Task)
 
                 valueCell.textContent(text)
             })
-        },
+        }),
         callListLoaded: () => {
             CircuitList.clear().append(
                 TextNode(`Task calls: (${task.circuits.length})`).paddingVertical(4),

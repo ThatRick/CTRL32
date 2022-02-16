@@ -1,7 +1,7 @@
 import Vec2, { vec2 } from '../Vector2.js';
 import { GUIDynamicElement } from './GUIDynamicElement.js';
 import { MoveHandle, ResizeHandle } from './GUIPointerHandlers.js';
-import { Button, Div, TextNode } from './UIElement.js';
+import { Button, Div, TextNode } from './UIElements.js';
 const windowStyle = {
     backgroundColor: 'DimGray',
     border: 'solid Gray 1px',

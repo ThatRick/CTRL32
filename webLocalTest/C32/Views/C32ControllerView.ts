@@ -17,10 +17,10 @@ export function C32ControllerView(controller: C32Controller)
     const valueCellMap = new Map<string, NodeElement<'td'>>()
 
     const table = Table(
-        ...tableData.map(lineInfo => {
-            const valueCell = TableCell(controller.data[lineInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
-            valueCellMap.set(lineInfo.dataName, valueCell)
-            return TableRow( TableCell(lineInfo.label), valueCell, TableCell(lineInfo.unit) )
+        ...tableData.map(rowData => {
+            const valueCell = TableCell(controller.data[rowData.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
+            valueCellMap.set(rowData.dataName, valueCell)
+            return TableRow( TableCell(rowData.label), valueCell, TableCell(rowData.unit) )
         })
     ).color(Color.SecondaryText)
 
@@ -45,13 +45,13 @@ export function C32ControllerView(controller: C32Controller)
 
     controller.events.subscribeEvents(
     {
-        dataUpdated: () => {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = controller.data[dataName]
                 const text = (dataName == 'freeHeap') ? valueWithSeparators(value) : value.toString()
                 valueCell.textContent(text)
             })
-        },
+        }),
         tasklistLoaded: () => {
             PanelElement.append(
                 ...controller.tasks.map(taskPtr => {

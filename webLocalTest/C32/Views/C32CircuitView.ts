@@ -35,14 +35,15 @@ export function C32CircuitView(circuit: C32Circuit)
 
     const functionPanels = new Map<number, PanelElementView>()
 
-    const eventHandlers =    {
-        dataUpdated: () => {
+    const eventHandlers =
+    {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = circuit.data[dataName] as number
                 const text = (dataName == 'pointer') ? toHex(value) : value.toString()
                 valueCell.textContent(text)
             })
-        },
+        }),
         funcListLoaded: () => {
             FunctionList.clear().append(
                 TextNode(`Functions: (${circuit.funcList.length})`).paddingVertical(4),

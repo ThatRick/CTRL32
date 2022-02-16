@@ -1,4 +1,4 @@
-import { VerticalContainer, TableCell, TableRow, Table } from "../../GUI/UIElement.js";
+import { VerticalContainer, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
 import { toHex } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -24,13 +24,13 @@ export function C32FunctionView(func) {
         closable: true
     });
     const eventHandlers = {
-        dataUpdated: () => {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = func.data[dataName];
                 const text = (dataName == 'pointer') ? toHex(value) : value.toString();
                 valueCell.textContent(text);
             });
-        }
+        })
     };
     func.events.subscribeEvents(eventHandlers);
     eventHandlers.dataUpdated();

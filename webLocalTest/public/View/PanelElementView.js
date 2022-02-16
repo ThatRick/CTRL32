@@ -1,4 +1,4 @@
-import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../GUI/UIElement.js";
+import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../GUI/UIElements.js";
 import { Color } from "./Colors.js";
 export class PanelElementView extends NodeElement {
     constructor(titleText, config = {}) {

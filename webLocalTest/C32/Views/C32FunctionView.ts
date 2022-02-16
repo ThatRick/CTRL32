@@ -37,13 +37,13 @@ export function C32FunctionView(func: C32Function)
     })
 
     const eventHandlers = {
-        dataUpdated: () => {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = func.data[dataName] as number
                 const text = (dataName == 'pointer') ? toHex(value) : value.toString()
                 valueCell.textContent(text)
             })
-        }
+        })
     }
     func.events.subscribeEvents(eventHandlers)
     eventHandlers.dataUpdated()

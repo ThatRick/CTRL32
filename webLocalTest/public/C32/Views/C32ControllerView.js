@@ -1,4 +1,4 @@
-import { VerticalContainer, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElement.js";
+import { VerticalContainer, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
 import { valueWithSeparators } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -12,10 +12,10 @@ export function C32ControllerView(controller) {
         { dataName: 'tickCount', label: 'Tick count', unit: '' },
     ];
     const valueCellMap = new Map();
-    const table = Table(...tableData.map(lineInfo => {
-        const valueCell = TableCell(controller.data[lineInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText);
-        valueCellMap.set(lineInfo.dataName, valueCell);
-        return TableRow(TableCell(lineInfo.label), valueCell, TableCell(lineInfo.unit));
+    const table = Table(...tableData.map(rowData => {
+        const valueCell = TableCell(controller.data[rowData.dataName]).align('right').paddingRight(4).color(Color.PrimaryText);
+        valueCellMap.set(rowData.dataName, valueCell);
+        return TableRow(TableCell(rowData.label), valueCell, TableCell(rowData.unit));
     })).color(Color.SecondaryText);
     let intervalTimerID;
     const CheckboxUpdateData = new Checkbox('update data', checked => {
@@ -32,13 +32,13 @@ export function C32ControllerView(controller) {
         }
     });
     controller.events.subscribeEvents({
-        dataUpdated: () => {
+        dataUpdated: () => requestAnimationFrame(() => {
             valueCellMap.forEach((valueCell, dataName) => {
                 const value = controller.data[dataName];
                 const text = (dataName == 'freeHeap') ? valueWithSeparators(value) : value.toString();
                 valueCell.textContent(text);
             });
-        },
+        }),
         tasklistLoaded: () => {
             PanelElement.append(...controller.tasks.map(taskPtr => {
                 const task = controller.link.tasks.get(taskPtr);

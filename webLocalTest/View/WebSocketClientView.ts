@@ -6,11 +6,7 @@ import { Color } from "./Colors.js"
 
 export function WebSocketClientView(client: WebSocketClient)
 {
-    const HostInput = Input().type('url')
-        .style({
-            width: '0px',
-            flexGrow: '1',
-        })
+    const HostInput = Input('url').width(0).flexGrow()
         .setupNode(node => {
             node.placeholder = 'host ip'
             node.value = '192.168.0.241'
@@ -41,8 +37,8 @@ export function WebSocketClientView(client: WebSocketClient)
 
     client.events.subscribeEvents(
     {
-        sent:      () => { SentBytes.textContent( valueWithSeparators(client.sentBytes) )},
-        received:  () => { ReceivedBytes.textContent( valueWithSeparators(client.receivedBytes) )},
+        sent:      () => requestAnimationFrame(() => { SentBytes.textContent( valueWithSeparators(client.sentBytes) )} ),
+        received:  () => requestAnimationFrame(() => { ReceivedBytes.textContent( valueWithSeparators(client.receivedBytes) )} ),
         connected: () => {
             PanelElement.status.textContent('Online')
             PanelElement.status.color('#AAFFAA')
