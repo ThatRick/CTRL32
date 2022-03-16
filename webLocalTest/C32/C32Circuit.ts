@@ -1,10 +1,9 @@
 import { EventEmitter } from '../Events.js'
 import { DataType, StructValues } from '../TypedStructs.js'
 import { C32DataLink } from './C32DataLink.js'
-import { C32Task } from './C32Task.js'
-import { ICircuit, MsgCircuitInfo_t, MSG_TYPE } from './C32Types.js'
+import { ICircuitOnlineData, MsgCircuitInfo_t, MSG_TYPE } from './C32Types.js'
 
-export class C32Circuit implements ICircuit {
+export class C32Circuit implements ICircuitOnlineData {
 
     get data()          { return this._data }
     get funcList()      { return this._funcList }
@@ -12,14 +11,9 @@ export class C32Circuit implements ICircuit {
 
     get complete()      { return (this._funcList != null && this._outputRefs != null) }
 
-    get task()          { return this._task }
-    get index()         { return this._task.circuits.findIndex(pointer => (pointer == this.data.pointer) ) }
-
     readonly link: C32DataLink
 
     readonly events = new EventEmitter<typeof this, 'complete' | 'removed' | 'dataUpdated' | 'funcListLoaded' | 'outputRefListLoaded'>(this)
-
-    setTask(task: C32Task) { this._task = task }
 
     updateData(data: StructValues<typeof MsgCircuitInfo_t>) {
         const funcListModified = ( data.funcCount != this._data.funcCount || data.funcList != this._data.funcList )
@@ -53,7 +47,7 @@ export class C32Circuit implements ICircuit {
             }
             let callbackCounter = 0
             funcList.forEach(pointer => this.link.requestInfo(MSG_TYPE.FUNCTION_INFO, pointer, () => {
-                this.link.functionBlocks.get(pointer)?.setCircuit(this)
+                this.link.functionBlocks.get(pointer)?.setParentCircuit(this)
                 if (++callbackCounter == this.funcList.length) this.events.emit('funcListLoaded')
             }))
         })
@@ -69,9 +63,9 @@ export class C32Circuit implements ICircuit {
         })
     }
 
-    protected _task:       C32Task
     protected _data:       StructValues<typeof MsgCircuitInfo_t>
     protected _funcList:   number[]
     protected _outputRefs: number[]
+
     protected hasCompleted = false
 }

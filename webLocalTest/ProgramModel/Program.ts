@@ -1,0 +1,56 @@
+import { ICircuitSource, IFunctionBlockCall, IProgramSource, ITaskSource } from "./IDataTypes.js"
+
+export class ProgramSource
+{
+    source: IProgramSource
+
+    constructor(source?: IProgramSource) {
+        this.source = source
+    }
+
+    addTask(task: ITaskSource) {
+        const source = this.source
+        if (source.tasks.find(aTask => aTask.id == task.id)) {
+            console.error('Program: Can not add Task with duplicate id:', task.id)
+            return false
+        }
+        source.tasks.push(task)
+        return true
+    }
+
+    removeTask(taskId: number) {
+        this.source.tasks = this.source.tasks.filter( task => task.id != taskId )
+    }
+
+    addCircuitType(circuitType: ICircuitSource) {
+        if (this.source.repository.find(aCircType => aCircType.name == circuitType.name)) {
+            console.error('Program: Can not add Circuit type with duplicate name:', circuitType.name)
+            return false
+        }
+        this.source.repository.push(circuitType)
+        return true
+    }
+
+    removeCircuitType(typeName: string) {
+        // Check if circuit type is used in program
+        const refs = this.getCircuitTypeReferences(typeName)
+        if (refs.length > 0) {
+            console.error(`Program: Can not remove Circuit type '${typeName}'. ${refs.length} types with reference found:`, refs.map(ref => ref.name))
+            return false
+        }
+
+        this.source.repository = this.source.repository.filter( circType => circType.name != typeName )
+        return true
+    }
+
+    getCircuitType(typeName: string) {
+        return this.source.repository.find(aCircType => aCircType.name == typeName)
+    }
+
+    getCircuitTypeReferences(typeName: string) {
+        const isOfTypeName = (func: IFunctionBlockCall) => (func.circuitType == typeName)
+        const hasRefToTypeName = (circType: ICircuitSource) => (circType.functionCalls.find(isOfTypeName))
+
+        return this.source.repository.filter(hasRefToTypeName)
+    }
+}

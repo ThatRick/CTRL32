@@ -21,7 +21,5 @@ public:
     
     void reorderFunction(FunctionBlock* func, uint32_t index);
 
-    void collectMonitoringValues(Link* link);
-
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt);
 };

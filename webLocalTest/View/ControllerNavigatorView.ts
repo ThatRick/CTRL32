@@ -1,5 +1,5 @@
 import { C32Controller } from "../C32/C32Controller.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, IElement, NodeElement } from "../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, IElement, NodeElement } from "../UI/UIElements.js"
 import { Color } from "./Colors.js"
 
 
@@ -46,7 +46,7 @@ export class TreeNodeView extends NodeElement<'div'>
 
         this.titleBar   = HorizontalContainer( this.expandIcon, this.titleName )
             .style({
-                userSelect:     'none',
+                userSelect: 'none',
             })
             .onClick( () => {
                 if (this.selected && this.hasChildren) {

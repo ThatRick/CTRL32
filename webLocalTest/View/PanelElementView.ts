@@ -1,4 +1,4 @@
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, IElement, NodeElement } from "../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, IElement, NodeElement } from "../UI/UIElements.js"
 import { Color } from "./Colors.js"
 
 interface PanelElementViewConfig {

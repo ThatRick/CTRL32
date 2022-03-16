@@ -1,4 +1,4 @@
-import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../GUI/UIElements.js";
+import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../UI/UIElements.js";
 import { Color } from "./Colors.js";
 export class TreeNodeView extends NodeElement {
     constructor(name, getChildNodes) {

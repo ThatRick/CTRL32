@@ -1,4 +1,4 @@
-import { VerticalContainer, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
+import { VerticalContainer, TableCell, TableRow, Table } from "../../UI/UIElements.js";
 import { toHex } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -17,9 +17,10 @@ export function C32FunctionView(func) {
     })).color(Color.SecondaryText);
     const FunctionList = VerticalContainer();
     const Content = VerticalContainer(table, FunctionList);
-    const PanelElement = new PanelElementView(`${func.name} ${func.index + 1}/${func.circuit.funcList.length}`, {
+    const PanelElement = new PanelElementView(`${func.name} ${func.callOrder + 1}/${func.parentCircuit.funcList.length}`, {
         userContent: Content.node,
-        statusText: `(Task ${func.circuit.task.index} Circ ${func.circuit.index})`,
+        statusText: (func.parentCircuit) ? `(Call order: ${func.callOrder})` :
+            (func.task) ? `(Task: ${func.task.data.interval} ms)` : '(no parent)',
         statusColor: '#bbb',
         closable: true
     });

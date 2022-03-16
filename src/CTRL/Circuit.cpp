@@ -61,12 +61,6 @@ void Circuit::reorderFunction(FunctionBlock* func, uint32_t newIndex) {
     }
 }
 
-void Circuit::collectMonitoringValues(Link* link) {
-    for (FunctionBlock* func : funcList) {
-        func->reportMonitoringValues(link);
-    }
-}
-
 void Circuit::run(IOValue* inputValues, IOValue* outputValues, uint32_t dt)
 {
     // Update functions

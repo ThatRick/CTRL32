@@ -1,98 +1,13 @@
 import { DataType, StructValues } from '../TypedStructs.js'
+import { MSG_TYPE, msgTypeNames } from './C32MsgTypes.js'
 
-export const enum MSG_TYPE {
-    PING,
-
-    CONTROLLER_INFO,
-    TASK_INFO,
-    CIRCUIT_INFO,
-    FUNCTION_INFO,
-
-    GET_MEM_DATA,
-    SET_MEM_DATA,
-
-    MONITORING_ENABLE,
-    MONITORING_DISABLE,
-    MONITORING_REPORT,
-
-    CREATE_TASK,
-    CREATE_CIRCUIT,
-    CREATE_FUNCTION,
-
-    DELETE_TASK,
-    DELETE_CIRCUIT,
-    DELETE_FUNCTION,
-
-    TASK_START,
-    TASK_STOP,
-    TASK_SET_INTERVAL,
-    TASK_SET_OFFSET,
-    TASK_ADD_CIRCUIT,
-    TASK_REMOVE_CIRCUIT,
-
-    CIRCUIT_ADD_FUNCTION,
-    CIRCUIT_REMOVE_FUNCTION,
-    CIRCUIT_REORDER_FUNCTION,
-    CIRCUIT_CONNECT_OUTPUT,
-
-    FUNCTION_SET_IO_VALUE,
-    FUNCTION_SET_IO_FLAG,
-    FUNCTION_CONNECT_INPUT,
-    FUNCTION_DISCONNECT_INPUT,
-    FUNCTION_SET_FLAGS,
-    FUNCTION_SET_FLAG,
-    FUNCTION_CLEAR_FLAG,
-}
-
-export const msgTypeNames = [
-    'PING',
-
-    'CONTROLLER_INFO',
-    'TASK_INFO',
-    'CIRCUIT_INFO',
-    'FUNCTION_INFO',
-
-    'GET_MEM_DATA',
-    'SET_MEM_DATA',
-
-    'MONITORING_ENABLE',
-    'MONITORING_DISABLE',
-    'MONITORING_REPORT',
-
-    'CREATE_TASK',
-    'CREATE_CIRCUIT',
-    'CREATE_FUNCTION',
-
-    'DELETE_TASK',
-    'DELETE_CIRCUIT',
-    'DELETE_FUNCTION',
-
-    'TASK_START',
-    'TASK_STOP',
-    'TASK_SET_INTERVAL',
-    'TASK_SET_OFFSET',
-    'TASK_ADD_CIRCUIT',
-    'TASK_REMOVE_CIRCUIT',
-
-    'CIRCUIT_ADD_FUNCTION',
-    'CIRCUIT_REMOVE_FUNCTION',
-    'CIRCUIT_REORDER_FUNCTION',
-    'CIRCUIT_CONNECT_OUTPUT',
-
-    'FUNCTION_SET_IO_VALUE',
-    'FUNCTION_SET_IO_FLAG',
-    'FUNCTION_CONNECT_INPUT',
-    'FUNCTION_DISCONNECT_INPUT',
-    'FUNCTION_SET_FLAGS',
-    'FUNCTION_SET_FLAG',
-    'FUNCTION_CLEAR_FLAG',
-]
+export { MSG_TYPE, msgTypeNames }
 
 export const msgTypeNamesMaxLength = msgTypeNames.reduce((max, typeName) => Math.max(max, typeName.length), 0)
 
 export const enum REQUEST_RESULT {
-    REQUEST_FAILED,
-    REQUEST_SUCCESSFUL
+    FAILED,
+    SUCCESSFUL
 }
 
 export const enum IO_FLAG {
@@ -172,6 +87,8 @@ export const MsgControllerInfo_t = {
     tickCount:          DataType.uint32,
     taskCount:          DataType.uint32,
     taskList:           DataType.uint32,
+    funcCount:          DataType.uint32,
+    funcList:           DataType.uint32,
 }
 
 export const MsgTaskInfo_t = {
@@ -184,8 +101,8 @@ export const MsgTaskInfo_t = {
     lastActInterval:    DataType.uint32,
     avgActInterval:     DataType.float,
     driftTime:          DataType.uint32,
-    circuitCount:       DataType.uint32,
-    circuitList:        DataType.uint32,
+    funcCount:          DataType.uint32,
+    funcList:           DataType.uint32,
 }
 
 export const MsgCircuitInfo_t = {
@@ -250,35 +167,32 @@ export const ESP32 =
     logMemoryInfo
 }
 
-export interface IFunctionBlock
+export interface IFunctionBlockOnlineData
 {
     data:       StructValues<typeof MsgFunctionInfo_t>
-    ioValues:   number[]
     ioFlags:    number[]
+    ioValues:   number[]
     name:       string
-    complete:   boolean
 }
 
-export interface ICircuit
+export interface ICircuitOnlineData
 {
     data:       StructValues<typeof MsgCircuitInfo_t>
     funcList:   number[]
     outputRefs: number[]
-    complete:   boolean
 }
 
-export interface ITask
+export interface ITaskOnlineData
 {
     data:       StructValues<typeof MsgTaskInfo_t>
-    circuits:   number[]
-    complete:   boolean
+    funcList:   number[]
 }
 
-export interface IController
+export interface IControllerOnlineData
 {
     data:       StructValues<typeof MsgControllerInfo_t>
-    tasks:      number[]
-    complete:   boolean
+    taskList:   number[]
+    funcList:   number[]
 }
 
 // ------------------------------------------------------------------------

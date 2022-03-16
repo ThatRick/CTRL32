@@ -23,7 +23,7 @@ import {
 import { toHex } from './Util.js'
 import { CreateUI, ObjectView } from './UI.js'
 import { WSConnection } from './WSConnection.js'
-import { Button } from './GUI/UIElements.js'
+import { Button } from './UI/UIElements.js'
 
 
 

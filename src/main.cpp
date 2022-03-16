@@ -14,7 +14,7 @@
 #include "CTRL/Link.h"
 #include "CTRL/FunctionBlock.h"
 #include "CTRL/Circuit.h"
-#include "CTRL/ControllerTask.h"
+#include "CTRL/CyclicTask.h"
 #include "CTRL/FunctionLib.h"
 #include "CTRL/FunctionFactory.h"
 
@@ -159,13 +159,8 @@ void IRAM_ATTR ControllerLoop(void *) {
     }
 }
 
-void ControllerSetup()
-{
-    controller = new Controller();
-    commLink = new Link(controller, &onWSSendData, &onWSSendText);
-    funcFactory = new FunctionFactory();
-
-    Circuit *loop = new Circuit(4, 2);
+Circuit* createTestCircuit() {
+    Circuit *circ = new Circuit(4, 2);
     
     FunctionBlock *funcADD = funcFactory->createFunction(LIB_ID_MATH_UINT, MathUintLib::FUNC_ID_ADD, 2);
     FunctionBlock *funcDIV = funcFactory->createFunction(LIB_ID_MATH, MathLib::FUNC_ID_DIV);
@@ -183,22 +178,33 @@ void ControllerSetup()
     funcMUL->connectInput(0, funcSIN, 0);
     funcMUL->setInput(1, 100.f);
 
-    loop->addFunction(funcADD);
-    loop->addFunction(funcDIV);
-    loop->addFunction(funcSIN);
-    loop->addFunction(funcMUL);
+    circ->addFunction(funcADD);
+    circ->addFunction(funcDIV);
+    circ->addFunction(funcSIN);
+    circ->addFunction(funcMUL);
 
-    Serial.println("Creating a CTRL32 task");
-    ControllerTask* task1 = new ControllerTask(controller, 1000, 0);
-    task1->circuits.push_back(loop);
-    controller->tasks.push_back(task1);
+    return circ;
+}
 
-    task1->start();
+void ControllerSetup()
+{
+    controller = new Controller();
+    commLink = new Link(controller, &onWSSendData, &onWSSendText);
+    funcFactory = new FunctionFactory();
+
+    CyclicTask* task1s = new CyclicTask(controller, 1000, 0);
+    controller->tasks.push_back(task1s);
+
+    Circuit* testCircuit = createTestCircuit();
+
+    controller->addFunction(testCircuit, task1s);
+
+    task1s->start();
 
     Serial.println("Creating a FreeRTOS task");
     xTaskCreatePinnedToCore(ControllerLoop, "CTRL32", 4*1024, NULL, CONTROLLER_PRIORITY, &taskController, CONTROLLER_RUNNING_CORE);
 
-    Serial.println("Controller tasks running.");
+    Serial.println("Controller tasks running");
 }
 
 

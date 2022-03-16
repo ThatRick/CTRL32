@@ -4,12 +4,18 @@
 
 #define MAX_UPDATE_INTERVAL 100U
 
-class ControllerTask;
+#define OPCODE_CIRCUIT 0
+
+class CyclicTask;
+class FunctionBlock;
+class Link;
 
 class Controller
 {
 public:
-    std::vector<ControllerTask*> tasks;
+    std::vector<FunctionBlock*> funcList;
+    std::vector<CyclicTask*> tasks;
+
     uint32_t tickCount = 0;
 
     Controller();
@@ -19,6 +25,9 @@ public:
 
     void connected();
     void disconnected();
+
+    void addFunction(FunctionBlock* func, CyclicTask* taskNum = nullptr);
+    void removeFunction(FunctionBlock* func);
 
     uint32_t    freeHeap();
     uint32_t    cpuFreq();

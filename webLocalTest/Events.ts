@@ -31,8 +31,7 @@ export class EventEmitter<SourceType extends Object, EventNames extends string>
         this.subscribers.clear()
     }
 
-    constructor(protected eventSource: SourceType) {
-    }
+    constructor(protected eventSource: SourceType) {}
     
     protected subscribers = new Map<string, Array<(source: SourceType, event: EventNames) => void>>()
 }

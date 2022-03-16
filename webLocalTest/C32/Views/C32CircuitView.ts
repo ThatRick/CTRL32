@@ -1,5 +1,5 @@
 import { C32Circuit } from "../C32Circuit.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, TableCell, TableRow, Table } from "../../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
 import { Color } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
@@ -26,9 +26,8 @@ export function C32CircuitView(circuit: C32Circuit)
         table,
         FunctionList
     )
-    const PanelElement = new PanelElementView(`Circuit ${circuit.index}`, {
+    const PanelElement = new PanelElementView(`Circuit`, {
         userContent:    Content.node,
-        statusText:     `(Task ${circuit.task.index})`,
         statusColor:    '#bbb',
         closable:       true
     })

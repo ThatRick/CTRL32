@@ -7,7 +7,7 @@ import { ioConvNames, ioTypeNames, IO_FLAG, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE
 //      Print Function Block data to log
 
 export function functionToString(func: C32Function, withFlags = true) {
-    if (!func.complete) {
+    if (!func.isComplete) {
         console.error('printFunctionBlock: FunctionBlock data is not complete')
         return
     }

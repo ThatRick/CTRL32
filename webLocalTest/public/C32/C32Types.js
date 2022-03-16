@@ -1,38 +1,5 @@
-export const msgTypeNames = [
-    'PING',
-    'CONTROLLER_INFO',
-    'TASK_INFO',
-    'CIRCUIT_INFO',
-    'FUNCTION_INFO',
-    'GET_MEM_DATA',
-    'SET_MEM_DATA',
-    'MONITORING_ENABLE',
-    'MONITORING_DISABLE',
-    'MONITORING_REPORT',
-    'CREATE_TASK',
-    'CREATE_CIRCUIT',
-    'CREATE_FUNCTION',
-    'DELETE_TASK',
-    'DELETE_CIRCUIT',
-    'DELETE_FUNCTION',
-    'TASK_START',
-    'TASK_STOP',
-    'TASK_SET_INTERVAL',
-    'TASK_SET_OFFSET',
-    'TASK_ADD_CIRCUIT',
-    'TASK_REMOVE_CIRCUIT',
-    'CIRCUIT_ADD_FUNCTION',
-    'CIRCUIT_REMOVE_FUNCTION',
-    'CIRCUIT_REORDER_FUNCTION',
-    'CIRCUIT_CONNECT_OUTPUT',
-    'FUNCTION_SET_IO_VALUE',
-    'FUNCTION_SET_IO_FLAG',
-    'FUNCTION_CONNECT_INPUT',
-    'FUNCTION_DISCONNECT_INPUT',
-    'FUNCTION_SET_FLAGS',
-    'FUNCTION_SET_FLAG',
-    'FUNCTION_CLEAR_FLAG',
-];
+import { msgTypeNames } from './C32MsgTypes.js';
+export { msgTypeNames };
 export const msgTypeNamesMaxLength = msgTypeNames.reduce((max, typeName) => Math.max(max, typeName.length), 0);
 export const IO_FLAG_TYPE_MASK = (1 /* TYPE_B0 */ | 2 /* TYPE_B1 */ | 4 /* TYPE_B2 */);
 export const IO_FLAG_CONV_TYPE_MASK = (64 /* REF_CONV_TYPE_B0 */ | 128 /* REF_CONV_TYPE_B1 */);
@@ -76,6 +43,8 @@ export const MsgControllerInfo_t = {
     tickCount: 5 /* uint32 */,
     taskCount: 5 /* uint32 */,
     taskList: 5 /* uint32 */,
+    funcCount: 5 /* uint32 */,
+    funcList: 5 /* uint32 */,
 };
 export const MsgTaskInfo_t = {
     pointer: 5 /* uint32 */,
@@ -87,8 +56,8 @@ export const MsgTaskInfo_t = {
     lastActInterval: 5 /* uint32 */,
     avgActInterval: 6 /* float */,
     driftTime: 5 /* uint32 */,
-    circuitCount: 5 /* uint32 */,
-    circuitList: 5 /* uint32 */,
+    funcCount: 5 /* uint32 */,
+    funcList: 5 /* uint32 */,
 };
 export const MsgCircuitInfo_t = {
     pointer: 5 /* uint32 */,

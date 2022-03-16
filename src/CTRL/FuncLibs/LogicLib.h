@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../FunctionBlock.h"
 #include "../FunctionLib.h"
 

@@ -1,5 +1,5 @@
 import { PanelHorizontalResizeHandle } from "../GUI/GUIPointerHandlers.js";
-import { HorizontalContainer, VerticalContainer, TextNode, Div } from "../GUI/UIElements.js";
+import { HorizontalContainer, VerticalContainer, TextNode, Div } from "../UI/UIElements.js";
 import { Color } from "./Colors.js";
 const Toolbar = HorizontalContainer().id('Toolbar')
     .style({
@@ -30,6 +30,12 @@ Div().id('SidePanelResizeHandle')
 })
     .setupNode(node => new PanelHorizontalResizeHandle(node, SidePanel.node, 200, 600))
     .appendTo(SidePanel);
+const Taskbar = HorizontalContainer()
+    .style({
+    backgroundColor: Color.Panel,
+    height: '18px',
+    borderBottom: '1px solid ' + Color.BorderDark,
+});
 const Desktop = Div().id('Desktop')
     .style({
     flexGrow: '1',
@@ -50,10 +56,12 @@ const Root = VerticalContainer().id('Root')
     boxSizing: 'border-box'
 })
     .append(Toolbar, HorizontalContainer().id('Workspace').flexGrow()
-    .append(SidePanel, Desktop));
+    .append(SidePanel, VerticalContainer(Taskbar, Desktop).flexGrow(1)));
 export const MainView = {
     Color,
     Root,
     Toolbar,
-    SidePanel, Desktop,
+    SidePanel,
+    Taskbar,
+    Desktop,
 };

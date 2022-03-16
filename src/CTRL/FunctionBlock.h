@@ -4,7 +4,7 @@
 #include "Link.h"
 
 #define FUNC_FLAG_MONITORING        (1 << 0)
-#define FUNC_FLAG_B1                (1 << 1)
+#define FUNC_FLAG_MONITOR_ONCE      (1 << 1)
 #define FUNC_FLAG_B2                (1 << 2)
 
 #define IO_FLAG_TYPE_B0             (1 << 0)
@@ -55,7 +55,6 @@ inline uint16_t OPCODE(uint8_t libID, uint8_t funcID) { return (libID << 8) + fu
 
 class FunctionBlock
 {
-    bool monitorOnce = false;
 public:
     const uint8_t   numInputs;
     const uint8_t   numOutputs;
@@ -157,8 +156,6 @@ public:
     void disableMonitoring();
 
     void reportMonitoringValues(Link* link);
-
-    void executeQueuedCommands(Link* link);
 
     void initInput(uint8_t index, bool value);
     void initInput(uint8_t index, uint32_t value);

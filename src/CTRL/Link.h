@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "Controller.h"
 #include "FIFO.h"
-#include <map>
+#include <set>
 
 #define ADDRESS_MIN 0x3F400000
 #define ADDRESS_MAX 0x50002000
@@ -39,8 +39,8 @@ enum MESSAGE_TYPE {
     MSG_TYPE_TASK_STOP,
     MSG_TYPE_TASK_SET_INTERVAL,
     MSG_TYPE_TASK_SET_OFFSET,
-    MSG_TYPE_TASK_ADD_CIRCUIT,
-    MSG_TYPE_TASK_REMOVE_CIRCUIT,
+    MSG_TYPE_TASK_ADD_FUNCTION,
+    MSG_TYPE_TASK_REMOVE_FUNCTION,
 
     MSG_TYPE_CIRCUIT_ADD_FUNCTION,
     MSG_TYPE_CIRCUIT_REMOVE_FUNCTION,
@@ -99,6 +99,8 @@ struct MsgControllerInfo_t {
     uint32_t    tickCount;
     uint32_t    taskCount;
     ptr32_t     taskList;
+    uint32_t    funcCount;
+    ptr32_t     funcList;
 };
 
 struct MsgTaskInfo_t {
@@ -111,8 +113,8 @@ struct MsgTaskInfo_t {
     uint32_t    lastActInterval;
     float       avgActInterval;
     uint32_t    driftTime;
-    uint32_t    circuitCount;
-    ptr32_t     circuitList;
+    uint32_t    funcCount;
+    ptr32_t     funcList;
 };
 
 struct MsgCircuitInfo_t {
@@ -190,13 +192,28 @@ class Link
     bool isConnected = false;
 
     MonitoringCollectionItem_t* monitoringCollection = nullptr;
-    size_t monitoringCollectionCount = 0;
     size_t monitoringCollectionSize = 0;
+    size_t monitoringCollectionCount = 0;
     void* monitoringCollectionTask = nullptr;
+
+    uint32_t monitoringDataInterval_ms = 500;
+    Time nextMonitoringReportTime;
+    std::set<FunctionBlock*> monitoredFunctions;
+
+    void initMonitoringSet();
+    void reportMonitoringData();
+    void monitoringCollectionStart(void* reportingTask, size_t funcCount);
+    void monitoringCollectionSend();
+    void monitoringCollectionEnd();
+    void iterateForMonitoredFunctions(FunctionBlock* func);
 
     FIFOBuffer<RequestData_t, 16> dataQueue;
 
     void handleRequest(void* data, size_t len);
+
+    void sendConfirmation(MsgRequestHeader_t request, REQUEST_RESULT result);
+
+    void sendResponse(MsgRequestHeader_t request, void* payload = nullptr, size_t payloadSize = 0);
 
 public:
 
@@ -208,16 +225,8 @@ public:
 
     void receiveData(void* data, size_t len);
 
-    void sendConfirmation(MsgRequestHeader_t request, REQUEST_RESULT result);
-
-    void sendResponse(MsgRequestHeader_t request, void* payload = nullptr, size_t payloadSize = 0);
-
-    void monitoringCollectionStart(void* reportingTask, size_t funcCount);
-    void monitoringCollectionSend();
-    void monitoringCollectionEnd();
-    void monitoringValueHandler(void* func, void* values, uint32_t byteSize);
-    
     void processData();
 
-    void sendControllerInfo();
+    void monitoringValueHandler(void* func, void* values, uint32_t byteSize);
+
 };

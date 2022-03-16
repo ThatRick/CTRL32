@@ -1,5 +1,5 @@
 import { C32Circuit } from "../C32Circuit.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
 import { Color } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
@@ -29,9 +29,10 @@ export function C32FunctionView(func: C32Function)
         table,
         FunctionList
     )
-    const PanelElement = new PanelElementView(`${func.name} ${func.index+1}/${func.circuit.funcList.length}`, {
+    const PanelElement = new PanelElementView(`${func.name} ${func.callOrder+1}/${func.parentCircuit.funcList.length}`, {
         userContent:    Content.node,
-        statusText:     `(Task ${func.circuit.task.index} Circ ${func.circuit.index})`,
+        statusText:     (func.parentCircuit) ? `(Call order: ${func.callOrder})` :
+                        (func.task) ? `(Task: ${func.task.data.interval} ms)` : '(no parent)',
         statusColor:    '#bbb',
         closable:       true
     })

@@ -1,5 +1,5 @@
 import { C32Task } from "../C32Task.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
 import { Color } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
@@ -66,10 +66,10 @@ export function C32TaskView(task: C32Task)
                 valueCell.textContent(text)
             })
         }),
-        callListLoaded: () => {
+        funcListLoaded: () => {
             CircuitList.clear().append(
-                TextNode(`Task calls: (${task.circuits.length})`).paddingVertical(4),
-                ...task.circuits.map( (circuitPtr, index) => {
+                TextNode(`Task calls: (${task.funcList.length})`).paddingVertical(4),
+                ...task.funcList.map( (circuitPtr, index) => {
                     return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {
                         if (circuitPanels.has(circuitPtr)) {
                             const circuitPanel = circuitPanels.get(circuitPtr)

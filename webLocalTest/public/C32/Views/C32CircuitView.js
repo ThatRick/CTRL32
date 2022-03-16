@@ -1,4 +1,4 @@
-import { VerticalContainer, TextNode, TextSpan, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
+import { VerticalContainer, TextNode, TextSpan, TableCell, TableRow, Table } from "../../UI/UIElements.js";
 import { toHex } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -15,9 +15,8 @@ export function C32CircuitView(circuit) {
     })).color(Color.SecondaryText);
     const FunctionList = VerticalContainer();
     const Content = VerticalContainer(table, FunctionList);
-    const PanelElement = new PanelElementView(`Circuit ${circuit.index}`, {
+    const PanelElement = new PanelElementView(`Circuit`, {
         userContent: Content.node,
-        statusText: `(Task ${circuit.task.index})`,
         statusColor: '#bbb',
         closable: true
     });

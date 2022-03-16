@@ -1,22 +1,20 @@
 #pragma once
 
 #include "Common.h"
-#include "Circuit.h"
+#include "FunctionBlock.h"
 #include "Controller.h"
 #include "Link.h"
 
-class ControllerTask
+class CyclicTask
 {
     bool        running = false;
     Time        baseTimer = 0;
     Time        prevRunTime = 0;
     Controller* controller;
 
-    void collectMonitoringValues();
-
 public:
 
-    std::vector<Circuit*> circuits;
+    std::vector<FunctionBlock*> funcList;
 
     Link*       link = nullptr;
 
@@ -33,14 +31,14 @@ public:
 
     uint32_t    drift_us = 0;
 
-    ControllerTask(Controller* controller, uint32_t interval_ms, uint32_t offset_ms=0);
+    CyclicTask(Controller* controller, uint32_t interval_ms, uint32_t offset_ms=0);
 
     // Returns next pending update time
     Time tick();
 
     void update();
     bool isRunning();
-    inline uint64_t nextUpdateTime();
+    uint64_t inline nextUpdateTime();
 
     float averageCPUTime();
     float averageActualInterval_ms();
@@ -49,6 +47,6 @@ public:
     void stop();
     void setInterval(uint32_t time);
     void setOffset(uint32_t time);
-    void addCircuit(Circuit* circuit, int32_t index = -1);
-    void removeCircuit(Circuit* circuit);
+    void addFunction(FunctionBlock* func, int32_t index = -1);
+    void removeFunction(FunctionBlock* func);
 };

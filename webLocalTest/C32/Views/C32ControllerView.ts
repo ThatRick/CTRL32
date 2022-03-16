@@ -1,5 +1,5 @@
 import { C32Controller } from "../C32Controller.js"
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { valueWithSeparators } from "../../Util.js"
 import { Color } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
@@ -52,9 +52,9 @@ export function C32ControllerView(controller: C32Controller)
                 valueCell.textContent(text)
             })
         }),
-        tasklistLoaded: () => {
+        taskListLoaded: () => {
             PanelElement.append(
-                ...controller.tasks.map(taskPtr => {
+                ...controller.taskList.map(taskPtr => {
                     const task = controller.link.tasks.get(taskPtr)
                     return C32TaskView(task)
                 })

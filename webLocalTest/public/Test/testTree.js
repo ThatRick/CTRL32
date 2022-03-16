@@ -1,4 +1,4 @@
-import { NodeElement } from '../GUI/UIElements.js';
+import { NodeElement } from '../UI/UIElements.js';
 import { TreeNodeView } from '../View/ControllerNavigatorView.js';
 export const testTree = [
     {

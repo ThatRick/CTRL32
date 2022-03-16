@@ -12,9 +12,6 @@ export class C32Circuit {
     get funcList() { return this._funcList; }
     get outputRefs() { return this._outputRefs; }
     get complete() { return (this._funcList != null && this._outputRefs != null); }
-    get task() { return this._task; }
-    get index() { return this._task.circuits.findIndex(pointer => (pointer == this.data.pointer)); }
-    setTask(task) { this._task = task; }
     updateData(data) {
         const funcListModified = (data.funcCount != this._data.funcCount || data.funcList != this._data.funcList);
         const outputRefListModified = (data.outputRefCount != this._data.outputRefCount || data.outputRefList != this._data.outputRefList);
@@ -36,7 +33,7 @@ export class C32Circuit {
             }
             let callbackCounter = 0;
             funcList.forEach(pointer => this.link.requestInfo(4 /* FUNCTION_INFO */, pointer, () => {
-                this.link.functionBlocks.get(pointer)?.setCircuit(this);
+                this.link.functionBlocks.get(pointer)?.setParentCircuit(this);
                 if (++callbackCounter == this.funcList.length)
                     this.events.emit('funcListLoaded');
             }));

@@ -32,12 +32,6 @@ void IRAM_ATTR FunctionBlock::update(uint32_t dt)
     run(inputValues, outputs(), dt);
     // Update monitoring values
     if (monitoringValues) {
-        for (int i = 0; i < numInputs; i++) {
-            //monitoringValues[i] = inputValues[i];
-        }
-        for (int i = numInputs; i < ioCount(); i++) {
-            //monitoringValues[i] = outputs()[i];
-        }
         // Copy input values
         memcpy(&monitoringValues[0], &inputValues[0], numInputs * sizeof(IOValue));
         // Copy output values
@@ -66,7 +60,7 @@ IOValue IRAM_ATTR FunctionBlock::inputValue(uint8_t index) {
                     break;
                 case IO_TYPE_FLOAT:
                     if (ioConvType == IO_CONV_UNSIGNED) { value.f = value.u;  break; }
-                    if (ioConvType == IO_CONV_SIGNED)   { value.f = 420;  break; }
+                    if (ioConvType == IO_CONV_SIGNED)   { value.f = value.i;  break; }
                     break;
                 case IO_TYPE_INT:
                     if (ioConvType == IO_CONV_FLOAT)    { value.i = value.f;  break; }
@@ -173,26 +167,20 @@ const char* FunctionBlock::getIOTypeString(IO_TYPE ioType)
 }
 
 void FunctionBlock::enableMonitoring(bool once) {
-    monitorOnce = once;
+    if (once) setFuncFlag(FUNC_FLAG_MONITOR_ONCE);
     setFuncFlag(FUNC_FLAG_MONITORING);
     if (!monitoringValues) monitoringValues = (IOValue*)calloc(sizeof(IOValue), numInputs + numOutputs);
 }
 
 void FunctionBlock::disableMonitoring() {
-    clearFuncFlag(FUNC_FLAG_MONITORING);
+    clearFuncFlag(FUNC_FLAG_MONITORING || FUNC_FLAG_MONITOR_ONCE);
     free(monitoringValues);
     monitoringValues = nullptr;
-    monitorOnce = false;
 }
 
 void IRAM_ATTR FunctionBlock::reportMonitoringValues(Link* link) {
     if (!monitoringValues) return;
     link->monitoringValueHandler(this, monitoringValues, (numInputs + numOutputs) * sizeof(IOValue));
-    if (monitorOnce) disableMonitoring();
-}
-
-void FunctionBlock::executeQueuedCommands(Link* link) {
-
 }
 
 void FunctionBlock::initInput(uint8_t index, bool value) {

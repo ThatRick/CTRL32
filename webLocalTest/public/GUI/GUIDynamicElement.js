@@ -1,5 +1,5 @@
 import { vec2 } from "../Vector2.js";
-import { NodeElement } from "./UIElements.js";
+import { NodeElement } from "../UI/UIElements.js";
 export class GUIDynamicElement extends NodeElement {
     constructor(pos, size, gui) {
         super('div');

@@ -1,4 +1,4 @@
-import { VerticalContainer, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
+import { VerticalContainer, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js";
 import { valueWithSeparators } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -39,8 +39,8 @@ export function C32ControllerView(controller) {
                 valueCell.textContent(text);
             });
         }),
-        tasklistLoaded: () => {
-            PanelElement.append(...controller.tasks.map(taskPtr => {
+        taskListLoaded: () => {
+            PanelElement.append(...controller.taskList.map(taskPtr => {
                 const task = controller.link.tasks.get(taskPtr);
                 return C32TaskView(task);
             }));

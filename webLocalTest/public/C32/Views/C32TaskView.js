@@ -1,4 +1,4 @@
-import { VerticalContainer, TextNode, TextSpan, Checkbox, TableCell, TableRow, Table } from "../../GUI/UIElements.js";
+import { VerticalContainer, TextNode, TextSpan, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js";
 import { toHex } from "../../Util.js";
 import { Color } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
@@ -50,8 +50,8 @@ export function C32TaskView(task) {
                 valueCell.textContent(text);
             });
         }),
-        callListLoaded: () => {
-            CircuitList.clear().append(TextNode(`Task calls: (${task.circuits.length})`).paddingVertical(4), ...task.circuits.map((circuitPtr, index) => {
+        funcListLoaded: () => {
+            CircuitList.clear().append(TextNode(`Task calls: (${task.funcList.length})`).paddingVertical(4), ...task.funcList.map((circuitPtr, index) => {
                 return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {
                     if (circuitPanels.has(circuitPtr)) {
                         const circuitPanel = circuitPanels.get(circuitPtr);

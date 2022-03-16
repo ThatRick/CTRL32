@@ -1,4 +1,4 @@
-import { HorizontalContainer, VerticalContainer, TextNode, Button, Input, TableCell, Table, TableRow } from "../GUI/UIElements.js";
+import { HorizontalContainer, VerticalContainer, TextNode, Button, Input, TableCell, Table, TableRow } from "../UI/UIElements.js";
 import { PanelElementView } from "./PanelElementView.js";
 import { valueWithSeparators } from "../Util.js";
 import { Color } from "./Colors.js";

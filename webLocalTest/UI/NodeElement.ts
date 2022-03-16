@@ -1,6 +1,19 @@
+import Vec2, { vec2 } from "../Vector2.js"
+
 // NodeElement
 export interface IElement {
     node: HTMLElement
+}
+
+export interface IPointerEvents
+{
+    onPointerDown?:  () => void
+    onPointerUp?:    () => void
+    onPointerDrag?:  (offset: Vec2) => void
+    onPointerHover?: () => void
+    onPointerClick?: () => void
+    onPointerOver?:  () => void
+    onPointerOut?:   () => void
 }
 
 export class NodeElement<NodeType extends keyof HTMLElementTagNameMap> {
@@ -135,9 +148,69 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap> {
 
     padding(value: number) { this.node.style.padding = value + 'px';  return this }
 
+    flexContainer(direction: 'horizontal' | 'vertical' = 'vertical') {
+        this.style({
+            display:    'flex',
+            flexFlow:   (direction == 'horizontal') ? 'row' : 'column',
+        })
+        return this
+    }
+
     flexGrow(value = 1) { this.node.style.flexGrow = value.toString();  return this }
 
+    userSelect(mode: 'none' | 'auto' | 'text' | 'contain' |'all') {
+        this.style({ userSelect: mode })
+        return this
+    }
+
     align(value: 'left' | 'right' | 'center') { this.node.style.textAlign = value;  return this }
+
+    setPointerHandlers(pointerEvents: IPointerEvents) {
+        let currentPos = vec2(0, 0)
+        let downPos = vec2(0, 0)
+        let isDown = false
+    
+        if (pointerEvents.onPointerDown || pointerEvents.onPointerDrag)
+            this.node.addEventListener('pointerdown', ev => {
+                isDown = true
+                downPos.set(ev.pageX, ev.pageY)
+                pointerEvents.onPointerDown?.()
+                if (pointerEvents.onPointerDown) {
+                    this.node.setPointerCapture(ev.pointerId)
+                }
+            })
+
+        if (pointerEvents.onPointerUp || pointerEvents.onPointerDrag)
+            this.node.addEventListener('pointerup', ev => {
+                isDown = false
+                if (this.node.hasPointerCapture(ev.pointerId)) {
+                    this.node.releasePointerCapture(ev.pointerId)
+                }
+                pointerEvents.onPointerUp?.()
+            })
+
+        if (pointerEvents.onPointerDrag || pointerEvents.onPointerHover)
+            this.node.addEventListener('pointermove', ev => {
+                currentPos.set(ev.pageX, ev.pageY)
+                if (isDown && pointerEvents.onPointerDrag) {
+                    const dragOffset = Vec2.sub(currentPos, downPos)
+                    pointerEvents.onPointerDrag?.(dragOffset)
+                }
+                else pointerEvents.onPointerHover?.()
+            })
+
+        if (pointerEvents.onPointerClick) this.node.addEventListener('click', ev => {
+                pointerEvents.onPointerClick?.()
+            })
+
+        if (pointerEvents.onPointerOver) this.node.addEventListener('pointerover', ev => {
+                pointerEvents.onPointerOver?.()
+            })
+
+        if (pointerEvents.onPointerOut) this.node.addEventListener('pointerout', ev => {
+                pointerEvents.onPointerOut?.()
+            })
+    }
 
     private static idCounter = 1
 

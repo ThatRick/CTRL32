@@ -3,7 +3,7 @@ import { ioConvNames, ioTypeNames, IO_FLAG_CONV_TYPE_MASK, IO_FLAG_TYPE_MASK, pa
 // ------------------------------------------------------------------------
 //      Print Function Block data to log
 export function functionToString(func, withFlags = true) {
-    if (!func.complete) {
+    if (!func.isComplete) {
         console.error('printFunctionBlock: FunctionBlock data is not complete');
         return;
     }

@@ -2,37 +2,39 @@ import { EventEmitter } from '../Events.js';
 export class C32Task {
     constructor(data, link) {
         this.events = new EventEmitter(this);
-        this.hasCompleted = false;
+        this.wasCompleted = false;
         this._data = data;
         this.link = link;
-        this.getCircuitList();
+        this.getFuncList();
     }
     get data() { return this._data; }
-    get circuits() { return this._circuits; }
-    get complete() { return (this._circuits != null); }
-    get index() { return [...this.link.tasks.values()].findIndex(task => task == this); }
+    get funcList() { return this._funcList; }
+    get isComplete() { return (this._funcList != null); }
+    get index() { return this.link.controller.taskList.findIndex(taskPtr => taskPtr = this.data.pointer); }
+    requestData() { this.link.requestInfo(2 /* TASK_INFO */, this.data.pointer); }
     updateData(data) {
-        const circuitListModified = (data.circuitCount != this._data.circuitCount || data.circuitList != this._data.circuitList);
+        const funcListModified = (data.funcCount != this._data.funcCount || data.funcList != this._data.funcList);
         this._data = data;
         this.events.emit('dataUpdated');
-        if (circuitListModified)
-            this.getCircuitList();
+        if (funcListModified)
+            this.getFuncList();
     }
-    requestData() { this.link.requestInfo(2 /* TASK_INFO */, this.data.pointer); }
     remove() { this.events.emit('removed'); }
-    getCircuitList() {
-        this.link.requestMemData(this._data.circuitList, this._data.circuitCount, 5 /* uint32 */, circuitList => {
-            this._circuits = circuitList;
-            if (!this.hasCompleted && this.complete) {
-                this.events.emit('complete');
-                this.hasCompleted = true;
-            }
+    getFuncList() {
+        this.link.requestMemData(this._data.funcList, this._data.funcCount, 5 /* uint32 */, funcList => {
+            this._funcList = funcList;
+            this.checkCompleteness();
             let callbackCounter = 0;
-            circuitList.forEach(pointer => this.link.requestInfo(3 /* CIRCUIT_INFO */, pointer, () => {
-                this.link.circuits.get(pointer)?.setTask(this);
-                if (++callbackCounter == this._circuits.length)
-                    this.events.emit('callListLoaded');
+            funcList.forEach(pointer => this.link.requestInfo(3 /* CIRCUIT_INFO */, pointer, () => {
+                if (++callbackCounter == this._funcList.length)
+                    this.events.emit('funcListLoaded');
             }));
         });
+    }
+    checkCompleteness() {
+        if (this.isComplete && !this.wasCompleted) {
+            this.wasCompleted = true;
+            this.events.emit('complete');
+        }
     }
 }

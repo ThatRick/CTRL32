@@ -1,6 +1,7 @@
 #include "Link.h"
 #include "FunctionBlock.h"
-#include "ControllerTask.h"
+#include "Circuit.h"
+#include "CyclicTask.h"
 #include "Esp.h"
 
 #define LOG_INFO 0
@@ -8,7 +9,9 @@
 Link::Link(Controller* controller, send_data_callback_t onSendData, send_text_callback_t onSendText) :
     controller (controller),
     sendData (onSendData), 
-    sendText (onSendText) {
+    sendText (onSendText)
+{
+    initMonitoringSet();
 }
 
 Link::~Link() {
@@ -24,14 +27,14 @@ void Link::connected() {
         .timeStamp  = (uint32_t)(controller->getTime() / 1000ULL)
     };
     sendData(&response, sizeof(response));
-    for (ControllerTask* task : controller->tasks) {
+    for (CyclicTask* task : controller->tasks) {
         task->link = this;
     }
 }
 
 void Link::disconnected() {
     isConnected = false;
-    for (ControllerTask* task : controller->tasks) {
+    for (CyclicTask* task : controller->tasks) {
         task->link = nullptr;
     }
 }
@@ -55,6 +58,7 @@ void Link::processData() {
         handleRequest(cmd->data, cmd->size);
         free(cmd->data);
     }
+    reportMonitoringData();
 }
 
 void Link::handleRequest(void* data, size_t len) {
@@ -90,13 +94,15 @@ void Link::handleRequest(void* data, size_t len) {
                 .tickCount       = controller->tickCount,
                 .taskCount       = controller->tasks.size(),
                 .taskList        = (uint32_t)controller->tasks.data(),
+                .funcCount       = controller->funcList.size(),
+                .funcList        = (uint32_t)controller->funcList.data()
             };
             sendResponse(header, &info, sizeof(info));
             break;
         }
 
         case MSG_TYPE_TASK_INFO: {
-            ControllerTask* task = (ControllerTask*)pointer;
+            CyclicTask* task = (CyclicTask*)pointer;
             MsgTaskInfo_t info = {
                 .pointer         = (uint32_t)task,
                 .interval        = task->interval_ms,
@@ -107,8 +113,8 @@ void Link::handleRequest(void* data, size_t len) {
                 .lastActInterval = task->lastActualInterval_ms,
                 .avgActInterval  = task->averageActualInterval_ms(),
                 .driftTime       = task->drift_us,
-                .circuitCount    = task->circuits.size(),
-                .circuitList     = (uint32_t)task->circuits.data()
+                .funcCount       = task->funcList.size(),
+                .funcList        = (uint32_t)task->funcList.data()
             };
             sendResponse(header, &info, sizeof(info));
             break;
@@ -160,6 +166,7 @@ void Link::handleRequest(void* data, size_t len) {
             FunctionBlock* func = (FunctionBlock*)pointer;
             boolean once = msg->payload;
             func->enableMonitoring(once);
+            monitoredFunctions.insert(func);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
@@ -167,6 +174,7 @@ void Link::handleRequest(void* data, size_t len) {
         case MSG_TYPE_MONITORING_DISABLE: {
             FunctionBlock* func = (FunctionBlock*)pointer;
             func->disableMonitoring();
+            monitoredFunctions.erase(func);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
@@ -207,36 +215,36 @@ void Link::handleRequest(void* data, size_t len) {
         //      MODIFY CONTROLLER TASK
         
         case MSG_TYPE_TASK_START: {
-            ((ControllerTask*)pointer)->start();
+            ((CyclicTask*)pointer)->start();
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
         case MSG_TYPE_TASK_STOP: {
-            ((ControllerTask*)pointer)->stop();
+            ((CyclicTask*)pointer)->stop();
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
         case MSG_TYPE_TASK_SET_INTERVAL: {
             uint32_t time = msg->payload;
-            ((ControllerTask*)pointer)->setInterval(time);
+            ((CyclicTask*)pointer)->setInterval(time);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
         case MSG_TYPE_TASK_SET_OFFSET: {
             uint32_t time = msg->payload;
-            ((ControllerTask*)pointer)->setOffset(time);
+            ((CyclicTask*)pointer)->setOffset(time);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
-        case MSG_TYPE_TASK_ADD_CIRCUIT: {
+        case MSG_TYPE_TASK_ADD_FUNCTION: {
             MsgAddItem_t* params = (MsgAddItem_t*)payload;
-            ((ControllerTask*)pointer)->addCircuit((Circuit*)params->pointer, params->index);
+            ((CyclicTask*)pointer)->addFunction((FunctionBlock*)params->pointer, params->index);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
-        case MSG_TYPE_TASK_REMOVE_CIRCUIT: {
-            Circuit* circuit = (Circuit*)msg->payload;
-            ((ControllerTask*)pointer)->removeCircuit(circuit);
+        case MSG_TYPE_TASK_REMOVE_FUNCTION: {
+            FunctionBlock* func = (FunctionBlock*)msg->payload;
+            ((CyclicTask*)pointer)->removeFunction(func);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
         }
@@ -318,6 +326,47 @@ void Link::sendResponse(MsgRequestHeader_t request, void* payload, size_t payloa
     if (payload) memcpy(data + sizeof(MsgResponseHeader_t), payload, payloadSize);
     sendData(data, size);
     if (LOG_INFO) Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, size);
+}
+
+void Link::iterateForMonitoredFunctions(FunctionBlock* func) {
+    if (func->flags & FUNC_FLAG_MONITORING) monitoredFunctions.insert(func);
+
+    if (func->opcode == OPCODE_CIRCUIT) {
+        Circuit* circ = (Circuit*)func;
+        for (FunctionBlock* childFunc : circ->funcList) {
+            iterateForMonitoredFunctions(childFunc);
+        }
+    }
+}
+
+void Link::initMonitoringSet() {
+    for (FunctionBlock* func : controller->funcList) {
+        iterateForMonitoredFunctions(func);
+    }
+    nextMonitoringReportTime = controller->getTime() + monitoringDataInterval_ms * 1000;
+}
+
+void Link::reportMonitoringData() {
+
+    Time now = controller->getTime();
+
+    if ( nextMonitoringReportTime > now || monitoredFunctions.size() == 0 ) return;
+
+    while (nextMonitoringReportTime < now)
+        nextMonitoringReportTime += monitoringDataInterval_ms * 1000;
+
+    monitoringCollectionStart(this, monitoredFunctions.size());
+
+    for (FunctionBlock* func : monitoredFunctions) {
+        func->reportMonitoringValues(this);
+        
+        if (func->flags & FUNC_FLAG_MONITOR_ONCE) {
+            func->disableMonitoring();
+            monitoredFunctions.erase(func);
+        }
+    }
+
+    monitoringCollectionSend();
 }
 
 void Link::monitoringCollectionStart(void* reportingTask, size_t maxItemCount) {

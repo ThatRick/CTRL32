@@ -4,11 +4,11 @@ import { GUIDynamicElement, GUIManager, GUIWindow } from './GUI/GUI.js'
 
 import { DataViewer } from './DataViewer.js'
 
-import { Console } from './UI/UIConsole.js'
-import { ObjectView } from './UI/UIObjectView.js'
+import { Console } from './GUI/UIConsole.js'
+import { ObjectView } from './GUI/UIObjectView.js'
 
 import { LineGraph } from './LineGraph.js'
-import { Button, Checkbox } from './GUI/UIElements.js'
+import { Button, Checkbox } from './UI/UIElements.js'
 import { MoveHandle } from './GUI/GUIPointerHandlers.js'
 
 export { ObjectView }

@@ -1,4 +1,4 @@
-import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TableCell, Table, TableRow } from "../GUI/UIElements.js"
+import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TableCell, Table, TableRow } from "../UI/UIElements.js"
 import { WebSocketClient } from "../WebSocketClient.js"
 import { PanelElementView } from "./PanelElementView.js"
 import { valueWithSeparators } from "../Util.js"

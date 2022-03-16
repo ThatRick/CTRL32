@@ -21,7 +21,7 @@ export function TextSpan(text: string) {
     return new NodeElement('span').textContent(text)
 }
 
-//  BUTTON
+// BUTTON
 
 export function Button(name: string, onClick: () => void) {
     const button = new NodeElement('button').type('button')
