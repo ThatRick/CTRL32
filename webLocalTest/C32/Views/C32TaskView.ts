@@ -1,7 +1,7 @@
 import { C32Task } from "../C32Task.js"
 import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
-import { Color } from "../../View/Colors.js"
+import { Colors } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
 import { C32CircuitView } from "./C32CircuitView.js"
 
@@ -22,11 +22,11 @@ export function C32TaskView(task: C32Task)
 
     const table = Table(
         ...tableData.map(rowData => {
-            const valueCell = TableCell(task.data[rowData.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
+            const valueCell = TableCell(task.data[rowData.dataName]).align('right').paddingRight(4).color(Colors.PrimaryText)
             valueCellMap.set(rowData.dataName, valueCell)
             return TableRow( TableCell(rowData.label), valueCell, TableCell(rowData.unit) )
         })
-    ).color(Color.SecondaryText)
+    ).color(Colors.SecondaryText)
 
     let intervalTimerID: number
 
@@ -70,7 +70,7 @@ export function C32TaskView(task: C32Task)
             CircuitList.clear().append(
                 TextNode(`Task calls: (${task.funcList.length})`).paddingVertical(4),
                 ...task.funcList.map( (circuitPtr, index) => {
-                    return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {
+                    return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Colors.Link).onClick(() => {
                         if (circuitPanels.has(circuitPtr)) {
                             const circuitPanel = circuitPanels.get(circuitPtr)
                             if (circuitPanel.node.parentElement) circuitPanel.remove()

@@ -1,4 +1,4 @@
-export const Color = {
+export const Colors = {
     Base:                   '#303030',
 
     Panel:                  '#383838',
@@ -14,6 +14,7 @@ export const Color = {
     Light:                  '#d3d3d3',
 
     Selection:              '#aaaaff',
+    SelectionDark:          '#507090',
 
     PrimaryText:            '#fff',
     SecondaryText:          '#ccc',

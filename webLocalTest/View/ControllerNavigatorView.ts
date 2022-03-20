@@ -1,6 +1,6 @@
 import { C32Controller } from "../C32/C32Controller.js"
 import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, IElement, NodeElement } from "../UI/UIElements.js"
-import { Color } from "./Colors.js"
+import { Colors } from "./Colors.js"
 
 
 export class TreeNodeView extends NodeElement<'div'>
@@ -42,7 +42,7 @@ export class TreeNodeView extends NodeElement<'div'>
             .paddingHorizontal(2)
 
         this.titleName  = TextNode(name)
-            .color( this.hasChildren ? Color.PrimaryText : Color.SecondaryText )
+            .color( this.hasChildren ? Colors.PrimaryText : Colors.SecondaryText )
 
         this.titleBar   = HorizontalContainer( this.expandIcon, this.titleName )
             .style({
@@ -54,7 +54,7 @@ export class TreeNodeView extends NodeElement<'div'>
                 }
                 else if (!this.selected) {
                     this.selected = true
-                    this.titleBar.backgroundColor(Color.PanelElement)
+                    this.titleBar.backgroundColor(Colors.PanelElement)
                 }
             })
 

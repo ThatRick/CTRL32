@@ -1,6 +1,6 @@
 import { EventEmitter } from "../Events.js"
 import { CircuitSource } from "./CircuitSource.js"
-import { getFunctionType } from "./FunctionLib/FunctionLib.js"
+import { FunctionLibrary } from "./FunctionLib/FunctionLib.js"
 import { ICircuitSource, IFunctionBlockCall } from "./IDataTypes.js"
 import { ProgramSource } from "./Program.js"
 
@@ -19,7 +19,7 @@ export class FunctionBlockCall
     }
 
     static FromOpcode(parentCircuit: CircuitSource, opcode: number) {
-        const funcType = getFunctionType(opcode)
+        const funcType = FunctionLibrary.getFunctionByOpcode(opcode)
         return new FunctionBlockCall(parentCircuit, {
             id:             parentCircuit.getNewFunctionID(),
             opcode:         opcode,

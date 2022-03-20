@@ -1,7 +1,7 @@
 import { C32Circuit } from "../C32Circuit.js"
 import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
-import { Color } from "../../View/Colors.js"
+import { Colors } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
 import { C32Function } from "../C32Function.js"
 
@@ -17,11 +17,11 @@ export function C32FunctionView(func: C32Function)
 
     const table = Table(
         ...tableData.map(rowInfo => {
-            const valueCell = TableCell(func.data[rowInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
+            const valueCell = TableCell(func.data[rowInfo.dataName]).align('right').paddingRight(4).color(Colors.PrimaryText)
             valueCellMap.set(rowInfo.dataName, valueCell)
             return TableRow( TableCell(rowInfo.label), valueCell )
         })
-    ).color(Color.SecondaryText)
+    ).color(Colors.SecondaryText)
     
     const FunctionList = VerticalContainer()
 

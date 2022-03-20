@@ -1,5 +1,5 @@
 import { EventEmitter } from "../Events.js";
-import { getFunctionType } from "./FunctionLib/FunctionLib.js";
+import { FunctionLibrary } from "./FunctionLib/FunctionLib.js";
 export class FunctionBlockCall {
     constructor(parentCircuit, data) {
         this.events = new EventEmitter(this);
@@ -7,7 +7,7 @@ export class FunctionBlockCall {
         this.data = data;
     }
     static FromOpcode(parentCircuit, opcode) {
-        const funcType = getFunctionType(opcode);
+        const funcType = FunctionLibrary.getFunctionByOpcode(opcode);
         return new FunctionBlockCall(parentCircuit, {
             id: parentCircuit.getNewFunctionID(),
             opcode: opcode,

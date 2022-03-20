@@ -1,5 +1,5 @@
 import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, IElement, NodeElement } from "../UI/UIElements.js"
-import { Color } from "./Colors.js"
+import { Colors } from "./Colors.js"
 
 interface PanelElementViewConfig {
     userContent?:   HTMLElement
@@ -21,7 +21,7 @@ export class PanelElementView extends NodeElement<'div'>
     constructor(titleText: string, config: PanelElementViewConfig = {}) {
         super('div')
 
-        this.backgroundColor(Color.PanelElement)
+        this.backgroundColor(Colors.PanelElement)
 
         this.hideIcon   = TextNode('⌵').width(11).paddingHorizontal(2)
 
@@ -33,15 +33,15 @@ export class PanelElementView extends NodeElement<'div'>
         this.titleBar   = HorizontalContainer(this.hideIcon, this.titleName, this.status)
             .style({
                 userSelect:     'none',
-                borderTop:      '1px solid ' + Color.BorderLight,
-                borderBottom:   '1px solid ' + Color.BorderDark,
+                borderTop:      '1px solid ' + Colors.BorderLight,
+                borderBottom:   '1px solid ' + Colors.BorderDark,
             })
-            .backgroundColor(Color.PanelElementHeader)
+            .backgroundColor(Colors.PanelElementHeader)
             .onClick(() => this.setHidden(!this.hidden))
 
         if (config.closable) this.titleBar.append(
             TextNode('✕').paddingHorizontal(4)
-                .color(Color.SecondaryText)
+                .color(Colors.SecondaryText)
                 .onClick(() => this.remove() )
         )
 

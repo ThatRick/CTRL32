@@ -1,6 +1,6 @@
 import { VerticalContainer, TableCell, TableRow, Table } from "../../UI/UIElements.js";
 import { toHex } from "../../Util.js";
-import { Color } from "../../View/Colors.js";
+import { Colors } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
 export function C32FunctionView(func) {
     const tableData = [
@@ -11,10 +11,10 @@ export function C32FunctionView(func) {
     ];
     const valueCellMap = new Map();
     const table = Table(...tableData.map(rowInfo => {
-        const valueCell = TableCell(func.data[rowInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText);
+        const valueCell = TableCell(func.data[rowInfo.dataName]).align('right').paddingRight(4).color(Colors.PrimaryText);
         valueCellMap.set(rowInfo.dataName, valueCell);
         return TableRow(TableCell(rowInfo.label), valueCell);
-    })).color(Color.SecondaryText);
+    })).color(Colors.SecondaryText);
     const FunctionList = VerticalContainer();
     const Content = VerticalContainer(table, FunctionList);
     const PanelElement = new PanelElementView(`${func.name} ${func.callOrder + 1}/${func.parentCircuit.funcList.length}`, {

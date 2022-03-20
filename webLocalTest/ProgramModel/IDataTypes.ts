@@ -53,31 +53,6 @@ export interface IPosition
     y:          number
 }
 
-export interface IFunctionCallMetaData
-{
-    id:         number
-    pos:        IPosition
-    comment:    string
-}
-
-export interface IIOConnectionMetaData
-{
-    id:         number
-    nodePos:    IPosition[]
-}
-
-export interface ICircuitSourceMetaData
-{
-    functionsCalls: IFunctionCallMetaData[]
-    connections:    IIOConnectionMetaData[]
-}
-
-export interface IFunctionLib
-{
-    name:           string
-    functions:      IFunctionBlockType[]
-}
-
 export interface IIOConnectionData
 {
     id:             number
@@ -112,4 +87,30 @@ export interface IProgramSource
     mainCircuit:    IFunctionBlockCall
     repository:     ICircuitSource[]
     metaData:       ICircuitSourceMetaData[]
+}
+
+export interface IFunctionLib
+{
+    name:           string
+    functions:      IFunctionBlockType[]
+}
+
+
+export interface IFunctionCallMetaData
+{
+    id:         number
+    pos:        IPosition
+    comment:    string
+}
+
+export interface IIOConnectionMetaData
+{
+    id:         number
+    nodePos:    IPosition[]
+}
+
+export interface ICircuitSourceMetaData
+{
+    functionsCalls: IFunctionCallMetaData[]
+    connections:    IIOConnectionMetaData[]
 }

@@ -61,7 +61,7 @@ const SR = {
     ]
 };
 const RisingEdge = {
-    name: 'RisingEdge',
+    name: 'Rising',
     inputs: [
         { name: 'in', type: 'BOOL', initValue: 0 },
     ],
@@ -70,7 +70,7 @@ const RisingEdge = {
     ]
 };
 const FallingEdge = {
-    name: 'FallingEdge',
+    name: 'Falling',
     inputs: [
         { name: 'in', type: 'BOOL', initValue: 1 },
     ],

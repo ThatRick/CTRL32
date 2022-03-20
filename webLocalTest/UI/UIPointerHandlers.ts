@@ -26,8 +26,7 @@ export function MoveHandle(targetElement: MovableElement, elem?: NodeElement<'di
         onPointerUp: () => {
             elem.node.style.cursor = 'grab'
             if (targetElement.posSnap) {
-                const pos = Vec2.div(targetElement.currentPos, targetElement.posSnap).round().mul(targetElement.posSnap)
-                targetElement.setPos(pos)
+                targetElement.setPos(Vec2.snap(targetElement.currentPos, targetElement.posSnap))
             }
         }
     })
@@ -55,8 +54,7 @@ export function ResizeHandle(targetElement: MovableElement, elem?: NodeElement<'
         },
         onPointerUp: () => {
             if (targetElement.sizeSnap) {
-                const size = Vec2.div(targetElement.currentSize, targetElement.sizeSnap).round().mul(targetElement.sizeSnap)
-                targetElement.setSize(size)
+                targetElement.setSize(Vec2.snap(targetElement.currentSize, targetElement.sizeSnap))
             }
         }
     })

@@ -1,7 +1,7 @@
 import { C32Circuit } from "../C32Circuit.js"
 import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, TextSpan, NodeElement, TableCell, TableRow, Table } from "../../UI/UIElements.js"
 import { toHex, valueWithSeparators } from "../../Util.js"
-import { Color } from "../../View/Colors.js"
+import { Colors } from "../../View/Colors.js"
 import { PanelElementView } from "../../View/PanelElementView.js"
 import { C32FunctionView } from "./C32FunctionView.js"
 
@@ -14,11 +14,11 @@ export function C32CircuitView(circuit: C32Circuit)
 
     const table = Table(
         ...tableData.map(rowInfo => {
-            const valueCell = TableCell(circuit.data[rowInfo.dataName]).align('right').paddingRight(4).color(Color.PrimaryText)
+            const valueCell = TableCell(circuit.data[rowInfo.dataName]).align('right').paddingRight(4).color(Colors.PrimaryText)
             valueCellMap.set(rowInfo.dataName, valueCell)
             return TableRow( TableCell(rowInfo.label), valueCell, TableCell(rowInfo.unit) )
         })
-    ).color(Color.SecondaryText)
+    ).color(Colors.SecondaryText)
     
     const FunctionList = VerticalContainer()
 
@@ -48,7 +48,7 @@ export function C32CircuitView(circuit: C32Circuit)
                 TextNode(`Functions: (${circuit.funcList.length})`).paddingVertical(4),
                 ...circuit.funcList.map( (funcPtr, index) => {
                     const funcBlock = circuit.link.functionBlocks.get(funcPtr)
-                    return TextSpan(`${index}: ${funcBlock.name} [${toHex(funcPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {
+                    return TextSpan(`${index}: ${funcBlock.name} [${toHex(funcPtr)}]`).paddingLeft(8).color(Colors.Link).onClick(() => {
                         if (functionPanels.has(funcPtr)) {
                             const functionPanel = functionPanels.get(funcPtr)
                             if (!functionPanel.node.parentElement) functionPanel.setHidden(false).appendTo(PanelElement)

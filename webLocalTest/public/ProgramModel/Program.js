@@ -35,6 +35,9 @@ export class ProgramSource {
     getCircuitType(typeName) {
         return this.source.repository.find(aCircType => aCircType.name == typeName);
     }
+    listCircuitTypes() {
+        return this.source.repository.map(item => item.name);
+    }
     getCircuitTypeReferences(typeName) {
         const isOfTypeName = (func) => (func.circuitType == typeName);
         const hasRefToTypeName = (circType) => (circType.functionCalls.find(isOfTypeName));

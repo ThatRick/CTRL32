@@ -47,6 +47,10 @@ export class ProgramSource
         return this.source.repository.find(aCircType => aCircType.name == typeName)
     }
 
+    listCircuitTypes() {
+        return this.source.repository.map(item => item.name)
+    }
+
     getCircuitTypeReferences(typeName: string) {
         const isOfTypeName = (func: IFunctionBlockCall) => (func.circuitType == typeName)
         const hasRefToTypeName = (circType: ICircuitSource) => (circType.functionCalls.find(isOfTypeName))

@@ -90,6 +90,11 @@ export default class Vec2 {
     toString() {
         return `(${this.x}, ${this.y})`;
     }
+    snap(v) {
+        this.x = Math.round(this.x / v.x) * v.x;
+        this.y = Math.round(this.y / v.y) * v.y;
+        return this;
+    }
     // ###################################################
     //    STATIC FUNCTIONS - always returns a new vector
     // ###################################################
@@ -208,5 +213,10 @@ export default class Vec2 {
     static randomRay() {
         const t = 2 * Math.PI * Math.random();
         return Vec2.rotate(vec2(1, 0), t);
+    }
+    static snap(v, snap) {
+        const x = Math.round(v.x / snap.x) * snap.x;
+        const y = Math.round(v.y / snap.y) * snap.y;
+        return vec2(x, y);
     }
 }

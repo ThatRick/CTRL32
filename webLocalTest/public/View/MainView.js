@@ -1,27 +1,27 @@
 import { PanelHorizontalResizeHandle } from "../GUI/GUIPointerHandlers.js";
 import { HorizontalContainer, VerticalContainer, TextNode, Div } from "../UI/UIElements.js";
-import { Color } from "./Colors.js";
+import { Colors } from "./Colors.js";
 const Toolbar = HorizontalContainer().id('Toolbar')
     .style({
-    backgroundColor: Color.Bar,
-    borderTop: '1px solid ' + Color.BorderLight,
-    borderBottom: '1px solid ' + Color.BorderDark,
+    backgroundColor: Colors.Bar,
+    borderTop: '1px solid ' + Colors.BorderLight,
+    borderBottom: '1px solid ' + Colors.BorderDark,
     columnGap: '4px',
     padding: '4px'
 })
     .append(TextNode('CONTROL-32 IDE').color('#DDDDAA'));
 const SidePanel = VerticalContainer().id('SidePanel')
     .style({
-    backgroundColor: Color.Panel,
+    backgroundColor: Colors.Panel,
     width: '200px',
-    borderRight: '1px solid ' + Color.BorderDark,
+    borderRight: '1px solid ' + Colors.BorderDark,
     position: 'relative',
     zIndex: '9',
     overflowX: 'visible'
 });
 Div().id('SidePanelResizeHandle')
     .style({
-    backgroundColor: Color.Selection,
+    backgroundColor: Colors.Selection,
     position: 'absolute',
     height: '100%',
     width: '8px',
@@ -32,9 +32,9 @@ Div().id('SidePanelResizeHandle')
     .appendTo(SidePanel);
 const Taskbar = HorizontalContainer()
     .style({
-    backgroundColor: Color.Panel,
+    backgroundColor: Colors.Panel,
     height: '18px',
-    borderBottom: '1px solid ' + Color.BorderDark,
+    borderBottom: '1px solid ' + Colors.BorderDark,
 });
 const Desktop = Div().id('Desktop')
     .style({
@@ -42,7 +42,7 @@ const Desktop = Div().id('Desktop')
     margin: '0px',
     overflowX: 'hidden',
     overflowY: 'hidden',
-    backgroundColor: Color.Base,
+    backgroundColor: Colors.Base,
     boxSizing: 'border-box',
     position: 'relative',
 });
@@ -57,8 +57,8 @@ const Root = VerticalContainer().id('Root')
 })
     .append(Toolbar, HorizontalContainer().id('Workspace').flexGrow()
     .append(SidePanel, VerticalContainer(Taskbar, Desktop).flexGrow(1)));
-export const MainView = {
-    Color,
+export const View = {
+    Colors,
     Root,
     Toolbar,
     SidePanel,

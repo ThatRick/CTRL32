@@ -77,7 +77,7 @@ const SR: IFunctionBlockType =
 
 const RisingEdge: IFunctionBlockType = 
 {
-    name: 'RisingEdge',
+    name: 'Rising',
     inputs: [
         { name: 'in',   type: 'BOOL',   initValue: 0 },
     ],
@@ -88,7 +88,7 @@ const RisingEdge: IFunctionBlockType =
 
 const FallingEdge: IFunctionBlockType = 
 {
-    name: 'FallingEdge',
+    name: 'Falling',
     inputs: [
         { name: 'in',   type: 'BOOL',   initValue: 1 },
     ],

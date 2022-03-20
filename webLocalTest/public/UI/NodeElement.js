@@ -83,9 +83,28 @@ export class NodeElement {
         parent.node.appendChild(this.node);
         return this;
     }
+    appendToNode(node) {
+        node.appendChild(this.node);
+        return this;
+    }
     clear() {
         while (this.node.lastChild)
             this.node.lastChild.remove();
+        return this;
+    }
+    position(pos, mode) {
+        this.style({
+            position: mode,
+            left: pos.x + 'px',
+            top: pos.y + 'px'
+        });
+        return this;
+    }
+    size(size) {
+        this.style({
+            width: size.x + 'px',
+            height: size.y + 'px'
+        });
         return this;
     }
     paddingLeft(value) { this.node.style.paddingLeft = value + 'px'; return this; }
@@ -124,7 +143,7 @@ export class NodeElement {
             this.node.addEventListener('pointerdown', ev => {
                 isDown = true;
                 downPos.set(ev.pageX, ev.pageY);
-                pointerEvents.onPointerDown?.();
+                pointerEvents.onPointerDown?.(ev, this);
                 if (pointerEvents.onPointerDown) {
                     this.node.setPointerCapture(ev.pointerId);
                 }
@@ -135,30 +154,39 @@ export class NodeElement {
                 if (this.node.hasPointerCapture(ev.pointerId)) {
                     this.node.releasePointerCapture(ev.pointerId);
                 }
-                pointerEvents.onPointerUp?.();
+                pointerEvents.onPointerUp?.(ev, this);
             });
         if (pointerEvents.onPointerDrag || pointerEvents.onPointerHover)
             this.node.addEventListener('pointermove', ev => {
                 currentPos.set(ev.pageX, ev.pageY);
                 if (isDown && pointerEvents.onPointerDrag) {
                     const dragOffset = Vec2.sub(currentPos, downPos);
-                    pointerEvents.onPointerDrag?.(dragOffset);
+                    pointerEvents.onPointerDrag?.(dragOffset, ev, this);
                 }
                 else
-                    pointerEvents.onPointerHover?.();
+                    pointerEvents.onPointerHover?.(ev, this);
             });
         if (pointerEvents.onPointerClick)
             this.node.addEventListener('click', ev => {
-                pointerEvents.onPointerClick?.();
+                pointerEvents.onPointerClick?.(ev, this);
+            });
+        if (pointerEvents.onPointerContextMenu)
+            this.node.addEventListener('contextmenu', ev => {
+                pointerEvents.onPointerContextMenu?.(ev, this);
+            });
+        if (pointerEvents.onPointerClick)
+            this.node.addEventListener('click', ev => {
+                pointerEvents.onPointerClick?.(ev, this);
             });
         if (pointerEvents.onPointerOver)
             this.node.addEventListener('pointerover', ev => {
-                pointerEvents.onPointerOver?.();
+                pointerEvents.onPointerOver?.(ev, this);
             });
         if (pointerEvents.onPointerOut)
             this.node.addEventListener('pointerout', ev => {
-                pointerEvents.onPointerOut?.();
+                pointerEvents.onPointerOut?.(ev, this);
             });
+        return this;
     }
     static getUniqueID() {
         return (this.idCounter++).toString();

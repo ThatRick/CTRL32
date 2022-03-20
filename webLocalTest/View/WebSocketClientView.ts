@@ -2,7 +2,7 @@ import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, T
 import { WebSocketClient } from "../WebSocketClient.js"
 import { PanelElementView } from "./PanelElementView.js"
 import { valueWithSeparators } from "../Util.js"
-import { Color } from "./Colors.js"
+import { Colors } from "./Colors.js"
 
 export function WebSocketClientView(client: WebSocketClient)
 {
@@ -16,8 +16,8 @@ export function WebSocketClientView(client: WebSocketClient)
     })
     const Status        = TextNode('Ready').paddingBottom(6)
 
-    const SentBytes     = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow()
-    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow()
+    const SentBytes     = TableCell('0').align('right').paddingRight(4).color(Colors.PrimaryText).flexGrow()
+    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Colors.PrimaryText).flexGrow()
 
     const Content = VerticalContainer(
         HorizontalContainer( HostInput, ConnectButton ),
@@ -25,7 +25,7 @@ export function WebSocketClientView(client: WebSocketClient)
         Table(
             TableRow( TableCell('Sent'),     SentBytes,     TableCell('bytes') ),
             TableRow( TableCell('Received'), ReceivedBytes, TableCell('bytes') ),
-        ).color(Color.SecondaryText)
+        ).color(Colors.SecondaryText)
     )
 
     const PanelElement = new PanelElementView('WebSocket', {

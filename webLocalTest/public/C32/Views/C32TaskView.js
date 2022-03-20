@@ -1,6 +1,6 @@
 import { VerticalContainer, TextNode, TextSpan, Checkbox, TableCell, TableRow, Table } from "../../UI/UIElements.js";
 import { toHex } from "../../Util.js";
-import { Color } from "../../View/Colors.js";
+import { Colors } from "../../View/Colors.js";
 import { PanelElementView } from "../../View/PanelElementView.js";
 import { C32CircuitView } from "./C32CircuitView.js";
 export function C32TaskView(task) {
@@ -17,10 +17,10 @@ export function C32TaskView(task) {
     ];
     const valueCellMap = new Map();
     const table = Table(...tableData.map(rowData => {
-        const valueCell = TableCell(task.data[rowData.dataName]).align('right').paddingRight(4).color(Color.PrimaryText);
+        const valueCell = TableCell(task.data[rowData.dataName]).align('right').paddingRight(4).color(Colors.PrimaryText);
         valueCellMap.set(rowData.dataName, valueCell);
         return TableRow(TableCell(rowData.label), valueCell, TableCell(rowData.unit));
-    })).color(Color.SecondaryText);
+    })).color(Colors.SecondaryText);
     let intervalTimerID;
     const CheckboxUpdateData = new Checkbox('update data', checked => {
         if (checked)
@@ -52,7 +52,7 @@ export function C32TaskView(task) {
         }),
         funcListLoaded: () => {
             CircuitList.clear().append(TextNode(`Task calls: (${task.funcList.length})`).paddingVertical(4), ...task.funcList.map((circuitPtr, index) => {
-                return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Color.Link).onClick(() => {
+                return TextSpan(`${index}: Circuit [${toHex(circuitPtr)}]`).paddingLeft(8).color(Colors.Link).onClick(() => {
                     if (circuitPanels.has(circuitPtr)) {
                         const circuitPanel = circuitPanels.get(circuitPtr);
                         if (circuitPanel.node.parentElement)

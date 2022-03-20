@@ -1,7 +1,7 @@
 import { HorizontalContainer, VerticalContainer, TextNode, Button, Input, TableCell, Table, TableRow } from "../UI/UIElements.js";
 import { PanelElementView } from "./PanelElementView.js";
 import { valueWithSeparators } from "../Util.js";
-import { Color } from "./Colors.js";
+import { Colors } from "./Colors.js";
 export function WebSocketClientView(client) {
     const HostInput = Input('url').width(0).flexGrow()
         .setupNode(node => {
@@ -12,9 +12,9 @@ export function WebSocketClientView(client) {
         (!client.connected) ? client.connect(HostInput.node.value) : client.disconnect();
     });
     const Status = TextNode('Ready').paddingBottom(6);
-    const SentBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow();
-    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Color.PrimaryText).flexGrow();
-    const Content = VerticalContainer(HorizontalContainer(HostInput, ConnectButton), HorizontalContainer(Status), Table(TableRow(TableCell('Sent'), SentBytes, TableCell('bytes')), TableRow(TableCell('Received'), ReceivedBytes, TableCell('bytes'))).color(Color.SecondaryText));
+    const SentBytes = TableCell('0').align('right').paddingRight(4).color(Colors.PrimaryText).flexGrow();
+    const ReceivedBytes = TableCell('0').align('right').paddingRight(4).color(Colors.PrimaryText).flexGrow();
+    const Content = VerticalContainer(HorizontalContainer(HostInput, ConnectButton), HorizontalContainer(Status), Table(TableRow(TableCell('Sent'), SentBytes, TableCell('bytes')), TableRow(TableCell('Received'), ReceivedBytes, TableCell('bytes'))).color(Colors.SecondaryText));
     const PanelElement = new PanelElementView('WebSocket', {
         userContent: Content.node,
         statusText: 'Offline',

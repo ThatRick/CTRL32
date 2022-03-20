@@ -1,6 +1,6 @@
 
 import { NodeElement, VerticalContainer } from '../UI/UIElements.js'
-import { Color } from '../View/Colors.js'
+import { Colors } from '../View/Colors.js'
 import { TreeNodeView } from '../View/ControllerNavigatorView.js'
 
 export interface ITreeNodeInfo

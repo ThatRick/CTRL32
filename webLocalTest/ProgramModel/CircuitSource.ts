@@ -1,6 +1,6 @@
 import { EventEmitter } from "../Events.js"
 import { FunctionBlockCall } from "./FunctionBlockCall.js"
-import { getFunctionType } from "./FunctionLib/FunctionLib.js"
+import { FunctionLibrary } from "./FunctionLib/FunctionLib.js"
 import { ICircuitSource, IFunctionBlockCall, IIOConnectionData } from "./IDataTypes.js"
 import { ProgramSource } from "./Program.js"
 
@@ -8,7 +8,7 @@ export class CircuitSource
 {
     private source: ICircuitSource
 
-    private program: ProgramSource
+    readonly program: ProgramSource
 
     events = new EventEmitter<typeof this,  'inputAdded' | 'inputRemoved' | 'outputAdded' | 'outputRemoved' |
         'functionCallAdded' | 'functionCallRemoved' | 'callOrderModified' |
@@ -69,7 +69,7 @@ export class CircuitSource
     }
 
     createFunctionCallWithOpcode(opcode: number) {
-        const funcType = getFunctionType(opcode)
+        const funcType = FunctionLibrary.getFunctionByOpcode(opcode)
         if (!funcType) {
             console.error('CircuitSource - createFunctionCallWithOpcode failed: opcode not found', opcode)
         }

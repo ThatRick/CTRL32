@@ -1,10 +1,10 @@
 import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../UI/UIElements.js";
-import { Color } from "./Colors.js";
+import { Colors } from "./Colors.js";
 export class PanelElementView extends NodeElement {
     constructor(titleText, config = {}) {
         super('div');
         this.hidden = false;
-        this.backgroundColor(Color.PanelElement);
+        this.backgroundColor(Colors.PanelElement);
         this.hideIcon = TextNode('⌵').width(11).paddingHorizontal(2);
         this.titleName = TextNode(titleText).paddingRight(6).color('white');
         this.status = TextNode(config.statusText ?? '').flexGrow();
@@ -13,14 +13,14 @@ export class PanelElementView extends NodeElement {
         this.titleBar = HorizontalContainer(this.hideIcon, this.titleName, this.status)
             .style({
             userSelect: 'none',
-            borderTop: '1px solid ' + Color.BorderLight,
-            borderBottom: '1px solid ' + Color.BorderDark,
+            borderTop: '1px solid ' + Colors.BorderLight,
+            borderBottom: '1px solid ' + Colors.BorderDark,
         })
-            .backgroundColor(Color.PanelElementHeader)
+            .backgroundColor(Colors.PanelElementHeader)
             .onClick(() => this.setHidden(!this.hidden));
         if (config.closable)
             this.titleBar.append(TextNode('✕').paddingHorizontal(4)
-                .color(Color.SecondaryText)
+                .color(Colors.SecondaryText)
                 .onClick(() => this.remove()));
         this.userContainer = VerticalContainer().padding(4).flexGrow();
         this.append(this.titleBar, this.userContainer);

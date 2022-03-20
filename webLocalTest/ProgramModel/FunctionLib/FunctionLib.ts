@@ -1,4 +1,4 @@
-import { IFunctionBlockType } from "../IDataTypes.js";
+import { IFunctionBlockType, IFunctionLib } from "../IDataTypes.js";
 import { LogicLib } from "./LogicLib.js";
 
 enum LIBRARY_ID
@@ -13,30 +13,73 @@ enum LIBRARY_ID
     COUNT
 }
 
-export const functionLib = [
-    null,
-    LogicLib
-]
+const libraryMap = new Map<number, IFunctionLib>([
+    [LIBRARY_ID.LOGIC, LogicLib]
+])
 
-export function decodeOpcode(opcode: number)
+function decodeOpcode(opcode: number)
 {
-    const libID  = (opcode & 0xFF00) << 8
-    const funcID = (opcode & 0xFF)
+    const libID  = (opcode & 0xFF00) >> 8
+    const funcID = (opcode & 0x00FF)
 
+    console.log(`Decoded opcode ${opcode}: ${libID}/${funcID}`)
     return {
         libID, funcID
     }
 }
 
-export function getFunctionType(opcode: number): IFunctionBlockType
+function encodeOpcode(libID: number, funcID: number)
+{
+    return (libID << 8) + (funcID)
+}
+
+
+function getLibraryByID(id: number)
+{
+    return libraryMap.get(id)
+}
+
+
+function getLibraryByName(name: string)
+{
+    return [...libraryMap.values()].find(lib => lib.name == name)
+}
+
+
+function getFunctionByOpcode(opcode: number): IFunctionBlockType
 {
     const {libID, funcID} = decodeOpcode(opcode)
 
-    const lib = functionLib[libID]
+    return getFunctionByID(libID, funcID)
+}
+
+
+function getFunctionByID(libID: number, funcID: number)
+{
+    const lib = libraryMap.get(libID)
     if (!lib) return null
 
-    const func = lib[funcID]
-    if (!func) return null
+    return lib.functions[funcID]
+}
 
-    return func
+
+function getFunctionByName(libName: string, funcName: string)
+{
+    const lib = getLibraryByName(libName)
+    if (!lib) return null
+
+    return lib.functions.find(func => func.name == funcName)
+}
+
+
+export const FunctionLibrary =
+{
+    libraryMap,
+    decodeOpcode,
+    encodeOpcode,
+    getLibraryByID,
+    getLibraryByName,
+    getFunctionByOpcode,
+    getFunctionByID,
+    getFunctionByName
 }

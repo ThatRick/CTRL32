@@ -1,5 +1,5 @@
 import { EventEmitter } from "../Events.js";
-import { getFunctionType } from "./FunctionLib/FunctionLib.js";
+import { FunctionLibrary } from "./FunctionLib/FunctionLib.js";
 export class CircuitSource {
     constructor(program, data) {
         this.events = new EventEmitter(this);
@@ -52,7 +52,7 @@ export class CircuitSource {
         return true;
     }
     createFunctionCallWithOpcode(opcode) {
-        const funcType = getFunctionType(opcode);
+        const funcType = FunctionLibrary.getFunctionByOpcode(opcode);
         if (!funcType) {
             console.error('CircuitSource - createFunctionCallWithOpcode failed: opcode not found', opcode);
         }

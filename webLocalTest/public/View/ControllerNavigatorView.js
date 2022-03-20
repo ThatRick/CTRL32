@@ -1,5 +1,5 @@
 import { HorizontalContainer, VerticalContainer, TextNode, NodeElement } from "../UI/UIElements.js";
-import { Color } from "./Colors.js";
+import { Colors } from "./Colors.js";
 export class TreeNodeView extends NodeElement {
     constructor(name, getChildNodes) {
         super('div');
@@ -13,7 +13,7 @@ export class TreeNodeView extends NodeElement {
             .width(this.expandIconWidth)
             .paddingHorizontal(2);
         this.titleName = TextNode(name)
-            .color(this.hasChildren ? Color.PrimaryText : Color.SecondaryText);
+            .color(this.hasChildren ? Colors.PrimaryText : Colors.SecondaryText);
         this.titleBar = HorizontalContainer(this.expandIcon, this.titleName)
             .style({
             userSelect: 'none',
@@ -24,7 +24,7 @@ export class TreeNodeView extends NodeElement {
             }
             else if (!this.selected) {
                 this.selected = true;
-                this.titleBar.backgroundColor(Color.PanelElement);
+                this.titleBar.backgroundColor(Colors.PanelElement);
             }
         });
         this.childContainer = VerticalContainer()
