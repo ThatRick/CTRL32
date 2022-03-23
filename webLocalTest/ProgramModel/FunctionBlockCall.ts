@@ -1,6 +1,6 @@
 import { EventEmitter } from "../Events.js"
 import { CircuitSource } from "./CircuitSource.js"
-import { FunctionLibrary } from "./FunctionLib/FunctionLib.js"
+import { FunctionLibrary } from "./FunctionLib.js"
 import { ICircuitSource, IFunctionBlockCall } from "./IDataTypes.js"
 import { ProgramSource } from "./Program.js"
 

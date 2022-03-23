@@ -1,6 +1,19 @@
 
 import { IFunctionBlockType, IFunctionLib } from "../IDataTypes.js";
 
+const minimal = {
+    noHeader:       true,
+    noInputNames:   true,
+    noOutputNames:  true,
+    width:          3
+}
+
+const onlyInputNames = {
+    noHeader:       true,
+    noOutputNames:  true,
+    width:          3
+}
+
 const AND: IFunctionBlockType = 
 {
     name: 'AND',
@@ -11,7 +24,8 @@ const AND: IFunctionBlockType =
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 1 },
     ],
-    variableInputCount: { min: 2, max: 32 }
+    variableInputCount: { min: 2, max: 32 },
+    visual: minimal
 }
 
 const OR: IFunctionBlockType = 
@@ -24,7 +38,8 @@ const OR: IFunctionBlockType =
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 0 },
     ],
-    variableInputCount: { min: 2, max: 32 }
+    variableInputCount: { min: 2, max: 32 },
+    visual: minimal
 }
 
 const XOR: IFunctionBlockType = 
@@ -37,7 +52,8 @@ const XOR: IFunctionBlockType =
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 0 },
     ],
-    variableInputCount: { min: 2, max: 32 }
+    variableInputCount: { min: 2, max: 32 },
+    visual: minimal
 }
 
 const NOT: IFunctionBlockType = 
@@ -48,7 +64,8 @@ const NOT: IFunctionBlockType =
     ],
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 1 },
-    ]
+    ],
+    visual: minimal
 }
 
 const RS: IFunctionBlockType = 
@@ -60,7 +77,8 @@ const RS: IFunctionBlockType =
     ],
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 0 },
-    ]
+    ],
+    visual: onlyInputNames
 }
 
 const SR: IFunctionBlockType = 
@@ -72,7 +90,8 @@ const SR: IFunctionBlockType =
     ],
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 0 },
-    ]
+    ],
+    visual: onlyInputNames
 }
 
 const RisingEdge: IFunctionBlockType = 
@@ -83,7 +102,8 @@ const RisingEdge: IFunctionBlockType =
     ],
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 0 },
-    ]
+    ],
+    visual: {...minimal, symbol: '_|‾'}
 }
 
 const FallingEdge: IFunctionBlockType = 
@@ -94,7 +114,8 @@ const FallingEdge: IFunctionBlockType =
     ],
     outputs: [
         { name: 'out',  type: 'BOOL',   initValue: 0 },
-    ]
+    ],
+    visual: {...minimal, symbol: '‾|_'}
 }
 
 export const LogicLib: IFunctionLib =

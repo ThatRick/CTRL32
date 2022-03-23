@@ -15,20 +15,20 @@ export const enum MouseButton {
 
 export interface IPointerEvents
 {
-    onPointerDown?:         (ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerUp?:           (ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerDrag?:         (offset: Vec2, ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerHover?:        (ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerClick?:        (ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerContextMenu?:  (ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerOver?:         (ev: PointerEvent, elem: NodeElement<'div'>) => void
-    onPointerOut?:          (ev: PointerEvent, elem: NodeElement<'div'>) => void
+    onPointerDown?:         (ev: PointerEvent, elem: NodeElement) => void
+    onPointerUp?:           (ev: PointerEvent, elem: NodeElement) => void
+    onPointerDrag?:         (offset: Vec2, ev: PointerEvent, elem: NodeElement) => void
+    onPointerHover?:        (ev: PointerEvent, elem: NodeElement) => void
+    onPointerClick?:        (ev: PointerEvent, elem: NodeElement) => void
+    onPointerContextMenu?:  (ev: PointerEvent, elem: NodeElement) => void
+    onPointerOver?:         (ev: PointerEvent, elem: NodeElement) => void
+    onPointerOut?:          (ev: PointerEvent, elem: NodeElement) => void
 }
 
-export class NodeElement<NodeType extends keyof HTMLElementTagNameMap> {
+export class NodeElement<NodeType extends keyof HTMLElementTagNameMap = 'div'> {
     
     readonly node: HTMLElementTagNameMap[NodeType]
-    readonly tagName: string
+    readonly tagName: NodeType
 
     constructor(tagName: NodeType) {
         this.tagName = tagName
@@ -205,7 +205,7 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap> {
             this.node.addEventListener('pointerdown', ev => {
                 isDown = true
                 downPos.set(ev.pageX, ev.pageY)
-                pointerEvents.onPointerDown?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerDown?.(ev, this as NodeElement)
                 if (pointerEvents.onPointerDown) {
                     this.node.setPointerCapture(ev.pointerId)
                 }
@@ -217,7 +217,7 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap> {
                 if (this.node.hasPointerCapture(ev.pointerId)) {
                     this.node.releasePointerCapture(ev.pointerId)
                 }
-                pointerEvents.onPointerUp?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerUp?.(ev, this as NodeElement)
             })
 
         if (pointerEvents.onPointerDrag || pointerEvents.onPointerHover)
@@ -225,27 +225,27 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap> {
                 currentPos.set(ev.pageX, ev.pageY)
                 if (isDown && pointerEvents.onPointerDrag) {
                     const dragOffset = Vec2.sub(currentPos, downPos)
-                    pointerEvents.onPointerDrag?.(dragOffset, ev, this as NodeElement<'div'>)
+                    pointerEvents.onPointerDrag?.(dragOffset, ev, this as NodeElement)
                 }
-                else pointerEvents.onPointerHover?.(ev, this as NodeElement<'div'>)
+                else pointerEvents.onPointerHover?.(ev, this as NodeElement)
             })
 
         if (pointerEvents.onPointerClick) this.node.addEventListener('click', ev => {
-                pointerEvents.onPointerClick?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerClick?.(ev, this as NodeElement)
             })
         if (pointerEvents.onPointerContextMenu) this.node.addEventListener('contextmenu', ev => {
-                pointerEvents.onPointerContextMenu?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerContextMenu?.(ev, this as NodeElement)
             })
         if (pointerEvents.onPointerClick) this.node.addEventListener('click', ev => {
-                pointerEvents.onPointerClick?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerClick?.(ev, this as NodeElement)
             })
 
         if (pointerEvents.onPointerOver) this.node.addEventListener('pointerover', ev => {
-                pointerEvents.onPointerOver?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerOver?.(ev, this as NodeElement)
             })
 
         if (pointerEvents.onPointerOut) this.node.addEventListener('pointerout', ev => {
-                pointerEvents.onPointerOut?.(ev, this as NodeElement<'div'>)
+                pointerEvents.onPointerOut?.(ev, this as NodeElement)
             })
         return this
     }

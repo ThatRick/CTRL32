@@ -9,7 +9,7 @@ export interface IGUI {
     scale: number
 }
 
-export class GUIDynamicElement extends NodeElement<'div'> {
+export class GUIDynamicElement extends NodeElement {
     readonly currentPos = vec2(0, 0)
     readonly currentSize = vec2(0, 0)
     

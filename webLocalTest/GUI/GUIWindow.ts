@@ -43,11 +43,11 @@ interface GUIWindowOptions {
 }
 
 export class GUIWindow extends GUIDynamicElement {
-    userContainer:      NodeElement<'div'>
+    userContainer:      NodeElement
     userContent:        HTMLElement
 
-    status:             NodeElement<'div'>
-    userControls:       NodeElement<'div'>
+    status:             NodeElement
+    userControls:       NodeElement
 
     constructor(pos: Vec2, gui: IGUI, protected options: GUIWindowOptions)
     {

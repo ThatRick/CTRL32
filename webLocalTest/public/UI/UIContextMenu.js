@@ -25,7 +25,7 @@ export class UIContextMenu extends NodeElement {
         const itemNodes = items.map((item, index) => HorizontalContainer(TextNode(item.name), TextNode(item.subItems ? '>' : '').align('right').flexGrow())
             .onClick(() => {
             if (item.action) {
-                item.action(item.name, index);
+                item.action(item.name, item.id);
                 this.childMenu?.closeSelfAndChildren();
                 this.parentMenu?.closeSelfAndParent();
                 this.remove();

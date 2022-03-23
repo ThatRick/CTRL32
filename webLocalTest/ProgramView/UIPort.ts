@@ -6,15 +6,13 @@ import { NodeElement } from "../UI/NodeElement.js"
 type PortOrientation = 'left' | 'right' | 'up' | 'down'
 type PortDataDirection = 'input' | 'output'
 
-export class UIPort extends NodeElement<'div'>
+export class UIPort extends NodeElement
 {
     private connection: UIConnection
-
     private value: number
 
-    private onBlockMoved() {
-        this.connection?.update()
-    }
+
+    private pin: NodeElement
 
     constructor(
         public readonly block:          UIBlock,
@@ -22,10 +20,16 @@ export class UIPort extends NodeElement<'div'>
         public readonly localOffset:    Vec2,
         public readonly orientation:    PortOrientation,
         public readonly dataDirection:  PortDataDirection,
-        public readonly name?:          string
+        public readonly name:           string,
+                        value:          number
     ) {
         super('div')
+        this.value = value
         this.block.events.subscribe('moved', this.onBlockMoved)
+    }
+
+    private onBlockMoved() {
+        this.connection?.update()
     }
 
     getPosition() {

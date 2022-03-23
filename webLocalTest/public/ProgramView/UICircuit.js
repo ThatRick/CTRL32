@@ -1,4 +1,4 @@
-import { FunctionLibrary } from "../ProgramModel/FunctionLib/FunctionLib.js";
+import { FunctionLibrary } from "../ProgramModel/FunctionLib.js";
 import { NodeElement } from "../UI/NodeElement.js";
 import { backgroundGridStyle } from "../UI/UIBackgroundPattern.js";
 import { UIContextMenu } from "../UI/UIContextMenu.js";
@@ -30,6 +30,34 @@ export class UICircuit extends NodeElement {
         this.selection = elem;
         this.selection.setSelected(true);
     }
+    onContextMenuCreateFunction(name, opcode) {
+        const funcCall = this.circuit.createFunctionCallWithOpcode(opcode);
+        if (!funcCall) {
+            console.error('Could not create function call:', opcode, name);
+            return;
+        }
+        this.addFunctionCall(funcCall);
+    }
+    onContextMenuCreateCircuitType(name) {
+        const funcCall = this.circuit.createFunctionCallWithCircuitType(name);
+        if (!funcCall) {
+            console.error('Could not create circuit type:', name);
+            return;
+        }
+        this.addFunctionCall(funcCall);
+    }
+    addFunctionCall(funcCall) {
+        const blockType = (funcCall.opcode > 0) ? FunctionLibrary.getFunctionByOpcode(funcCall.opcode)
+            : this.circuit.program.getCircuitType(funcCall.circuitType);
+        if (!blockType) {
+            console.error('Could not find function type for function call:', funcCall.opcode, funcCall.circuitType);
+            return;
+        }
+        const uiBlock = new UIBlock(this, blockType, this.localPointerOffset.snap(this.snap));
+        this.append(uiBlock);
+        this.uiBlocks.set(funcCall.id, uiBlock);
+        uiBlock.events.subscribe('clicked', this.elementSelected.bind(this));
+    }
     showContextMenu(pos) {
         const libraryItems = [...FunctionLibrary.libraryMap.entries()].map(([libID, lib]) => {
             return {
@@ -37,10 +65,8 @@ export class UICircuit extends NodeElement {
                 subItems: () => lib.functions.map((func, funcID) => {
                     return {
                         name: func.name,
-                        action: () => {
-                            const opcode = FunctionLibrary.encodeOpcode(libID, funcID);
-                            this.circuit.createFunctionCallWithOpcode(opcode);
-                        }
+                        id: FunctionLibrary.encodeOpcode(libID, funcID),
+                        action: this.onContextMenuCreateFunction.bind(this)
                     };
                 })
             };
@@ -63,20 +89,6 @@ export class UICircuit extends NodeElement {
         this.contextMenu = null;
     }
     setupCircuitEventHandlers() {
-        this.circuit.events.subscribeEvents({
-            functionCallAdded: (_, id) => {
-                const func = this.circuit.getFunctionCall(id);
-                const blockType = (func.opcode > 0) ? FunctionLibrary.getFunctionByOpcode(func.opcode)
-                    : this.circuit.program.getCircuitType(func.circuitType);
-                if (!blockType) {
-                    console.error('Could not find block interface for opcode (circuit type)', func.opcode, func.circuitType);
-                    return;
-                }
-                const uiBlock = new UIBlock(this, blockType, this.localPointerOffset);
-                this.append(uiBlock);
-                this.uiBlocks.set(func.id, uiBlock);
-            }
-        });
     }
     setupPointerHandlers() {
         this.setPointerHandlers({
@@ -95,4 +107,6 @@ export class UICircuit extends NodeElement {
             }
         });
     }
+}
+function action() {
 }

@@ -1,5 +1,5 @@
 import { EventEmitter } from "../Events.js";
-import { FunctionLibrary } from "./FunctionLib/FunctionLib.js";
+import { FunctionLibrary } from "./FunctionLib.js";
 export class FunctionBlockCall {
     constructor(parentCircuit, data) {
         this.events = new EventEmitter(this);

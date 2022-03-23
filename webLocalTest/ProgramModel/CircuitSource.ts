@@ -1,6 +1,6 @@
 import { EventEmitter } from "../Events.js"
 import { FunctionBlockCall } from "./FunctionBlockCall.js"
-import { FunctionLibrary } from "./FunctionLib/FunctionLib.js"
+import { FunctionLibrary } from "./FunctionLib.js"
 import { ICircuitSource, IFunctionBlockCall, IIOConnectionData } from "./IDataTypes.js"
 import { ProgramSource } from "./Program.js"
 
@@ -57,7 +57,7 @@ export class CircuitSource
     addFunctionCall(funcCall: IFunctionBlockCall, index?: number) {
         if (this.source.functionCalls.find(item => item.id == funcCall.id)) {
             console.error('CircuitSource - addFunctionCall failed: duplicate ID given', index)
-            return false
+            return null
         }
         if (index === undefined || index < 0 || index >= this.source.functionCalls.length) {
             this.source.functionCalls.push(funcCall)
@@ -65,7 +65,7 @@ export class CircuitSource
             this.source.functionCalls.splice(index, 0, funcCall)
         }
         this.events.emit('functionCallAdded', funcCall.id)
-        return true
+        return funcCall
     }
 
     createFunctionCallWithOpcode(opcode: number) {

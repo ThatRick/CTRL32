@@ -20,23 +20,23 @@ export interface IVariableIOCount
     max:        number
 }
 
-export interface IFunctionBlockInterface
-{
-    name:                   string
-    inputs:                 IDataPin[]
-    outputs:                IDataPin[]
-}
-
-export interface IFunctionBlockType extends IFunctionBlockInterface
+export interface IFunctionBlockType
 {
     name:                   string
     inputs:                 IDataPin[]
     outputs:                IDataPin[]
     variableInputCount?:    IVariableIOCount
     variableOutputCount?:   IVariableIOCount
+    visual?: {
+        noHeader?:          boolean
+        noInputNames?:      boolean
+        noOutputNames?:     boolean
+        symbol?:            string,
+        width?:             number
+    }
 }
 
-export interface ICircuitSource extends IFunctionBlockInterface
+export interface ICircuitSource extends IFunctionBlockType
 {
     name:                   string
     inputs:                 IDataPin[]
@@ -94,7 +94,6 @@ export interface IFunctionLib
     name:           string
     functions:      IFunctionBlockType[]
 }
-
 
 export interface IFunctionCallMetaData
 {

@@ -3,7 +3,7 @@ import { MovableElement } from "./MovableElement.js"
 import { IElement, NodeElement } from "./NodeElement.js"
 import { Div } from "./UIElements.js"
 
-export function MoveHandle(targetElement: MovableElement, elem?: NodeElement<'div'>)
+export function MoveHandle(targetElement: MovableElement, elem?: NodeElement)
 {
     elem = elem ?? Div()
 
@@ -34,7 +34,7 @@ export function MoveHandle(targetElement: MovableElement, elem?: NodeElement<'di
     return elem
 }
 
-export function ResizeHandle(targetElement: MovableElement, elem?: NodeElement<'div'>, minSize = vec2(16, 16), maxSize = vec2(Number.MAX_VALUE, Number.MAX_VALUE))
+export function ResizeHandle(targetElement: MovableElement, elem?: NodeElement, minSize = vec2(16, 16), maxSize = vec2(Number.MAX_VALUE, Number.MAX_VALUE))
 {
     elem = elem ?? Div()
     elem.node.style.cursor = 'nwse-resize'

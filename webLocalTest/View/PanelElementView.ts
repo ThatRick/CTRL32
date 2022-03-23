@@ -9,13 +9,13 @@ interface PanelElementViewConfig {
     onHideChanged?: (hidden: boolean) => void
 }
 
-export class PanelElementView extends NodeElement<'div'>
+export class PanelElementView extends NodeElement
 {
-    titleBar:           NodeElement<'div'>
-        hideIcon:       NodeElement<'div'>
-        titleName:      NodeElement<'div'>
-        status:         NodeElement<'div'>
-    userContainer:      NodeElement<'div'>
+    titleBar:           NodeElement
+        hideIcon:       NodeElement
+        titleName:      NodeElement
+        status:         NodeElement
+    userContainer:      NodeElement
         userContent:    HTMLElement
 
     constructor(titleText: string, config: PanelElementViewConfig = {}) {

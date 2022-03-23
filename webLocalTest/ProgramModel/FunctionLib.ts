@@ -1,5 +1,5 @@
-import { IFunctionBlockType, IFunctionLib } from "../IDataTypes.js";
-import { LogicLib } from "./LogicLib.js";
+import { IFunctionBlockType, IFunctionLib } from "./IDataTypes.js";
+import { LogicLib } from "./FunctionLibs/LogicLib.js";
 
 enum LIBRARY_ID
 {

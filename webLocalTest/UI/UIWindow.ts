@@ -7,9 +7,9 @@ import { MoveHandle, ResizeHandle } from "./UIPointerHandlers.js"
 
 export class UIWindow extends MovableElement
 {
-    private titleTextNode: NodeElement<'div'>
+    private titleTextNode: NodeElement
 
-    constructor(pos: Vec2, size: Vec2, content: NodeElement<'div'>) {
+    constructor(pos: Vec2, size: Vec2, content: NodeElement) {
         super(pos, size)
 
         const titleBar = HorizontalContainer(

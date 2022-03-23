@@ -3,12 +3,12 @@ import { HorizontalContainer, VerticalContainer, TextNode, Div, Button, Input, I
 import { Colors } from "./Colors.js"
 
 
-export class TreeNodeView extends NodeElement<'div'>
+export class TreeNodeView extends NodeElement
 {
-    titleBar:           NodeElement<'div'>
-        expandIcon:     NodeElement<'div'>
-        titleName:      NodeElement<'div'>
-    childContainer:     NodeElement<'div'>
+    titleBar:           NodeElement
+        expandIcon:     NodeElement
+        titleName:      NodeElement
+    childContainer:     NodeElement
 
     readonly hasChildren: boolean
 
@@ -81,7 +81,7 @@ export class TreeNodeView extends NodeElement<'div'>
 }
 
 
-export class ControllerNavigatorView extends NodeElement<'div'>
+export class ControllerNavigatorView extends NodeElement
 {
     constructor(protected controller: C32Controller) {
         super('div')

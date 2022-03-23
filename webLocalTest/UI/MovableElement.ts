@@ -3,7 +3,7 @@ import { NodeElement } from "./UIElements.js"
 import { EventEmitter } from "../Events.js"
 
 
-export class MovableElement extends NodeElement<'div'> {
+export class MovableElement extends NodeElement {
     readonly currentPos = vec2(0, 0)
     readonly currentSize = vec2(0, 0)
     

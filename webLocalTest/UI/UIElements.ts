@@ -53,7 +53,7 @@ export function VerticalContainer(...children: IElement[]) {
 
 // CHECKBOX
 
-export class Checkbox extends NodeElement<'div'> {
+export class Checkbox extends NodeElement {
     
     checkbox:   NodeElement<'input'>
     label:      NodeElement<'label'>

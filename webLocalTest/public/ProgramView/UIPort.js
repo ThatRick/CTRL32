@@ -1,7 +1,7 @@
 import Vec2 from "../Vector2.js";
 import { NodeElement } from "../UI/NodeElement.js";
 export class UIPort extends NodeElement {
-    constructor(block, ioNumber, localOffset, orientation, dataDirection, name) {
+    constructor(block, ioNumber, localOffset, orientation, dataDirection, name, value) {
         super('div');
         this.block = block;
         this.ioNumber = ioNumber;
@@ -9,6 +9,7 @@ export class UIPort extends NodeElement {
         this.orientation = orientation;
         this.dataDirection = dataDirection;
         this.name = name;
+        this.value = value;
         this.block.events.subscribe('moved', this.onBlockMoved);
     }
     onBlockMoved() {

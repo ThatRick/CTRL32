@@ -6,18 +6,19 @@ import { Div, HorizontalContainer, TextNode } from "./UIElements.js"
 export interface IUIContextMenuItem
 {
     name:       string
-    action?:    (name: string, index: number) => void
+    action?:    (name: string, id?: number) => void
     subItems?:  () => IUIContextMenuItem[]
     disabled?:  boolean
+    id?:        number
 }
 
 const itemHeight = 20
 const itemMinWidth = 100
 
-export class UIContextMenu extends NodeElement<'div'>
+export class UIContextMenu extends NodeElement
 {
-    private onPointerOverItem = (ev: PointerEvent, elem: NodeElement<'div'>) => { elem.backgroundColor(Colors.SelectionDark); elem.color(Colors.PrimaryText) }
-    private onPointerOutItem = (ev: PointerEvent, elem: NodeElement<'div'>) => { elem.backgroundColor('transparent'); elem.color(Colors.SecondaryText) }
+    private onPointerOverItem = (ev: PointerEvent, elem: NodeElement) => { elem.backgroundColor(Colors.SelectionDark); elem.color(Colors.PrimaryText) }
+    private onPointerOutItem = (ev: PointerEvent, elem: NodeElement) => { elem.backgroundColor('transparent'); elem.color(Colors.SecondaryText) }
 
     private childMenu:  UIContextMenu
     private childMenuIndex: number
@@ -63,7 +64,7 @@ export class UIContextMenu extends NodeElement<'div'>
         )
             .onClick(() => {    
                 if (item.action) {
-                    item.action(item.name, index)
+                    item.action(item.name, item.id)
                     this.childMenu?.closeSelfAndChildren()
                     this.parentMenu?.closeSelfAndParent()
                     this.remove()

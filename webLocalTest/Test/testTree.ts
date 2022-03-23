@@ -78,7 +78,7 @@ export const testTree: ITreeNodeInfo[] = [
     },
 ]
 
-export class TreeView extends NodeElement<'div'>
+export class TreeView extends NodeElement
 {
     constructor(treeInfo: ITreeNodeInfo[]) {
         super('div')
