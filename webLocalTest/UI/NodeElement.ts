@@ -196,7 +196,7 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap = 'div'> {
 
     align(value: 'left' | 'right' | 'center') { this.node.style.textAlign = value;  return this }
 
-    setPointerHandlers(pointerEvents: IPointerEvents) {
+    setPointerHandlers(pointerEvents: IPointerEvents, noBubbling = false) {
         let currentPos = vec2(0, 0)
         let downPos = vec2(0, 0)
         let isDown = false
@@ -209,7 +209,7 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap = 'div'> {
                 if (pointerEvents.onPointerDown) {
                     this.node.setPointerCapture(ev.pointerId)
                 }
-            })
+            }, noBubbling)
 
         if (pointerEvents.onPointerUp || pointerEvents.onPointerDrag)
             this.node.addEventListener('pointerup', ev => {
@@ -218,7 +218,7 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap = 'div'> {
                     this.node.releasePointerCapture(ev.pointerId)
                 }
                 pointerEvents.onPointerUp?.(ev, this as NodeElement)
-            })
+            }, noBubbling)
 
         if (pointerEvents.onPointerDrag || pointerEvents.onPointerHover)
             this.node.addEventListener('pointermove', ev => {
@@ -228,25 +228,23 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap = 'div'> {
                     pointerEvents.onPointerDrag?.(dragOffset, ev, this as NodeElement)
                 }
                 else pointerEvents.onPointerHover?.(ev, this as NodeElement)
-            })
+            }, noBubbling)
 
         if (pointerEvents.onPointerClick) this.node.addEventListener('click', ev => {
                 pointerEvents.onPointerClick?.(ev, this as NodeElement)
-            })
+            }, noBubbling)
+
         if (pointerEvents.onPointerContextMenu) this.node.addEventListener('contextmenu', ev => {
                 pointerEvents.onPointerContextMenu?.(ev, this as NodeElement)
-            })
-        if (pointerEvents.onPointerClick) this.node.addEventListener('click', ev => {
-                pointerEvents.onPointerClick?.(ev, this as NodeElement)
-            })
+            }, noBubbling)
 
         if (pointerEvents.onPointerOver) this.node.addEventListener('pointerover', ev => {
                 pointerEvents.onPointerOver?.(ev, this as NodeElement)
-            })
+            }, noBubbling)
 
         if (pointerEvents.onPointerOut) this.node.addEventListener('pointerout', ev => {
                 pointerEvents.onPointerOut?.(ev, this as NodeElement)
-            })
+            }, noBubbling)
         return this
     }
 

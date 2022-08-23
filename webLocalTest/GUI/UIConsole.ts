@@ -36,7 +36,7 @@ export class Console
     }
     line(text: string) { this.entry([text]) }
 
-    clear = () => { while (this.node.lastChild) this.node.lastChild.remove() }
+    clear() { while (this.node.lastChild) this.node.lastChild.remove() }
 
     scrollToEnd() {
         this.node.lastElementChild?.scrollIntoView()

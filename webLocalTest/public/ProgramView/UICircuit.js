@@ -25,10 +25,10 @@ export class UICircuit extends NodeElement {
     set snap(value) { this._snap = value; }
     elementSelected(elem, ev) {
         // ev.stopPropagation()
-        if (this.selection)
-            this.selection.setSelected(false);
-        this.selection = elem;
-        this.selection.setSelected(true);
+        if (this.selectedBlock)
+            this.selectedBlock.setSelected(false);
+        this.selectedBlock = elem;
+        this.selectedBlock.setSelected(true);
     }
     onContextMenuCreateFunction(name, opcode) {
         const funcCall = this.circuit.createFunctionCallWithOpcode(opcode);
@@ -83,8 +83,8 @@ export class UICircuit extends NodeElement {
         console.log('Context menu item selected: ', { name, index });
     }
     deselectAll() {
-        if (this.selection)
-            this.selection.setSelected(false);
+        this.selectedBlock?.setSelected(false);
+        this.selectedBlock = null;
         this.contextMenu?.closeSelfAndChildren();
         this.contextMenu = null;
     }

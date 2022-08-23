@@ -37,15 +37,15 @@ export class UICircuit extends NodeElement
     private uiBlocks = new Map<number, UIBlock>()
     private uiConnections = new Map<number, UIConnection>()
 
-    private selection: UIBlock
+    private selectedBlock: UIBlock
     private contextMenu: UIContextMenu
     private localPointerOffset: Vec2
 
     private elementSelected(elem: UIBlock, ev: PointerEvent) {
         // ev.stopPropagation()
-        if (this.selection) this.selection.setSelected(false)
-        this.selection = elem
-        this.selection.setSelected(true)
+        if (this.selectedBlock) this.selectedBlock.setSelected(false)
+        this.selectedBlock = elem
+        this.selectedBlock.setSelected(true)
     }
 
     private onContextMenuCreateFunction(name: string, opcode: number) {
@@ -106,7 +106,8 @@ export class UICircuit extends NodeElement
     }
 
     private deselectAll() {
-        if (this.selection) this.selection.setSelected(false)
+        this.selectedBlock?.setSelected(false)
+        this.selectedBlock = null
         this.contextMenu?.closeSelfAndChildren()
         this.contextMenu = null
     }

@@ -19,8 +19,8 @@ export class UIBlock extends MovableElement
     constructor(circuit: UICircuit, blockType: IFunctionBlockType, pos: Vec2) {
         super(pos, UIBlock.blockSize(blockType, circuit.snap))
         this.circuit = circuit
-        this.backgroundColor('gray')
-            .setPosSnap(circuit.snap)
+        
+        this.setPosSnap(circuit.snap)
             .style({
                 border: 'solid 1px ' + Colors.Base,
                 backgroundColor: Colors.PanelElement
@@ -28,24 +28,27 @@ export class UIBlock extends MovableElement
             .append(
                 TextNode(blockType.name).align('center')
                     .color(Colors.SecondaryText)
-                    .userSelect('none')
+                    .userSelect('none'),
+
+                MoveHandle(this, null, true).style({
+                    position: 'absolute',
+                    top: '0px',
+                    width: '100%', height: '100%'
+                })
             )
         
-        MoveHandle(this, this)
-
         const titleHeight = blockType.visual.noHeader ? 0 : 1
         const blockWidth = blockType.visual.width ?? defaultBlockWidth
 
         // Create io-ports
-        let ioNum = 0
         blockType.inputs.forEach((input, inputIndex) => {
             const pos = Vec2.mul(vec2(-1, titleHeight + inputIndex), this.circuit.snap)
-            const inputPort = new UIPort(this, ioNum++, pos, 'left', 'input', input.name, input.initValue)
+            const inputPort = new UIPort(this, pos, this.circuit.snap, 'left', 'input', input.name, input.initValue)
             this.addIOPort(inputPort)
         })
         blockType.outputs.forEach((output, outputIndex) => {
             const pos = Vec2.mul(vec2(blockWidth, titleHeight + outputIndex), this.circuit.snap)
-            const outputPort = new UIPort(this, ioNum++, pos, 'right', 'output', output.name, output.initValue)
+            const outputPort = new UIPort(this, pos, this.circuit.snap, 'right', 'output', output.name, output.initValue)
             this.addIOPort(outputPort)
         })
     }
@@ -60,6 +63,8 @@ export class UIBlock extends MovableElement
         this.node.style.zIndex = selected ? '3' : '2'
         return this
     }
+
+    get snap() { return this.circuit.snap }
 
     static blockSize(blockType: IFunctionBlockType, snap: Vec2) {
         const height = (Math.max(blockType.inputs.length, blockType.outputs.length) + (blockType.visual.noHeader ? 0 : 1)) * snap.y

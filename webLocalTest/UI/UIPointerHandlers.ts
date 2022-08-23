@@ -3,7 +3,7 @@ import { MovableElement } from "./MovableElement.js"
 import { IElement, NodeElement } from "./NodeElement.js"
 import { Div } from "./UIElements.js"
 
-export function MoveHandle(targetElement: MovableElement, elem?: NodeElement)
+export function MoveHandle(targetElement: MovableElement, elem?: NodeElement, noBubbling = false)
 {
     elem = elem ?? Div()
 
@@ -12,7 +12,8 @@ export function MoveHandle(targetElement: MovableElement, elem?: NodeElement)
     let initPos = vec2(targetElement.currentPos)
     let maxPos: Vec2
 
-    elem.setPointerHandlers({
+    elem.setPointerHandlers(
+    {
         onPointerDown: () => {
             initPos.set(targetElement.currentPos)
             elem.node.style.cursor = 'grabbing'
@@ -29,7 +30,7 @@ export function MoveHandle(targetElement: MovableElement, elem?: NodeElement)
                 targetElement.setPos(Vec2.snap(targetElement.currentPos, targetElement.posSnap))
             }
         }
-    })
+    }, noBubbling)
 
     return elem
 }

@@ -1,6 +1,6 @@
 import Vec2, { vec2 } from "../Vector2.js";
 import { Div } from "./UIElements.js";
-export function MoveHandle(targetElement, elem) {
+export function MoveHandle(targetElement, elem, noBubbling = false) {
     elem = elem ?? Div();
     elem.node.style.cursor = 'grab';
     let initPos = vec2(targetElement.currentPos);
@@ -22,7 +22,7 @@ export function MoveHandle(targetElement, elem) {
                 targetElement.setPos(Vec2.snap(targetElement.currentPos, targetElement.posSnap));
             }
         }
-    });
+    }, noBubbling);
     return elem;
 }
 export function ResizeHandle(targetElement, elem, minSize = vec2(16, 16), maxSize = vec2(Number.MAX_VALUE, Number.MAX_VALUE)) {

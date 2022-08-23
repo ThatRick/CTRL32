@@ -16,10 +16,7 @@ export class UIPointHandle extends MovableElement
         MoveHandle(this, this)
     }
 
-    private visible = true
-
     setVisible(visible: boolean) {
-        this.visible = visible
         this.node.style.display = visible ? 'block' : 'none'
         return this
     }

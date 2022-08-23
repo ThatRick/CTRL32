@@ -3,8 +3,6 @@ import { toHex } from "../Util.js";
 export class Console {
     constructor() {
         this.autoScroll = false;
-        this.clear = () => { while (this.node.lastChild)
-            this.node.lastChild.remove(); };
         this.node = htmlElement('div');
     }
     entry(lines) {
@@ -33,6 +31,8 @@ export class Console {
         this.entry(lines);
     }
     line(text) { this.entry([text]); }
+    clear() { while (this.node.lastChild)
+        this.node.lastChild.remove(); }
     scrollToEnd() {
         this.node.lastElementChild?.scrollIntoView();
     }

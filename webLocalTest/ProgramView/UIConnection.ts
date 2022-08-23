@@ -11,7 +11,6 @@ export class UIConnection
     constructor(dest: UIPort, source: UIPort, midpoints: Vec2[]) {
         this.dest = dest
         this.source = source
-
     }
 
     update() {

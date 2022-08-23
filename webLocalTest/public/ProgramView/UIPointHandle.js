@@ -3,7 +3,6 @@ import { MoveHandle } from "../UI/UIPointerHandlers.js";
 export class UIPointHandle extends MovableElement {
     constructor(pos, snap) {
         super(pos, snap);
-        this.visible = true;
         this.backgroundColor('gray')
             .setPosSnap(snap)
             .style({
@@ -12,7 +11,6 @@ export class UIPointHandle extends MovableElement {
         MoveHandle(this, this);
     }
     setVisible(visible) {
-        this.visible = visible;
         this.node.style.display = visible ? 'block' : 'none';
         return this;
     }
