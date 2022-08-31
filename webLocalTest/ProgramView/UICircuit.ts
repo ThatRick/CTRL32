@@ -8,76 +8,71 @@ import Vec2, { vec2 } from "../Vector2.js"
 import { Colors } from "../View/Colors.js"
 import { UIBlock } from "./UIBlock.js"
 import { UIConnection } from "./UIConnection.js"
+import { UILayerOrder } from './UILayerOrder.js'
+import { UISelection } from './UISelection.js'
+
+export { UILayerOrder as UILayers }
 
 export class UICircuit extends NodeElement
 {
-    constructor(circuit: CircuitSource, snap = vec2(20))
+    constructor(circuit: CircuitSource, snapSize = vec2(20))
     {
         super('div')
-        this._snap = snap
-        this.circuit = circuit
+        this._snapSize = snapSize
+        this.circuitSource = circuit
 
         this.style({
             overflow: 'auto',
             position: 'relative',
             backgroundColor: Colors.Panel,
-            ...backgroundGridStyle(snap, Colors.PanelElement),
+            ...backgroundGridStyle(snapSize, Colors.PanelElement),
         })
 
         this.setupCircuitEventHandlers()
         this.setupPointerHandlers()
     }
 
-    get snap() { return this._snap }
-    set snap(value: Vec2) { this._snap = value }
+    // Public API
 
-    private circuit: CircuitSource
-    private _snap: Vec2
+    public get snapSize() { return this._snapSize }
+    public set snapSize(size: Vec2) { this._snapSize = size }
+
+    // Private
+
+    private circuitSource: CircuitSource
+    private _snapSize: Vec2
 
     private uiBlocks = new Map<number, UIBlock>()
     private uiConnections = new Map<number, UIConnection>()
 
-    private selectedBlock: UIBlock
+    private selection = new UISelection()
     private contextMenu: UIContextMenu
     private localPointerOffset: Vec2
 
-    private elementSelected(elem: UIBlock, ev: PointerEvent) {
-        // ev.stopPropagation()
-        if (this.selectedBlock) this.selectedBlock.setSelected(false)
-        this.selectedBlock = elem
-        this.selectedBlock.setSelected(true)
+    private onBlockClicked(uiBlock: UIBlock, ev: PointerEvent) {
+        if (ev.shiftKey)
+            this.selection.toggle(uiBlock)
+        else
+            this.selection.set(uiBlock)
     }
 
-    private onContextMenuCreateFunction(name: string, opcode: number) {
-        const funcCall = this.circuit.createFunctionCallWithOpcode(opcode)
-        if (!funcCall) {
-            console.error('Could not create function call:', opcode, name); return
-        }
-        this.addFunctionCall(funcCall)
-    }
-
-    private onContextMenuCreateCircuitType(name: string) {
-        const funcCall = this.circuit.createFunctionCallWithCircuitType(name)
-        if (!funcCall) {
-            console.error('Could not create circuit type:', name); return
-        }
-        this.addFunctionCall(funcCall)
-    }
-
-    private addFunctionCall(funcCall: IFunctionBlockCall) {
+    private addFunctionBlock(funcCall: IFunctionBlockCall) {
         const blockType = (funcCall.opcode > 0) ? FunctionLibrary.getFunctionByOpcode(funcCall.opcode)
-                                                : this.circuit.program.getCircuitType(funcCall.circuitType)
+                                                : this.circuitSource.program.getCircuitType(funcCall.circuitType)
 
         if (!blockType) {
             console.error('Could not find function type for function call:', funcCall.opcode, funcCall.circuitType); return
         }
-        const uiBlock = new UIBlock(this, blockType, this.localPointerOffset.snap(this.snap))
+        const uiBlock = new UIBlock(this, blockType, this.localPointerOffset.snap(this.snapSize))
         this.append(uiBlock)
         this.uiBlocks.set(funcCall.id, uiBlock)
 
-        uiBlock.events.subscribe('clicked', this.elementSelected.bind(this))
+        uiBlock.events.subscribe('clicked', this.onBlockClicked.bind(this))
     }
 
+    // ------------------------------------------------
+    //      Context menu and action handlers
+    // ------------------------------------------------
     private showContextMenu(pos: Vec2) {
         const libraryItems: IUIContextMenuItem[] = [...FunctionLibrary.libraryMap.entries()].map(([libID, lib]) => {
             return {
@@ -87,18 +82,34 @@ export class UICircuit extends NodeElement
                         name:   func.name,
                         id:     FunctionLibrary.encodeOpcode(libID, funcID),
                         action: this.onContextMenuCreateFunction.bind(this)
-                    }
+                    } as IUIContextMenuItem
                 })
-            }
+            } as IUIContextMenuItem
         })
+
         const menuItems: IUIContextMenuItem[] = [
             ...libraryItems,
             { name: 'Item A', action: this.onContextMenuSelect },
             { name: 'Item B', action: this.onContextMenuSelect },
         ]
-        console.log(menuItems)
 
         this.contextMenu = new UIContextMenu(pos, menuItems)
+    }
+
+    private onContextMenuCreateFunction(name: string, opcode: number) {
+        const funcCall = this.circuitSource.createFunctionCallWithOpcode(opcode)
+        if (!funcCall) {
+            console.error('Could not create function call:', opcode, name); return
+        }
+        this.addFunctionBlock(funcCall)
+    }
+
+    private onContextMenuCreateCircuitType(name: string) {
+        const funcCall = this.circuitSource.createFunctionCallWithCircuitType(name)
+        if (!funcCall) {
+            console.error('Could not create circuit type:', name); return
+        }
+        this.addFunctionBlock(funcCall)
     }
 
     private onContextMenuSelect(name: string, index: number) {
@@ -106,8 +117,7 @@ export class UICircuit extends NodeElement
     }
 
     private deselectAll() {
-        this.selectedBlock?.setSelected(false)
-        this.selectedBlock = null
+        this.selection.deselectAll()
         this.contextMenu?.closeSelfAndChildren()
         this.contextMenu = null
     }
@@ -140,7 +150,4 @@ export class UICircuit extends NodeElement
             }
         })
     }
-}
-
-function action(this: UICircuit) {
 }

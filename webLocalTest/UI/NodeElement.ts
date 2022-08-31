@@ -104,7 +104,10 @@ export class NodeElement<NodeType extends keyof HTMLElementTagNameMap = 'div'> {
         return this
     }
 
+    protected onRemove?(): void
+
     remove() {
+        this.onRemove?.()
         this.node.remove()
     }
 

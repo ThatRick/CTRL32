@@ -1,14 +1,13 @@
 import { MovableElement } from "../UI/MovableElement.js";
-import { MoveHandle } from "../UI/UIPointerHandlers.js";
+import { createMoveHandle } from "../UI/UIPointerHandlers.js";
 export class UIPointHandle extends MovableElement {
-    constructor(pos, snap) {
-        super(pos, snap);
+    constructor(pos, snapSize) {
+        super(pos, snapSize);
         this.backgroundColor('gray')
-            .setPosSnap(snap)
             .style({
             opacity: '0.25'
         });
-        MoveHandle(this, this);
+        createMoveHandle(this, this, snapSize);
     }
     setVisible(visible) {
         this.node.style.display = visible ? 'block' : 'none';

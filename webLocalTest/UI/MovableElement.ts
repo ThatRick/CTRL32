@@ -12,9 +12,6 @@ export class MovableElement extends NodeElement {
 
     private animationRequest = 0
 
-    posSnap: Vec2
-    sizeSnap: Vec2
-
     constructor(pos: Vec2, size: Vec2) {
         super('div')
         this.setNodePos(pos)
@@ -41,6 +38,10 @@ export class MovableElement extends NodeElement {
         return this
     }
 
+    setZIndex(zIndex: number) {
+        this.node.style.zIndex = zIndex.toString()
+    }
+
     update() {
         if (this.newPos) {
             this.setNodePos(this.newPos)
@@ -53,16 +54,6 @@ export class MovableElement extends NodeElement {
             this.events.emit('resized')
         }
         this.animationRequest = 0
-    }
-
-    setPosSnap(snap: Vec2) {
-        this.posSnap = snap
-        return this
-    }
-
-    setSizeSnap(snap: Vec2) {
-        this.sizeSnap = snap
-        return this
     }
 
     remove() {

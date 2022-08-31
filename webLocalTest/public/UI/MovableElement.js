@@ -30,6 +30,9 @@ export class MovableElement extends NodeElement {
         this.requestUpdate();
         return this;
     }
+    setZIndex(zIndex) {
+        this.node.style.zIndex = zIndex.toString();
+    }
     update() {
         if (this.newPos) {
             this.setNodePos(this.newPos);
@@ -42,14 +45,6 @@ export class MovableElement extends NodeElement {
             this.events.emit('resized');
         }
         this.animationRequest = 0;
-    }
-    setPosSnap(snap) {
-        this.posSnap = snap;
-        return this;
-    }
-    setSizeSnap(snap) {
-        this.sizeSnap = snap;
-        return this;
     }
     remove() {
         this.events.emit('removed');

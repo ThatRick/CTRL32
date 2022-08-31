@@ -1,11 +1,11 @@
 import { Colors } from "../View/Colors.js";
 import { MovableElement } from "./MovableElement.js";
 import { Button, HorizontalContainer, TextNode } from "./UIElements.js";
-import { MoveHandle, ResizeHandle } from "./UIPointerHandlers.js";
+import { createMoveHandle, createResizeHandle } from "./UIPointerHandlers.js";
 export class UIWindow extends MovableElement {
     constructor(pos, size, content) {
         super(pos, size);
-        const titleBar = HorizontalContainer(MoveHandle(this).textContent('Text Window')
+        const titleBar = HorizontalContainer(createMoveHandle(this).textContent('Text Window')
             .setup(elem => this.titleTextNode = elem)
             .userSelect('none')
             .padding(2)
@@ -18,7 +18,7 @@ export class UIWindow extends MovableElement {
         }));
         this.flexContainer('vertical')
             .backgroundColor(Colors.Panel)
-            .append(titleBar, content.flexGrow(), ResizeHandle(this).append(TextNode('⋰').style({
+            .append(titleBar, content.flexGrow(), createResizeHandle(this).append(TextNode('⋰').style({
             color: Colors.BorderLight,
             textAlign: 'right',
             position: 'absolute',

@@ -19,5 +19,7 @@ export const Colors = {
     PrimaryText:            '#fff',
     SecondaryText:          '#ccc',
 
-    Link:                   '#90c2ff'
+    Link:                   '#90c2ff',
+
+    Transparent:            '#00000000'
 }

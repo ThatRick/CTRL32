@@ -5,59 +5,48 @@ import { UIContextMenu } from "../UI/UIContextMenu.js";
 import { vec2 } from "../Vector2.js";
 import { Colors } from "../View/Colors.js";
 import { UIBlock } from "./UIBlock.js";
+import { UISelection } from './UISelection.js';
 export class UICircuit extends NodeElement {
-    constructor(circuit, snap = vec2(20)) {
+    constructor(circuit, snapSize = vec2(20)) {
         super('div');
         this.uiBlocks = new Map();
         this.uiConnections = new Map();
-        this._snap = snap;
-        this.circuit = circuit;
+        this.selection = new UISelection();
+        this._snapSize = snapSize;
+        this.circuitSource = circuit;
         this.style({
             overflow: 'auto',
             position: 'relative',
             backgroundColor: Colors.Panel,
-            ...backgroundGridStyle(snap, Colors.PanelElement),
+            ...backgroundGridStyle(snapSize, Colors.PanelElement),
         });
         this.setupCircuitEventHandlers();
         this.setupPointerHandlers();
     }
-    get snap() { return this._snap; }
-    set snap(value) { this._snap = value; }
-    elementSelected(elem, ev) {
-        // ev.stopPropagation()
-        if (this.selectedBlock)
-            this.selectedBlock.setSelected(false);
-        this.selectedBlock = elem;
-        this.selectedBlock.setSelected(true);
+    // Public API
+    get snapSize() { return this._snapSize; }
+    set snapSize(size) { this._snapSize = size; }
+    onBlockClicked(uiBlock, ev) {
+        if (ev.shiftKey)
+            this.selection.toggle(uiBlock);
+        else
+            this.selection.set(uiBlock);
     }
-    onContextMenuCreateFunction(name, opcode) {
-        const funcCall = this.circuit.createFunctionCallWithOpcode(opcode);
-        if (!funcCall) {
-            console.error('Could not create function call:', opcode, name);
-            return;
-        }
-        this.addFunctionCall(funcCall);
-    }
-    onContextMenuCreateCircuitType(name) {
-        const funcCall = this.circuit.createFunctionCallWithCircuitType(name);
-        if (!funcCall) {
-            console.error('Could not create circuit type:', name);
-            return;
-        }
-        this.addFunctionCall(funcCall);
-    }
-    addFunctionCall(funcCall) {
+    addFunctionBlock(funcCall) {
         const blockType = (funcCall.opcode > 0) ? FunctionLibrary.getFunctionByOpcode(funcCall.opcode)
-            : this.circuit.program.getCircuitType(funcCall.circuitType);
+            : this.circuitSource.program.getCircuitType(funcCall.circuitType);
         if (!blockType) {
             console.error('Could not find function type for function call:', funcCall.opcode, funcCall.circuitType);
             return;
         }
-        const uiBlock = new UIBlock(this, blockType, this.localPointerOffset.snap(this.snap));
+        const uiBlock = new UIBlock(this, blockType, this.localPointerOffset.snap(this.snapSize));
         this.append(uiBlock);
         this.uiBlocks.set(funcCall.id, uiBlock);
-        uiBlock.events.subscribe('clicked', this.elementSelected.bind(this));
+        uiBlock.events.subscribe('clicked', this.onBlockClicked.bind(this));
     }
+    // ------------------------------------------------
+    //      Context menu and action handlers
+    // ------------------------------------------------
     showContextMenu(pos) {
         const libraryItems = [...FunctionLibrary.libraryMap.entries()].map(([libID, lib]) => {
             return {
@@ -76,15 +65,29 @@ export class UICircuit extends NodeElement {
             { name: 'Item A', action: this.onContextMenuSelect },
             { name: 'Item B', action: this.onContextMenuSelect },
         ];
-        console.log(menuItems);
         this.contextMenu = new UIContextMenu(pos, menuItems);
+    }
+    onContextMenuCreateFunction(name, opcode) {
+        const funcCall = this.circuitSource.createFunctionCallWithOpcode(opcode);
+        if (!funcCall) {
+            console.error('Could not create function call:', opcode, name);
+            return;
+        }
+        this.addFunctionBlock(funcCall);
+    }
+    onContextMenuCreateCircuitType(name) {
+        const funcCall = this.circuitSource.createFunctionCallWithCircuitType(name);
+        if (!funcCall) {
+            console.error('Could not create circuit type:', name);
+            return;
+        }
+        this.addFunctionBlock(funcCall);
     }
     onContextMenuSelect(name, index) {
         console.log('Context menu item selected: ', { name, index });
     }
     deselectAll() {
-        this.selectedBlock?.setSelected(false);
-        this.selectedBlock = null;
+        this.selection.deselectAll();
         this.contextMenu?.closeSelfAndChildren();
         this.contextMenu = null;
     }
@@ -107,6 +110,4 @@ export class UICircuit extends NodeElement {
             }
         });
     }
-}
-function action() {
 }

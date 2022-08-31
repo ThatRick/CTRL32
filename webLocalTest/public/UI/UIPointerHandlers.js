@@ -1,14 +1,14 @@
 import Vec2, { vec2 } from "../Vector2.js";
 import { Div } from "./UIElements.js";
-export function MoveHandle(targetElement, elem, noBubbling = false) {
-    elem = elem ?? Div();
-    elem.node.style.cursor = 'grab';
+export function createMoveHandle(targetElement, handleElement, snapSize, noBubbling = false) {
+    handleElement = handleElement ?? Div();
+    handleElement.node.style.cursor = 'grab';
     let initPos = vec2(targetElement.currentPos);
     let maxPos;
-    elem.setPointerHandlers({
+    handleElement.setPointerHandlers({
         onPointerDown: () => {
             initPos.set(targetElement.currentPos);
-            elem.node.style.cursor = 'grabbing';
+            handleElement.node.style.cursor = 'grabbing';
             const parent = targetElement.node.parentElement;
             maxPos = vec2(parent.clientWidth - targetElement.currentSize.x, parent.clientHeight - targetElement.currentSize.y);
         },
@@ -17,15 +17,15 @@ export function MoveHandle(targetElement, elem, noBubbling = false) {
             targetElement.setPos(draggedPos);
         },
         onPointerUp: () => {
-            elem.node.style.cursor = 'grab';
-            if (targetElement.posSnap) {
-                targetElement.setPos(Vec2.snap(targetElement.currentPos, targetElement.posSnap));
+            handleElement.node.style.cursor = 'grab';
+            if (snapSize) {
+                targetElement.setPos(Vec2.snap(targetElement.currentPos, snapSize));
             }
         }
     }, noBubbling);
-    return elem;
+    return handleElement;
 }
-export function ResizeHandle(targetElement, elem, minSize = vec2(16, 16), maxSize = vec2(Number.MAX_VALUE, Number.MAX_VALUE)) {
+export function createResizeHandle(targetElement, elem, minSize = vec2(16, 16), maxSize = vec2(Number.MAX_VALUE, Number.MAX_VALUE), snapSize) {
     elem = elem ?? Div();
     elem.node.style.cursor = 'nwse-resize';
     let initSize = vec2(targetElement.currentSize);
@@ -41,8 +41,8 @@ export function ResizeHandle(targetElement, elem, minSize = vec2(16, 16), maxSiz
             targetElement.setSize(draggedSize);
         },
         onPointerUp: () => {
-            if (targetElement.sizeSnap) {
-                targetElement.setSize(Vec2.snap(targetElement.currentSize, targetElement.sizeSnap));
+            if (snapSize) {
+                targetElement.setSize(Vec2.snap(targetElement.currentSize, snapSize));
             }
         }
     });

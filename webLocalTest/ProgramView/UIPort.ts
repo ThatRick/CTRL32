@@ -4,6 +4,8 @@ import { UIBlock } from "./UIBlock.js"
 import { NodeElement } from "../UI/NodeElement.js"
 import { MovableElement } from "../UI/MovableElement.js"
 import { Colors } from "../View/Colors.js"
+import { EventEmitter } from "../Events.js"
+import { UICircuitElement } from "./UICircuitElement.js"
 
 const pinWidth  = 0.5
 const pinHeight = 0.15
@@ -30,12 +32,8 @@ const pinGraphicsByOrientation =
 type PortOrientation = 'left' | 'right' | 'up' | 'down'
 type PortDataDirection = 'input' | 'output'
 
-export class UIPort extends NodeElement
+export class UIPort extends MovableElement implements UICircuitElement
 {
-    private connection?:    UIConnection
-
-    private pin: NodeElement
-
     constructor(
         public readonly parent:         MovableElement,
         public readonly offset:         Vec2,
@@ -43,25 +41,71 @@ export class UIPort extends NodeElement
         public readonly orientation:    PortOrientation,
         public readonly dataDirection:  PortDataDirection,
         public readonly name:           string,
+        public readonly ioNum?:         number,
         private         value?:         number
     ) {
-        super('div')
-        this.position(offset, 'absolute')
-        this.size(snap)
-        this.node.style.cursor = 'default'
+        super(offset, snap)
+        this.style({
+            cursor: 'default',
+            backgroundColor: Colors.SelectionDark,
+            opacity: '0'
+        })
 
         this.parent.append(this)
         this.parent.events.subscribe('moved', this.onParentMoved.bind(this))
 
         this.drawPin()
     }
+    // UICircuitElement interface
+
+    readonly typeName = 'Port'
+    readonly isMovable = false
+
+    set highlighted(selected: boolean) {
+        this.node.style.opacity = selected ? '0.5' : '0'
+    }
+
+    portEvents = new EventEmitter<typeof this, 'connected' | 'disconnected' | 'valueModified'>(this)
+
+    absolutePos() {
+        return Vec2.add(this.parent.currentPos, this.offset)
+    }
+
+    getValue() {
+        return this.value
+    }
+
+    setValue(value: number) {
+
+        this.value = value
+    }
+
+    modifyValue(value: number) {
+        this.value = value
+        this.portEvents.emit('valueModified', this)
+    }
+
+    connect(connection: UIConnection) {
+        if (!connection) return
+        this.connection = connection
+        this.events.subscribe('moved', this.connection.update.bind(this))
+        this.portEvents.emit('connected', this)
+    }
+
+    disconnect() {
+        if (!this.connection) return
+        this.events.unsubscribe(this.connection.update.bind(this))
+    }
+
+    private connection?:    UIConnection
+    private pin: NodeElement
 
     private onParentMoved() {
         this.connection?.update()
     }
 
     private drawPin() {
-        if (this.pin) this.pin.remove();
+        if (this.pin) this.pin.remove()
         const pinGraphics = pinGraphicsByOrientation[this.orientation]
         const size   = Vec2.mul(this.snap, pinGraphics.size).round()
         const offset = Vec2.mul(this.snap, pinGraphics.offset).round()
@@ -72,21 +116,5 @@ export class UIPort extends NodeElement
             .backgroundColor(Colors.Link)
 
         this.append(this.pin)
-    }
-
-    getPosition() {
-        return Vec2.add(this.parent.currentPos, this.offset)
-    }
-
-    getValue() {
-        return this.value
-    }
-
-    setValue(value: number) {
-        this.value = value
-    }
-
-    connect(connection: UIConnection) {
-        this.connection = connection
     }
 }

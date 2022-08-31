@@ -28,5 +28,5 @@ const circuitView = new UICircuit(circuitSource, snap);
 const testLine = new UIPolyline([vec2(20, 20), vec2(60, 20), vec2(60, 60), vec2(100, 60)], vec2(20, 20), circuitView.node);
 testLine.setSelected(true);
 testLine.events.subscribe('lineClicked', () => console.log('Polyline emitted click-event'));
-const testWindow = new UIWindow(vec2(100, 100), vec2(400, 300), circuitView).setSizeSnap(snap).titleText('Test Circuit');
+const testWindow = new UIWindow(vec2(100, 100), vec2(400, 300), circuitView).titleText('Test Circuit');
 View.Desktop.append(testWindow);

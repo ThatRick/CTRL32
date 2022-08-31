@@ -8,7 +8,7 @@ import { C32TaskView } from './C32/Views/C32TaskView.js'
 import { createTestTreeView } from './Test/testTree.js'
 import { MovableElement } from './UI/MovableElement.js'
 import { vec2 } from './Vector2.js'
-import { MoveHandle, ResizeHandle } from './UI/UIPointerHandlers.js'
+import { createMoveHandle, createResizeHandle } from './UI/UIPointerHandlers.js'
 import { Button, Div, HorizontalContainer, TextNode, VerticalContainer } from './UI/UIElements.js'
 import { backgroundGridStyle } from './UI/UIBackgroundPattern.js'
 import { UIBlock } from './ProgramView/UIBlock.js'
@@ -48,7 +48,7 @@ const testLine = new UIPolyline([vec2(20, 20), vec2(60, 20), vec2(60, 60), vec2(
 testLine.setSelected(true)
 testLine.events.subscribe('lineClicked', () => console.log('Polyline emitted click-event'))
 
-const testWindow = new UIWindow(vec2(100, 100), vec2(400, 300), circuitView).setSizeSnap(snap).titleText('Test Circuit')
+const testWindow = new UIWindow(vec2(100, 100), vec2(400, 300), circuitView).titleText('Test Circuit')
 
 View.Desktop.append(
     testWindow

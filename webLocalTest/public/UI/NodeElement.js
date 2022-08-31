@@ -61,6 +61,7 @@ export class NodeElement {
         return this;
     }
     remove() {
+        this.onRemove?.();
         this.node.remove();
     }
     color(color) {
