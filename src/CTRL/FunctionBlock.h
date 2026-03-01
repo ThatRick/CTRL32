@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Common.h"
-#include "Link.h"
+#include "Platform.h"
+
+class Link;
 
 #define FUNC_FLAG_MONITORING        (1 << 0)
 #define FUNC_FLAG_MONITOR_ONCE      (1 << 1)
@@ -20,9 +22,9 @@
 #define IO_FLAG_CONV_TYPE_MASK      (IO_FLAG_REF_CONV_TYPE_B0 | IO_FLAG_REF_CONV_TYPE_B1)
 
 #define MS           1
-#define SEC      1_000
-#define MIN     60_000
-#define HOUR 3_600_000
+#define SEC      1000
+#define MIN     60000
+#define HOUR 3600000
 
 // bits 0, 1 and 2 of IO Flag
 enum IO_TYPE
@@ -34,7 +36,7 @@ enum IO_TYPE
     IO_TYPE_TIME
 };
 
-// bits 0, 1 and 2 of IO Flag
+// bits 6 and 7 of IO Flag
 enum IO_CONVERSION_TYPE
 {
     IO_CONV_NONE        = 0,
@@ -43,12 +45,12 @@ enum IO_CONVERSION_TYPE
     IO_CONV_FLOAT       = IO_FLAG_REF_CONV_TYPE_B0 | IO_FLAG_REF_CONV_TYPE_B1,
 };
 
+// 4-byte value type — no pointers, portable across 32/64 bit
 union IOValue
 {
     uint32_t    u;
     int32_t     i;
     float       f;
-    IOValue*    ref;
 };
 
 inline uint16_t OPCODE(uint8_t libID, uint8_t funcID) { return (libID << 8) + funcID; }
@@ -59,17 +61,20 @@ public:
     const uint8_t   numInputs;
     const uint8_t   numOutputs;
     const uint16_t  opcode;
-    
+
     uint32_t flags = 0;
 
     IOValue* ioValues = nullptr;
     uint8_t* ioFlags = nullptr;
     IOValue* monitoringValues = nullptr;
 
+    // Separate reference pointers for connected inputs (one per input, null if not connected)
+    IOValue** inputRefs = nullptr;
+
     FunctionBlock(uint8_t numInputs, uint8_t numOutputs, uint16_t opcode);
 
     virtual const char* name() = 0;
-    
+
     virtual void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt_ms) = 0;
 
     virtual ~FunctionBlock();
@@ -78,7 +83,7 @@ public:
 
     void update(uint32_t dt);
 
-    // Return an input value. Dereferece if needed
+    // Return an input value. Dereference if needed
     IOValue inputValue(uint8_t index);
 
     // Read all input values to given array. Dereference values if needed

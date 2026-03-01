@@ -2,7 +2,6 @@
 
 #include "Common.h"
 #include "FunctionBlock.h"
-#include "Link.h"
 
 class Circuit : public FunctionBlock
 {

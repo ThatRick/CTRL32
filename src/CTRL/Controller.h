@@ -2,8 +2,6 @@
 
 #include "Common.h"
 
-#define MAX_UPDATE_INTERVAL 100U
-
 #define OPCODE_CIRCUIT 0
 
 class CyclicTask;
@@ -20,13 +18,13 @@ public:
 
     Controller();
 
-    // Returns next pending update time in ms
+    // Returns next pending update time in microseconds
     Time tick();
 
     void connected();
     void disconnected();
 
-    void addFunction(FunctionBlock* func, CyclicTask* taskNum = nullptr);
+    void addFunction(FunctionBlock* func, CyclicTask* task = nullptr);
     void removeFunction(FunctionBlock* func);
 
     uint32_t    freeHeap();

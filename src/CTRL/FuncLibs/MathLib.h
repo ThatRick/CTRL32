@@ -2,6 +2,8 @@
 
 #include "../FunctionBlock.h"
 #include "../FunctionLib.h"
+#include <cmath>
+#include <algorithm>
 
 namespace MathLib
 {
@@ -10,7 +12,7 @@ enum FUNC_ID {
     FUNC_ID_ADD,
     FUNC_ID_SUB,
     FUNC_ID_MUL,
-    FUNC_ID_DIV, 
+    FUNC_ID_DIV,
     FUNC_ID_ABS,
     FUNC_ID_SIN,
     FUNC_ID_COS,
@@ -19,11 +21,11 @@ enum FUNC_ID {
     FUNC_COUNT
 };
 
-const char* names[] = {
+static const char* names[] = {
     "ADD",
     "SUB",
     "MUL",
-    "DIV", 
+    "DIV",
     "ABS",
     "SIN",
     "COS",
@@ -34,7 +36,7 @@ const char* names[] = {
 class ADD : public FunctionBlock
 {
 public:
-    ADD(uint8_t size = 2) : FunctionBlock(max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH, FUNC_ID_ADD))
+    ADD(uint8_t size = 2) : FunctionBlock(std::max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH, FUNC_ID_ADD))
     {
         for (int i = 0; i < numInputs; i++) initInput(i, 0.0f);
         initOutput(0, 0.0f);
@@ -72,7 +74,7 @@ public:
 class MUL : public FunctionBlock
 {
 public:
-    MUL(uint8_t size = 2) : FunctionBlock(max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH, FUNC_ID_MUL))
+    MUL(uint8_t size = 2) : FunctionBlock(std::max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH, FUNC_ID_MUL))
     {
         for (int i = 0; i < numInputs; i++) initInput(i, 1.0f);
         initOutput(0, 1.0f);
@@ -125,7 +127,7 @@ public:
 
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt)
     {
-        outputValues[0].f = abs(inputValues[0].f);
+        outputValues[0].f = std::fabs(inputValues[0].f);
     }
 };
 
@@ -210,7 +212,7 @@ public:
     {
         switch(func_id)
         {
-            case FUNC_ID_ADD:           return new ADD(numInputs);   
+            case FUNC_ID_ADD:           return new ADD(numInputs);
             case FUNC_ID_SUB:           return new SUB();
             case FUNC_ID_MUL:           return new MUL(numInputs);
             case FUNC_ID_DIV:           return new DIV();
@@ -219,7 +221,7 @@ public:
             case FUNC_ID_COS:           return new COS();
             case FUNC_ID_POW:           return new POW();
             case FUNC_ID_SQRT:          return new SQRT();
-            
+
             default:                    return nullptr;
         }
     }

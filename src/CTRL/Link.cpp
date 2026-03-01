@@ -2,13 +2,16 @@
 #include "FunctionBlock.h"
 #include "Circuit.h"
 #include "CyclicTask.h"
-#include "Esp.h"
+#include "Platform.h"
+
+#include <cstring>
+#include <vector>
 
 #define LOG_INFO 0
 
 Link::Link(Controller* controller, send_data_callback_t onSendData, send_text_callback_t onSendText) :
     controller (controller),
-    sendData (onSendData), 
+    sendData (onSendData),
     sendText (onSendText)
 {
     initMonitoringSet();
@@ -27,16 +30,10 @@ void Link::connected() {
         .timeStamp  = (uint32_t)(controller->getTime() / 1000ULL)
     };
     sendData(&response, sizeof(response));
-    for (CyclicTask* task : controller->tasks) {
-        task->link = this;
-    }
 }
 
 void Link::disconnected() {
     isConnected = false;
-    for (CyclicTask* task : controller->tasks) {
-        task->link = nullptr;
-    }
 }
 
 void Link::receiveData(void* data, size_t len) {
@@ -48,7 +45,7 @@ void Link::receiveData(void* data, size_t len) {
         .size = len
     };
     if (!dataQueue.push(cmd)) {
-        Serial.println("Link command buffer full!");
+        Platform::log("Link command buffer full!\n");
     }
 }
 
@@ -70,12 +67,7 @@ void Link::handleRequest(void* data, size_t len) {
     size_t payloadSize = len - sizeof(header);
     MESSAGE_TYPE msgType = (MESSAGE_TYPE)header.msgType;
 
-    if (LOG_INFO) Serial.printf("Received ws request type: %d ptr: %p size: %d \n", header.msgType, pointer, len);
-
-    if ((header.pointer < ADDRESS_MIN || header.pointer >= ADDRESS_MAX) && header.msgType > MSG_TYPE_CONTROLLER_INFO) {
-        Serial.printf("INVALID REQUEST: invalid pointer %p in message header \n", pointer);
-        return;
-    }
+    if (LOG_INFO) Platform::log("Received ws request type: %d ptr: %p size: %zu \n", header.msgType, pointer, len);
 
     switch(msgType)
     {
@@ -86,16 +78,16 @@ void Link::handleRequest(void* data, size_t len) {
 
         case MSG_TYPE_CONTROLLER_INFO: {
             MsgControllerInfo_t info = {
-                .pointer         = (uint32_t)controller,
-                .freeHeap        = ESP.getFreeHeap(),
-                .cpuFreq         = ESP.getCpuFreqMHz(),
+                .pointer         = (ptr_t)controller,
+                .freeHeap        = controller->freeHeap(),
+                .cpuFreq         = controller->cpuFreq(),
                 .RSSI            = controller->getRSSI(),
-                .aliveTime       = (uint32_t)(esp_timer_get_time() / 1000000),
+                .aliveTime       = (uint32_t)(controller->getTime() / 1000000ULL),
                 .tickCount       = controller->tickCount,
-                .taskCount       = controller->tasks.size(),
-                .taskList        = (uint32_t)controller->tasks.data(),
-                .funcCount       = controller->funcList.size(),
-                .funcList        = (uint32_t)controller->funcList.data()
+                .taskCount       = (uint32_t)controller->tasks.size(),
+                .taskList        = (ptr_t)controller->tasks.data(),
+                .funcCount       = (uint32_t)controller->funcList.size(),
+                .funcList        = (ptr_t)controller->funcList.data()
             };
             sendResponse(header, &info, sizeof(info));
             break;
@@ -104,7 +96,7 @@ void Link::handleRequest(void* data, size_t len) {
         case MSG_TYPE_TASK_INFO: {
             CyclicTask* task = (CyclicTask*)pointer;
             MsgTaskInfo_t info = {
-                .pointer         = (uint32_t)task,
+                .pointer         = (ptr_t)task,
                 .interval        = task->interval_ms,
                 .offset          = task->offset_ms,
                 .runCount        = task->runCount,
@@ -113,8 +105,8 @@ void Link::handleRequest(void* data, size_t len) {
                 .lastActInterval = task->lastActualInterval_ms,
                 .avgActInterval  = task->averageActualInterval_ms(),
                 .driftTime       = task->drift_us,
-                .funcCount       = task->funcList.size(),
-                .funcList        = (uint32_t)task->funcList.data()
+                .funcCount       = (uint32_t)task->funcList.size(),
+                .funcList        = (ptr_t)task->funcList.data()
             };
             sendResponse(header, &info, sizeof(info));
             break;
@@ -123,11 +115,11 @@ void Link::handleRequest(void* data, size_t len) {
         case MSG_TYPE_CIRCUIT_INFO: {
             Circuit* circuit = (Circuit*)pointer;
             MsgCircuitInfo_t info = {
-                .pointer         = (uint32_t)circuit,
-                .funcCount       = circuit->funcList.size(),
-                .funcList        = (uint32_t)circuit->funcList.data(),
+                .pointer         = (ptr_t)circuit,
+                .funcCount       = (uint32_t)circuit->funcList.size(),
+                .funcList        = (ptr_t)circuit->funcList.data(),
                 .outputRefCount  = circuit->numOutputs,
-                .outputRefList   = (uint32_t)circuit->outputRefs,
+                .outputRefList   = (ptr_t)circuit->outputRefs,
             };
             sendResponse(header, &info, sizeof(info));
             break;
@@ -136,15 +128,15 @@ void Link::handleRequest(void* data, size_t len) {
         case MSG_TYPE_FUNCTION_INFO: {
             FunctionBlock* func = (FunctionBlock*)pointer;
             MsgFunctionInfo_t info = {
-                .pointer         = (uint32_t)func,
+                .pointer         = (ptr_t)func,
                 .numInputs       = func->numInputs,
                 .numOutputs      = func->numOutputs,
                 .opcode          = func->opcode,
                 .flags           = func->flags,
-                .ioValuesPtr     = (uint32_t)func->ioValues,
-                .ioFlagsPtr      = (uint32_t)func->ioFlags,
-                .nameLength      = strlen(func->name()),
-                .namePtr         = (uint32_t)func->name(),
+                .ioValuesPtr     = (ptr_t)func->ioValues,
+                .ioFlagsPtr      = (ptr_t)func->ioFlags,
+                .nameLength      = (uint32_t)strlen(func->name()),
+                .namePtr         = (ptr_t)func->name(),
             };
             sendResponse(header, &info, sizeof(info));
             break;
@@ -164,7 +156,7 @@ void Link::handleRequest(void* data, size_t len) {
 
         case MSG_TYPE_MONITORING_ENABLE: {
             FunctionBlock* func = (FunctionBlock*)pointer;
-            boolean once = msg->payload;
+            bool once = msg->payload;
             func->enableMonitoring(once);
             monitoredFunctions.insert(func);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
@@ -213,7 +205,7 @@ void Link::handleRequest(void* data, size_t len) {
 
         // ========================================================================
         //      MODIFY CONTROLLER TASK
-        
+
         case MSG_TYPE_TASK_START: {
             ((CyclicTask*)pointer)->start();
             sendConfirmation(header, REQUEST_SUCCESSFUL);
@@ -243,7 +235,7 @@ void Link::handleRequest(void* data, size_t len) {
             break;
         }
         case MSG_TYPE_TASK_REMOVE_FUNCTION: {
-            FunctionBlock* func = (FunctionBlock*)msg->payload;
+            FunctionBlock* func = (FunctionBlock*)(uintptr_t)msg->payload;
             ((CyclicTask*)pointer)->removeFunction(func);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
@@ -259,7 +251,7 @@ void Link::handleRequest(void* data, size_t len) {
             break;
         }
         case MSG_TYPE_CIRCUIT_REMOVE_FUNCTION: {
-            FunctionBlock* function = (FunctionBlock*)msg->payload;
+            FunctionBlock* function = (FunctionBlock*)(uintptr_t)msg->payload;
             ((Circuit*)pointer)->removeFunction(function);
             sendConfirmation(header, REQUEST_SUCCESSFUL);
             break;
@@ -311,21 +303,21 @@ void Link::sendConfirmation(MsgRequestHeader_t request, REQUEST_RESULT result) {
         .timeStamp  = (uint32_t)(controller->getTime() / 1000ULL)
     };
     sendData(&response, sizeof(response));
-    if (LOG_INFO) Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, sizeof(response));
+    if (LOG_INFO) Platform::log("   Sent ws response id: %u size: %zu \n", request.msgID, sizeof(response));
 }
 
 void Link::sendResponse(MsgRequestHeader_t request, void* payload, size_t payloadSize) {
     if (!isConnected) return;
     size_t size = sizeof(MsgResponseHeader_t) + payloadSize;
-    uint8_t data[size];
-    MsgResponseHeader_t* header = (MsgResponseHeader_t*)data;
+    std::vector<uint8_t> data(size);
+    MsgResponseHeader_t* header = (MsgResponseHeader_t*)data.data();
     header->msgType = request.msgType;
     header->msgID = request.msgID;
     header->result = REQUEST_SUCCESSFUL;
     header->timeStamp = (uint32_t)(controller->getTime() / 1000ULL);
-    if (payload) memcpy(data + sizeof(MsgResponseHeader_t), payload, payloadSize);
-    sendData(data, size);
-    if (LOG_INFO) Serial.printf("   Sent ws response id: %u size: %u \n", request.msgID, size);
+    if (payload) memcpy(data.data() + sizeof(MsgResponseHeader_t), payload, payloadSize);
+    sendData(data.data(), size);
+    if (LOG_INFO) Platform::log("   Sent ws response id: %u size: %zu \n", request.msgID, size);
 }
 
 void Link::iterateForMonitoredFunctions(FunctionBlock* func) {
@@ -357,12 +349,15 @@ void Link::reportMonitoringData() {
 
     monitoringCollectionStart(this, monitoredFunctions.size());
 
-    for (FunctionBlock* func : monitoredFunctions) {
+    for (auto it = monitoredFunctions.begin(); it != monitoredFunctions.end(); ) {
+        FunctionBlock* func = *it;
         func->reportMonitoringValues(this);
-        
+
         if (func->flags & FUNC_FLAG_MONITOR_ONCE) {
             func->disableMonitoring();
-            monitoredFunctions.erase(func);
+            it = monitoredFunctions.erase(it);
+        } else {
+            ++it;
         }
     }
 
@@ -385,35 +380,34 @@ void Link::monitoringCollectionSend() {
                     + sizeof(MsgMonitoringCollection_t)
                     + sizeof(MsgMonitoringCollectionItem_t) * monitoringCollectionCount;
     size_t bodySize = 0;
-    for (int i = 0; i < monitoringCollectionCount; i++) {
+    for (size_t i = 0; i < monitoringCollectionCount; i++) {
         MonitoringCollectionItem_t item = monitoringCollection[i];
         bodySize += item.size;
     }
-    // Allocate memory for message from stack
-    // - Future improvement: allocate memory for message data with WebSocket library API to avoid unnecessary memory copying)
+    // Allocate message buffer
     size_t dataSize = headSize + bodySize;
-    uint8_t data[dataSize];
-    
+    std::vector<uint8_t> data(dataSize);
+
     // Message header data
-    MsgResponseHeader_t* header = (MsgResponseHeader_t*)data;
+    MsgResponseHeader_t* header = (MsgResponseHeader_t*)data.data();
     header->msgType = MSG_TYPE_MONITORING_REPORT;
     header->msgID = 0;
     header->timeStamp = (uint32_t)(controller->getTime() / 1000ULL);
-    
+
     // Monitoring collection info
-    MsgMonitoringCollection_t* collectionInfo = (MsgMonitoringCollection_t*)(data + sizeof(MsgResponseHeader_t));
+    MsgMonitoringCollection_t* collectionInfo = (MsgMonitoringCollection_t*)(data.data() + sizeof(MsgResponseHeader_t));
     collectionInfo->itemCount = monitoringCollectionCount;
 
     // Monitoring collection item list
-    MsgMonitoringCollectionItem_t* itemList = (MsgMonitoringCollectionItem_t*)(data + sizeof(MsgResponseHeader_t) + sizeof(MsgMonitoringCollection_t));
+    MsgMonitoringCollectionItem_t* itemList = (MsgMonitoringCollectionItem_t*)(data.data() + sizeof(MsgResponseHeader_t) + sizeof(MsgMonitoringCollection_t));
     void* valuesData = itemList + monitoringCollectionCount;
 
     // Build message data
     uint16_t dataOffset = 0;
-    for (int i = 0; i < monitoringCollectionCount; i++) {
+    for (size_t i = 0; i < monitoringCollectionCount; i++) {
         MonitoringCollectionItem_t item = monitoringCollection[i];
         MsgMonitoringCollectionItem_t* msgItem = itemList + i;
-        msgItem->pointer = (uint32_t)item.func;
+        msgItem->pointer = (ptr_t)item.func;
         msgItem->size = item.size;
         msgItem->offset = dataOffset;
 
@@ -422,8 +416,8 @@ void Link::monitoringCollectionSend() {
         dataOffset += item.size;
     }
 
-    if (LOG_INFO) Serial.printf("   Sent ws response type: %u payload len: %u \n", header->msgType, dataSize - sizeof(MsgResponseHeader_t));
-    sendData(data, dataSize);
+    if (LOG_INFO) Platform::log("   Sent ws response type: %u payload len: %zu \n", header->msgType, dataSize - sizeof(MsgResponseHeader_t));
+    sendData(data.data(), dataSize);
 
     monitoringCollectionCount = 0;
 }

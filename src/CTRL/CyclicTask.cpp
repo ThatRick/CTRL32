@@ -1,6 +1,7 @@
 #include "CyclicTask.h"
+#include "Controller.h"
+#include "FunctionBlock.h"
 #include "Circuit.h"
-#include "Esp.h"
 
 CyclicTask::CyclicTask(Controller* controller, uint32_t interval_ms, uint32_t offset_ms) :
     controller (controller),
@@ -80,7 +81,7 @@ void CyclicTask::setOffset(uint32_t time) {
 }
 
 void CyclicTask::addFunction(FunctionBlock* func, int32_t index) {
-    if (index > 0 && index < funcList.size()) {
+    if (index > 0 && index < (int32_t)funcList.size()) {
         funcList.insert(funcList.begin() + index, func);
     } else
         funcList.push_back(func);

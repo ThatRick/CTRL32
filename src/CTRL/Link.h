@@ -5,9 +5,6 @@
 #include "FIFO.h"
 #include <set>
 
-#define ADDRESS_MIN 0x3F400000
-#define ADDRESS_MAX 0x50002000
-
 enum REQUEST_RESULT {
     REQUEST_FAILED,     // = 0
     REQUEST_SUCCESSFUL //  > 0
@@ -56,7 +53,8 @@ enum MESSAGE_TYPE {
     MSG_TYPE_FUNCTION_CLEAR_FLAG,
 };
 
-typedef uint32_t ptr32_t;
+// Pointer type for the wire protocol (platform-native size)
+typedef uintptr_t ptr_t;
 
 
 //  Request header
@@ -64,7 +62,7 @@ typedef uint32_t ptr32_t;
 struct MsgRequestHeader_t {
     uint32_t    msgType;
     uint32_t    msgID;
-    uint32_t    pointer;
+    ptr_t       pointer;
 };
 
 // Response header
@@ -91,20 +89,20 @@ struct MsgRequest_t {
 // Info response structs
 
 struct MsgControllerInfo_t {
-    uint32_t    pointer;
+    ptr_t       pointer;
     uint32_t    freeHeap;
     uint32_t    cpuFreq;
     int32_t     RSSI;
     uint32_t    aliveTime;
     uint32_t    tickCount;
     uint32_t    taskCount;
-    ptr32_t     taskList;
+    ptr_t       taskList;
     uint32_t    funcCount;
-    ptr32_t     funcList;
+    ptr_t       funcList;
 };
 
 struct MsgTaskInfo_t {
-    uint32_t    pointer;
+    ptr_t       pointer;
     uint32_t    interval;
     uint32_t    offset;
     uint32_t    runCount;
@@ -114,27 +112,27 @@ struct MsgTaskInfo_t {
     float       avgActInterval;
     uint32_t    driftTime;
     uint32_t    funcCount;
-    ptr32_t     funcList;
+    ptr_t       funcList;
 };
 
 struct MsgCircuitInfo_t {
-    uint32_t    pointer;
+    ptr_t       pointer;
     uint32_t    funcCount;
-    ptr32_t     funcList;
+    ptr_t       funcList;
     uint32_t    outputRefCount;
-    ptr32_t     outputRefList;
+    ptr_t       outputRefList;
 };
 
 struct MsgFunctionInfo_t {
-    uint32_t    pointer;
+    ptr_t       pointer;
     uint8_t     numInputs;
     uint8_t     numOutputs;
     uint16_t    opcode;
     uint32_t    flags;
-    ptr32_t     ioValuesPtr;
-    ptr32_t     ioFlagsPtr;
+    ptr_t       ioValuesPtr;
+    ptr_t       ioFlagsPtr;
     uint32_t    nameLength;
-    ptr32_t     namePtr;
+    ptr_t       namePtr;
 };
 
 // Monitoring response structure
@@ -144,7 +142,7 @@ struct MsgMonitoringCollection_t {
 };
 
 struct MsgMonitoringCollectionItem_t {
-    uint32_t    pointer;
+    ptr_t       pointer;
     uint16_t    offset;
     uint16_t    size;
 };
@@ -164,7 +162,7 @@ struct MsgCreateFunction_t {
 };
 
 struct MsgAddItem_t {
-    uint32_t    pointer;
+    ptr_t       pointer;
     int32_t     index;
 };
 

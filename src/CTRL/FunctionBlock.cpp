@@ -1,5 +1,5 @@
 #include "FunctionBlock.h"
-#include "Esp.h"
+#include "Link.h"
 
 FunctionBlock::FunctionBlock(uint8_t numInputs, uint8_t numOutputs, uint16_t opcode) :
     numInputs (numInputs),
@@ -9,17 +9,21 @@ FunctionBlock::FunctionBlock(uint8_t numInputs, uint8_t numOutputs, uint16_t opc
     const size_t ioCount = numInputs + numOutputs;
     ioValues = (IOValue*)calloc(sizeof(IOValue), ioCount);
     ioFlags = (uint8_t*)calloc(sizeof(uint8_t), ioCount);
+    if (numInputs > 0) {
+        inputRefs = (IOValue**)calloc(sizeof(IOValue*), numInputs);
+    }
 }
 
 FunctionBlock::~FunctionBlock() {
     free(ioValues);
     free(ioFlags);
     free(monitoringValues);
+    free(inputRefs);
 }
 
 size_t FunctionBlock::dataSize() {
     const size_t ioCount = numInputs + numOutputs;
-    return ioCount * 4 + ioCount;
+    return ioCount * sizeof(IOValue) + ioCount * sizeof(uint8_t) + numInputs * sizeof(IOValue*);
 }
 
 void IRAM_ATTR FunctionBlock::update(uint32_t dt)
@@ -39,15 +43,14 @@ void IRAM_ATTR FunctionBlock::update(uint32_t dt)
     }
 }
 
-// Return an input value. Dereferece if needed
+// Return an input value. Dereference if needed
 IOValue IRAM_ATTR FunctionBlock::inputValue(uint8_t index) {
     const uint8_t flags = inputFlag(index);
-    IOValue value = inputs()[index];
+    IOValue value;
     // Check if input is a reference
-    if (flags & IO_FLAG_REF) {
-        value = *value.ref;
+    if ((flags & IO_FLAG_REF) && inputRefs[index]) {
+        value = *inputRefs[index];
         // Check if value needs type conversion
-        // Serial.printf("flag: %x mask: %x AND: %x \n", flags, IO_FLAG_CONV_TYPE_MASK, (flags & IO_FLAG_CONV_TYPE_MASK));
         if (flags & IO_FLAG_CONV_TYPE_MASK) {
             const uint8_t ioConvType = (flags & IO_FLAG_CONV_TYPE_MASK);
             const uint8_t inputType = (flags & IO_FLAG_TYPE_MASK);
@@ -72,6 +75,8 @@ IOValue IRAM_ATTR FunctionBlock::inputValue(uint8_t index) {
         if (flags & IO_FLAG_REF_INVERT) {
             value.u = (value.u) ? 0 : 1;
         }
+    } else {
+        value = inputs()[index];
     }
     return value;
 }
@@ -80,10 +85,10 @@ IOValue IRAM_ATTR FunctionBlock::inputValue(uint8_t index) {
 void IRAM_ATTR FunctionBlock::readInputValues(IOValue* values) {
     for (size_t index = 0; index < numInputs; index++) {
         const uint8_t flags = inputFlag(index);
-        IOValue value = inputs()[index];
+        IOValue value;
         // Check if input is a reference
-        if (flags & IO_FLAG_REF) {
-            value = *value.ref;
+        if ((flags & IO_FLAG_REF) && inputRefs[index]) {
+            value = *inputRefs[index];
             // Check if value needs type conversion
             if (flags & IO_FLAG_CONV_TYPE_MASK) {
                 const uint8_t ioConvType = (flags & IO_FLAG_CONV_TYPE_MASK);
@@ -110,6 +115,8 @@ void IRAM_ATTR FunctionBlock::readInputValues(IOValue* values) {
                 if (value.u != 0) value.u = 0;
                 else value.u = 1;
             }
+        } else {
+            value = inputs()[index];
         }
         values[index] = value;
     }
@@ -117,9 +124,9 @@ void IRAM_ATTR FunctionBlock::readInputValues(IOValue* values) {
 
 void FunctionBlock::connectInput(uint8_t inputNum, FunctionBlock* sourceFunc, uint8_t outputNum, bool inverted)
 {
-    inputs()[inputNum].ref = sourceFunc->getOutputRef(outputNum);
+    inputRefs[inputNum] = sourceFunc->getOutputRef(outputNum);
     setInputFlag(inputNum, IO_FLAG_REF);
-    
+
     // Check if input reference needs type conversion
     uint8_t outputFlags = sourceFunc->outputFlags()[outputNum];
     IO_TYPE outputType = readFlagIOType(outputFlags);
@@ -149,7 +156,9 @@ void FunctionBlock::connectInput(uint8_t inputNum, FunctionBlock* sourceFunc, ui
 }
 
 void FunctionBlock::disconnectInput(uint8_t inputNum) {
+    // Snapshot the current dereferenced value before disconnecting
     IOValue value = inputValue(inputNum);
+    inputRefs[inputNum] = nullptr;
     clearInputFlag(inputNum, IO_FLAG_REF | IO_FLAG_REF_INVERT | IO_FLAG_CONV_TYPE_MASK);
     setInput(inputNum, value);
 }
@@ -173,7 +182,7 @@ void FunctionBlock::enableMonitoring(bool once) {
 }
 
 void FunctionBlock::disableMonitoring() {
-    clearFuncFlag(FUNC_FLAG_MONITORING || FUNC_FLAG_MONITOR_ONCE);
+    clearFuncFlag(FUNC_FLAG_MONITORING | FUNC_FLAG_MONITOR_ONCE);
     free(monitoringValues);
     monitoringValues = nullptr;
 }

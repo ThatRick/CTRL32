@@ -2,6 +2,7 @@
 
 #include "../FunctionBlock.h"
 #include "../FunctionLib.h"
+#include <algorithm>
 
 namespace MathUintLib
 {
@@ -14,17 +15,17 @@ enum FUNC_ID {
     FUNC_COUNT
 };
 
-const char* names[] = {
+static const char* names[] = {
     "ADD",
     "SUB",
     "MUL",
-    "DIV", 
+    "DIV",
 };
 
 class ADD : public FunctionBlock
 {
 public:
-    ADD(uint8_t size = 2) : FunctionBlock(max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_UINT, FUNC_ID_ADD))
+    ADD(uint8_t size = 2) : FunctionBlock(std::max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_UINT, FUNC_ID_ADD))
     {
         for (int i = 0; i < numInputs; i++) initInput(i, 0u);
         initOutput(0, 0u);
@@ -48,7 +49,7 @@ public:
     SUB() : FunctionBlock(2, 1, OPCODE(LIB_ID_MATH_UINT, FUNC_ID_SUB))
     {
         for (int i = 0; i < numInputs; i++) initInput(i, 0u);
-        initOutput(0, 0);
+        initOutput(0, 0u);
     }
 
     const char* name() { return names[FUNC_ID_SUB]; }
@@ -62,7 +63,7 @@ public:
 class MUL : public FunctionBlock
 {
 public:
-    MUL(uint8_t size = 2) : FunctionBlock(max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_UINT, FUNC_ID_MUL))
+    MUL(uint8_t size = 2) : FunctionBlock(std::max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_UINT, FUNC_ID_MUL))
     {
         for (int i = 0; i < numInputs; i++) initInput(i, 1u);
         initOutput(0, 1u);
@@ -111,11 +112,11 @@ public:
     {
         switch(func_id)
         {
-            case FUNC_ID_ADD:           return new ADD(numInputs);   
+            case FUNC_ID_ADD:           return new ADD(numInputs);
             case FUNC_ID_SUB:           return new SUB();
             case FUNC_ID_MUL:           return new MUL(numInputs);
             case FUNC_ID_DIV:           return new DIV();
-            
+
             default:                    return nullptr;
         }
     }

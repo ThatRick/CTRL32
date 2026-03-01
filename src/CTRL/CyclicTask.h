@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Common.h"
-#include "FunctionBlock.h"
-#include "Controller.h"
-#include "Link.h"
+
+class Controller;
+class FunctionBlock;
 
 class CyclicTask
 {
@@ -15,8 +15,6 @@ class CyclicTask
 public:
 
     std::vector<FunctionBlock*> funcList;
-
-    Link*       link = nullptr;
 
     uint32_t    interval_ms = 0;
     uint32_t    offset_ms = 0;

@@ -14,7 +14,7 @@ enum FUNC_ID
     FUNC_COUNT
 };
 
-const char* names[] =
+static const char* names[] =
 {
     "ON_DELAY",
     "OFF_DELAY",

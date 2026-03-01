@@ -14,12 +14,12 @@ enum FUNC_ID
     FUNC_ID_NOT,
     FUNC_ID_RS,
     FUNC_ID_SR,
-    FUNC_ID_RisingEdge, 
+    FUNC_ID_RisingEdge,
     FUNC_ID_FallingEdge,
     FUNC_COUNT
 };
 
-const char* names[] =
+static const char* names[] =
 {
     "AND",
     "OR",
@@ -27,7 +27,7 @@ const char* names[] =
     "NOT",
     "RS",
     "SR",
-    "Rising edge", 
+    "Rising edge",
     "Falling edge",
 };
 
@@ -45,7 +45,7 @@ public:
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt)
     {
         bool result = true;
-        for (uint i = 0; i < numInputs; i++) {
+        for (unsigned int i = 0; i < numInputs; i++) {
             result = (result && inputValues[i].u);
         }
         outputValues[0].u = result;
@@ -164,10 +164,10 @@ public:
         initInput(0, false);
         initOutput(0, false);
     }
-    
+
     const char* name() { return names[FUNC_ID_RisingEdge]; }
 
-    uint prevInput = 0;
+    unsigned int prevInput = 0;
 
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt) {
         bool input = inputValues[0].u;
@@ -188,7 +188,7 @@ public:
 
     const char* name() { return names[FUNC_ID_FallingEdge]; }
 
-    uint prevInput = 1;
+    unsigned int prevInput = 1;
 
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt) {
         bool input = inputValues[0].u;
@@ -208,7 +208,7 @@ public:
     {
         switch(func_id)
         {
-            case FUNC_ID_AND:           return new AND(numInputs);   
+            case FUNC_ID_AND:           return new AND(numInputs);
             case FUNC_ID_OR:            return new OR(numInputs);
             case FUNC_ID_XOR:           return new XOR(numInputs);
             case FUNC_ID_NOT:           return new NOT();
@@ -216,7 +216,7 @@ public:
             case FUNC_ID_SR:            return new SR();
             case FUNC_ID_RisingEdge:    return new RisingEdge();
             case FUNC_ID_FallingEdge:   return new FallingEdge();
-            
+
             default:                    return nullptr;
         }
     }

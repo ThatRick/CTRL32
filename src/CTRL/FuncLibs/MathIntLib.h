@@ -2,6 +2,8 @@
 
 #include "../FunctionBlock.h"
 #include "../FunctionLib.h"
+#include <cstdlib>
+#include <algorithm>
 
 namespace MathIntLib
 {
@@ -10,26 +12,26 @@ enum FUNC_ID {
     FUNC_ID_ADD,
     FUNC_ID_SUB,
     FUNC_ID_MUL,
-    FUNC_ID_DIV, 
+    FUNC_ID_DIV,
     FUNC_ID_ABS,
     FUNC_COUNT
 };
 
-const char* names[] = {
+static const char* names[] = {
     "ADD",
     "SUB",
     "MUL",
-    "DIV", 
+    "DIV",
     "ABS",
 };
 
 class ADD : public FunctionBlock
 {
 public:
-    ADD(uint8_t size = 2) : FunctionBlock(max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_ADD))
+    ADD(uint8_t size = 2) : FunctionBlock(std::max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_ADD))
     {
-        for (int i = 0; i < numInputs; i++) initInput(i, 0);
-        initOutput(0, 0);
+        for (int i = 0; i < numInputs; i++) initInput(i, (int32_t)0);
+        initOutput(0, (int32_t)0);
     }
 
     const char* name() { return names[FUNC_ID_ADD]; }
@@ -49,8 +51,8 @@ class SUB : public FunctionBlock
 public:
     SUB() : FunctionBlock(2, 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_SUB))
     {
-        for (int i = 0; i < numInputs; i++) initInput(i, 0);
-        initOutput(0, 0);
+        for (int i = 0; i < numInputs; i++) initInput(i, (int32_t)0);
+        initOutput(0, (int32_t)0);
     }
 
     const char* name() { return names[FUNC_ID_SUB]; }
@@ -64,10 +66,10 @@ public:
 class MUL : public FunctionBlock
 {
 public:
-    MUL(uint8_t size = 2) : FunctionBlock(max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_MUL))
+    MUL(uint8_t size = 2) : FunctionBlock(std::max((uint8_t)2, size), 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_MUL))
     {
-        for (int i = 0; i < numInputs; i++) initInput(i, 1);
-        initOutput(0, 1);
+        for (int i = 0; i < numInputs; i++) initInput(i, (int32_t)1);
+        initOutput(0, (int32_t)1);
     }
 
     const char* name() { return names[FUNC_ID_MUL]; }
@@ -87,9 +89,9 @@ class DIV : public FunctionBlock
 public:
     DIV() : FunctionBlock(2, 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_DIV))
     {
-        initInput(0, 0);
-        initInput(1, 1);
-        initOutput(0, 0);
+        initInput(0, (int32_t)0);
+        initInput(1, (int32_t)1);
+        initOutput(0, (int32_t)0);
     }
 
     const char* name() { return  names[FUNC_ID_DIV]; }
@@ -109,15 +111,15 @@ class ABS : public FunctionBlock
 public:
     ABS() : FunctionBlock(1, 1, OPCODE(LIB_ID_MATH_INT, FUNC_ID_ABS))
     {
-        initInput(0, 0);
-        initOutput(0, 0);
+        initInput(0, (int32_t)0);
+        initOutput(0, (int32_t)0);
     }
 
     const char* name() { return  names[FUNC_ID_ABS]; }
 
     void run(IOValue* inputValues, IOValue* outputValues, uint32_t dt)
     {
-        outputValues[0].i = abs(inputValues[0].i);
+        outputValues[0].i = std::abs(inputValues[0].i);
     }
 };
 
@@ -130,12 +132,12 @@ public:
     {
         switch(func_id)
         {
-            case FUNC_ID_ADD:           return new ADD(numInputs);   
+            case FUNC_ID_ADD:           return new ADD(numInputs);
             case FUNC_ID_SUB:           return new SUB();
             case FUNC_ID_MUL:           return new MUL(numInputs);
             case FUNC_ID_DIV:           return new DIV();
             case FUNC_ID_ABS:           return new ABS();
-            
+
             default:                    return nullptr;
         }
     }
