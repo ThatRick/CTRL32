@@ -38,7 +38,7 @@ void Circuit::removeFunction(FunctionBlock* partingFunc) {
     // Remove connections to circuit outputs
     for (size_t i = 0; i < numOutputs; i++) {
         if (outputRefs[i] >= partingFunc->outputs() &&
-            outputRefs[i] < partingFunc->outputs() + numOutputs) {
+            outputRefs[i] < partingFunc->outputs() + partingFunc->numOutputs) {
                 outputRefs[i] = nullptr;
         }
     }
@@ -52,7 +52,7 @@ void Circuit::removeFunction(FunctionBlock* partingFunc) {
 }
 
 void Circuit::reorderFunction(FunctionBlock* func, uint32_t newIndex) {
-    if (newIndex < 0 || newIndex >= funcList.size()) return;
+    if (newIndex >= funcList.size()) return;
     for (size_t current = 0; current < funcList.size(); current++) {
         if (funcList.at(current) == func) {
             std::swap(funcList[current], funcList[newIndex]);
