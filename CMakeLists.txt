@@ -16,6 +16,9 @@ add_library(ctrl
 
 target_include_directories(ctrl PUBLIC src)
 
-# Test executable
+# Test executables
 add_executable(ctrl_test test/test_main.cpp)
 target_link_libraries(ctrl_test ctrl)
+
+add_executable(ctrl_test_funclibs test/test_funclibs.cpp)
+target_link_libraries(ctrl_test_funclibs ctrl)
